@@ -1,0 +1,12 @@
+# ========================================================================
+# INFRAESTRUCTURA LOCAL Y CONTENEDORES (DOCKER)
+# ========================================================================
+# Bloquea el archivo que contiene las credenciales y configuración local de la BD
+docker-compose.yml
+
+# Bloquea archivos temporales o de entorno que contengan variables secretas
+.env
+docker-compose.override.yml
+
+# Bloquea los datos persistidos de la base de datos si se guardan en la raíz
+/pgdata/
