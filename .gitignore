@@ -10,3 +10,7 @@ docker-compose.override.yml
 
 # Bloquea los datos persistidos de la base de datos si se guardan en la raíz
 /pgdata/
+
+#Omite subir al rapositorio la key manager de antigravity al repositorio
+*.json
+antigravity-credentials.json
