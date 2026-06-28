@@ -75,7 +75,7 @@ public class AntigravityAgent {
                     .build();
 
             // 4. Inicializar el modelo Gemini con la configuración requerida
-            this.model = new GenerativeModel("gemini-1.5-flash", vertexAI)
+            this.model = new GenerativeModel("gemini-2.5-flash", vertexAI)
                     .withSystemInstruction(ContentMaker.fromString(systemPrompt))
                     .withGenerationConfig(GenerationConfig.newBuilder()
                             .setTemperature(temperature)

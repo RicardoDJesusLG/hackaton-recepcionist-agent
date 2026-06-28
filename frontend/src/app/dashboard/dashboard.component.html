@@ -1,0 +1,107 @@
+<div class="dashboard-wrapper">
+  <!-- Sidebar / Header Area -->
+  <header class="header">
+    <div class="header-logo">
+      <h1>Panel de Recepción</h1>
+      <span class="badge-empresa">ID Negocio: {{ empresaId }}</span>
+    </div>
+    <div class="user-profile">
+      <span class="username">Propietario: <strong>{{ username }}</strong></span>
+      <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon icon-total">📅</div>
+      <div class="stat-content">
+        <h3>Total Reservas</h3>
+        <p class="stat-number">{{ totalCitas }}</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon icon-confirmed">✅</div>
+      <div class="stat-content">
+        <h3>Confirmadas</h3>
+        <p class="stat-number">{{ citasConfirmadas }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon icon-cancelled">❌</div>
+      <div class="stat-content">
+        <h3>Canceladas</h3>
+        <p class="stat-number">{{ citasCanceladas }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Table -->
+  <div class="main-card">
+    <div class="card-header-table">
+      <h2>Listado de Citas (Agente de WhatsApp)</h2>
+      <button (click)="cargarCitas()" class="btn-refresh" [disabled]="isLoading">
+        @if (isLoading) {
+          <span>Actualizando...</span>
+        } @else {
+          <span>Refrescar Lista 🔄</span>
+        }
+      </button>
+    </div>
+
+    @if (errorMessage) {
+      <div class="alert alert-error">
+        {{ errorMessage }}
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th>Servicio</th>
+            <th>Inicio</th>
+            <th>Fin</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cita of citas; track cita.idCita) {
+            <tr class="fade-in-row">
+              <td class="client-name">{{ cita.clienteNombre }}</td>
+              <td>{{ cita.clienteTelefono }}</td>
+              <td class="service-tag">{{ cita.servicioNombre }}</td>
+              <td>{{ cita.fechaHoraInicio | date:'medium' }}</td>
+              <td>{{ cita.fechaHoraFin | date:'shortTime' }}</td>
+              <td>
+                <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
+                  {{ cita.estado }}
+                </span>
+              </td>
+              <td>
+                @if (cita.estado === 'CONFIRMADA') {
+                  <button (click)="cancelarCita(cita.idCita)" class="btn-cancel">Cancelar</button>
+                } @else {
+                  <span class="action-disabled">-</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-state">
+                <div class="empty-icon">📂</div>
+                <p>No hay citas registradas para este negocio todavía.</p>
+                <small>Las citas agendadas por los clientes a través del bot de WhatsApp aparecerán aquí automáticamente.</small>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

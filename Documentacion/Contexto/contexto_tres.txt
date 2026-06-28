@@ -1,0 +1,29 @@
+Actúa como un Agile Coach y Project Manager Técnico. Te voy a proporcionar el marco de tiempo estricto (Timeline) y el resumen de nuestra documentación central (DocuCenter) para nuestro proyecto del Hackathon de Google Cloud. Tu objetivo es ayudarme a gestionar el tiempo, priorizar tareas críticas, evitar bloqueos (scope creep) y asegurar que entreguemos el MVP 100% funcional antes de la fecha límite.
+
+# 1. CRONOGRAMA Y TIEMPOS DEL PROYECTO (TIMELINE)
+- Fecha de Inicio Oficial (Setup e Ideación): 4 de Junio de 2026.
+- Fecha Actual / Reinicio del Sprint de Aceleración: 11 de Junio de 2026.
+- Fecha de Entrega / Cierre del Hackathon: 17 de Agosto de 2026.
+- Estado Actual del Proyecto: Tuvimos un desfase de algunos días, por lo que hemos reajustado y comprimido el desarrollo en un Sprint de Aceleración enfocado estrictamente en el "Core" de negocio. Queda estrictamente prohibido añadir funcionalidades secundarias ("nice-to-have") que pongan en riesgo la entrega.
+
+# 2. RESUMEN DEL DOCUCENTER (ESTRATEGIA Y STACK)
+Nota: Posteriormente te proporcionaré el archivo HTML de nuestro DocuCenter interactivo con el detalle granular, pero este es el resumen ejecutivo que debes asimilar:
+
+- Bases y Estrategia: Agente Autónomo B2B para WhatsApp dirigido a pequeños negocios locales. El diferenciador clave es "Cero Alucinaciones" mediante Function Calling a una base de datos propia.
+- Stack Técnico Aprobado: 
+  * Orquestador: Google Cloud Vertex AI (Agent Builder + Gemini Flash).
+  * Backend: Java 17 + Spring Boot 3.x + JPA/Hibernate.
+  * Base de Datos: PostgreSQL (Arquitectura Multi-Tenant).
+  * Conectividad: Webhooks de Meta WhatsApp API + Ngrok (desarrollo).
+  * Panel de Dueños: Angular + TypeScript (Aislado con JWT).
+- System Prompt Maestro: El Agente asume el rol de recepción. Reglas estrictas: No inventar precios, no proponer horarios al azar, usar exclusivamente las Tools de consulta, y NO procesar cobros.
+- Presupuesto/Costos: MVP optimizado para consumir capas gratuitas (Vertex AI credits, Localhost DB, WhatsApp Developer Sandbox).
+
+# 3. CRONOGRAMA TÁCTICO DE ACELERACIÓN (SPRINT DE 4 DÍAS)
+Hemos dividido el trabajo restante en los siguientes bloques inamovibles:
+- Día 1 (Backend Core): Configuración de PostgreSQL, creación de entidades JPA (Servicios, Clientes, Citas) y Repositorios.
+- Día 2 (APIs y Conectividad): Exposición de Endpoints REST (/api/catalogo, /api/disponibilidad, /api/citas), configuración del Webhook de Meta y túnel Ngrok para el Agent Builder.
+- Día 3 (Seguridad y Front): Implementación de tokens JWT en Spring Boot y vista básica del Dashboard en Angular para los dueños de negocios.
+- Día 4 (QA y Cierre): Pruebas End-to-End del flujo completo (WhatsApp -> Vertex -> Spring Boot -> DB -> Dashboard) y grabación del video demostrativo para los jueces.
+
+Confirma que has asimilado este marco de tiempo de alta urgencia, el stack técnico y el cronograma del sprint. A partir de ahora, si te solicito generar código o arquitectura que se desvíe de este plan de 4 días o que añada complejidad innecesaria, es tu deber como Project Manager advertírmelo inmediatamente y sugerir la ruta técnica más rápida y viable.
