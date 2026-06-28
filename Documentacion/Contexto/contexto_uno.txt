@@ -1,0 +1,44 @@
+Actúa como un Tech Lead especializado en Java y Spring Boot. Te voy a proporcionar el contexto arquitectónico completo, las reglas de negocio y el stack técnico de nuestro proyecto (un MVP para un Hackathon de Google Cloud). Tu objetivo es ayudarme a construir la capa de backend (Controladores REST y Servicios) sin alucinar tecnologías fuera de este stack y respetando estrictamente las definiciones de datos que verás a continuación.
+
+# 1. RESUMEN DEL PROYECTO
+Estamos construyendo un Agente de Recepción y Agendamiento Autónomo B2B (Software as a Service) para pequeños negocios locales (barberías, clínicas, etc.). El canal de comunicación será WhatsApp.
+El agente vive en Google Cloud (Vertex AI Agent Builder usando Gemini Flash) y utilizará "Function Calling" (Tools) para consumir los endpoints que vamos a construir en este backend. El agente NUNCA inventa datos; toda la información de catálogos y horarios la extraerá de nuestra API.
+
+# 2. STACK TÉCNICO ASIGNADO PARA ESTE BACKEND
+- Lenguaje: Java 17+
+- Framework: Spring Boot 3.x
+- Persistencia: Spring Data JPA / Hibernate
+- Base de Datos: PostgreSQL
+- Exposición: Endpoints RESTful (que luego expondremos vía Ngrok para el webhook de WhatsApp y Vertex AI).
+
+# 3. ARQUITECTURA DE DATOS (MULTI-TENANT)
+La base de datos PostgreSQL compartirá la información de múltiples negocios. Por lo tanto, TODAS las consultas a la base de datos y todos los endpoints deben considerar un parámetro obligatorio: id_negocio. 
+Las tablas (que otro miembro del equipo está construyendo) son:
+- servicios: id_servicio, nombre, descripcion, precio_mxn, duracion_minutos, activo, id_negocio.
+- clientes: telefono_whatsapp, nombre, fecha_registro, id_negocio.
+- citas: id_cita, telefono_cliente, id_servicio, fecha_hora_inicio, fecha_hora_fin, estado, creado_en, id_negocio.
+
+# 4. OBJETIVO PRINCIPAL (LO QUE VAMOS A DESARROLLAR AQUÍ)
+Necesitamos construir los siguientes Endpoints REST que el Agente de Vertex AI consumirá:
+
+A) Endpoint de Catálogo:
+- Ruta sugerida: GET /api/v1/servicios
+- Parámetro requerido: id_negocio
+- Funcionalidad: Devolver la lista de servicios activos de ese negocio en formato JSON limpio para que la IA lo lea y se lo ofrezca al cliente.
+
+B) Endpoint de Disponibilidad:
+- Ruta sugerida: GET /api/v1/disponibilidad
+- Parámetros requeridos: id_negocio, id_servicio, fecha_solicitada
+- Funcionalidad: Calcular y devolver los bloques de tiempo libres (ej. de 10:00 a 10:45) basándose en la duración del servicio y las citas ya existentes en la tabla citas.
+
+C) Endpoint de Agendamiento:
+- Ruta sugerida: POST /api/v1/citas
+- Body esperado: id_negocio, telefono_cliente, id_servicio, fecha_hora_inicio
+- Funcionalidad: Insertar el registro en la base de datos y devolver un JSON de confirmación.
+
+# 5. REGLAS ESTRICTAS DE DESARROLLO
+1. Mantén las respuestas JSON de los controladores lo más planas y simples posible. Vertex AI procesa mejor los JSON que no están profundamente anidados.
+2. Utiliza DTOs (Data Transfer Objects) para separar la capa de persistencia de la capa web.
+3. No implementes Spring Security ni autenticación JWT todavía en estos endpoints, ya que primero necesitamos probar el Function Calling directo desde Google Cloud.
+
+Confirma que has entendido la arquitectura, el enfoque multi-tenant y tu rol como mi asistente de código para Spring Boot. Cuando confirmes, te pediré que generemos el primer @RestController.
