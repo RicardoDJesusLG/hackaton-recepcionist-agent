@@ -154,4 +154,91 @@ public class CitaService {
                 nuevaCita.getEstado().name()
         );
     }
+
+    /**
+     * Cancela una cita por su ID, validando que pertenezca a la empresa indicada.
+     * Usado por el skill "cancelarCita" del agente.
+     */
+    @Transactional
+    public void cancelarCita(UUID idCita, UUID empresaId) {
+        Cita cita = citaRepository.findById(idCita)
+                .orElseThrow(() -> new IllegalArgumentException("Cita no encontrada con el ID: " + idCita));
+
+        if (!cita.getEmpresaId().equals(empresaId)) {
+            throw new IllegalArgumentException("La cita no pertenece a la empresa indicada.");
+        }
+
+        if (cita.getEstado() == EstadoCita.CANCELADA) {
+            throw new IllegalArgumentException("La cita ya se encuentra cancelada.");
+        }
+
+        cita.setEstado(EstadoCita.CANCELADA);
+        citaRepository.save(cita);
+        System.out.println("[CitaService] Cita cancelada exitosamente: " + idCita);
+    }
+
+    /**
+     * Obtiene las citas futuras (no canceladas) de un cliente por su teléfono.
+     * Usado por el skill "obtenerMisCitas" del agente.
+     */
+    public List<CitaResponseDTO> obtenerCitasPorTelefono(String telefono, UUID empresaId) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByTelefonoWhatsapp(telefono);
+        if (usuarioOpt.isEmpty()) {
+            return List.of(); // No tiene citas si no existe como usuario
+        }
+
+        UUID usuarioId = usuarioOpt.get().getId();
+        LocalDateTime ahora = LocalDateTime.now();
+
+        List<Cita> citas = citaRepository
+                .findByUsuarioIdAndEmpresaIdAndFechaHoraInicioAfterAndEstadoNotOrderByFechaHoraInicioAsc(
+                        usuarioId, empresaId, ahora, EstadoCita.CANCELADA);
+
+        List<CitaResponseDTO> resultado = new java.util.ArrayList<>();
+        for (Cita cita : citas) {
+            String servicioNombre = "Servicio desconocido";
+            Optional<Servicio> servicioOpt = servicioRepository.findById(cita.getServicioId());
+            if (servicioOpt.isPresent()) {
+                servicioNombre = servicioOpt.get().getNombre();
+            }
+
+            resultado.add(new CitaResponseDTO(
+                    cita.getId(),
+                    cita.getEmpresaId(),
+                    telefono,
+                    cita.getServicioId(),
+                    servicioNombre,
+                    cita.getFechaHoraInicio().toString(),
+                    cita.getFechaHoraFin().toString(),
+                    cita.getEstado().name()
+            ));
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Obtiene los horarios de atención de una empresa para todos los días de la semana.
+     * Usado por el skill "obtenerHorariosAtencion" del agente.
+     */
+    public String obtenerHorariosAtencion(UUID empresaId) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Horarios de atención del negocio:\n");
+        String[] dias = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+
+        for (int i = 0; i < 7; i++) {
+            Optional<AgendaConfig> configOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, i);
+            if (configOpt.isPresent()) {
+                sb.append("- ").append(dias[i]).append(": ")
+                  .append(configOpt.get().getHoraInicio()).append(" a ").append(configOpt.get().getHoraFin()).append("\n");
+            } else {
+                if (i == 0) {
+                    sb.append("- ").append(dias[i]).append(": Cerrado\n");
+                } else {
+                    sb.append("- ").append(dias[i]).append(": 09:00 a 18:00\n");
+                }
+            }
+        }
+        return sb.toString();
+    }
 }

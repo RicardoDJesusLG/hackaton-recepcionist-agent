@@ -3,105 +3,297 @@
   <header class="header">
     <div class="header-logo">
       <h1>Panel de Recepción</h1>
-      <span class="badge-empresa">ID Negocio: {{ empresaId }}</span>
+      <span class="badge-empresa">{{ empresa.nombre || 'Cargando negocio...' }}</span>
     </div>
+    
+    <!-- Tabs Navigation -->
+    <nav class="tab-nav">
+      <button 
+        (click)="setTab('citas')" 
+        class="tab-link" 
+        [class.active]="activeTab === 'citas'">
+        📅 Citas
+      </button>
+      <button 
+        (click)="setTab('negocio')" 
+        class="tab-link" 
+        [class.active]="activeTab === 'negocio'">
+        🏢 Perfil del Negocio
+      </button>
+      <button 
+        (click)="setTab('horarios')" 
+        class="tab-link" 
+        [class.active]="activeTab === 'horarios'">
+        ⚙️ Horarios de Atención
+      </button>
+    </nav>
+
     <div class="user-profile">
       <span class="username">Propietario: <strong>{{ username }}</strong></span>
       <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
     </div>
   </header>
 
-  <!-- Summary Cards -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon icon-total">📅</div>
-      <div class="stat-content">
-        <h3>Total Reservas</h3>
-        <p class="stat-number">{{ totalCitas }}</p>
-      </div>
+  <!-- Notification Banner -->
+  @if (errorMessage) {
+    <div class="alert alert-error">
+      {{ errorMessage }}
     </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon icon-confirmed">✅</div>
-      <div class="stat-content">
-        <h3>Confirmadas</h3>
-        <p class="stat-number">{{ citasConfirmadas }}</p>
+  }
+  @if (successMessage) {
+    <div class="alert alert-success">
+      {{ successMessage }}
+    </div>
+  }
+
+  <!-- TAB: CITAS -->
+  @if (activeTab === 'citas') {
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon icon-total">📅</div>
+        <div class="stat-content">
+          <h3>Total Reservas</h3>
+          <p class="stat-number">{{ totalCitas }}</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon icon-confirmed">✅</div>
+        <div class="stat-content">
+          <h3>Confirmadas</h3>
+          <p class="stat-number">{{ citasConfirmadas }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-cancelled">❌</div>
+        <div class="stat-content">
+          <h3>Canceladas</h3>
+          <p class="stat-number">{{ citasCanceladas }}</p>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon icon-cancelled">❌</div>
-      <div class="stat-content">
-        <h3>Canceladas</h3>
-        <p class="stat-number">{{ citasCanceladas }}</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Content Table -->
-  <div class="main-card">
-    <div class="card-header-table">
-      <h2>Listado de Citas (Agente de WhatsApp)</h2>
-      <button (click)="cargarCitas()" class="btn-refresh" [disabled]="isLoading">
-        @if (isLoading) {
-          <span>Actualizando...</span>
-        } @else {
-          <span>Refrescar Lista 🔄</span>
-        }
-      </button>
-    </div>
-
-    @if (errorMessage) {
-      <div class="alert alert-error">
-        {{ errorMessage }}
-      </div>
-    }
-
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Teléfono</th>
-            <th>Servicio</th>
-            <th>Inicio</th>
-            <th>Fin</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (cita of citas; track cita.idCita) {
-            <tr class="fade-in-row">
-              <td class="client-name">{{ cita.clienteNombre }}</td>
-              <td>{{ cita.clienteTelefono }}</td>
-              <td class="service-tag">{{ cita.servicioNombre }}</td>
-              <td>{{ cita.fechaHoraInicio | date:'medium' }}</td>
-              <td>{{ cita.fechaHoraFin | date:'shortTime' }}</td>
-              <td>
-                <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
-                  {{ cita.estado }}
-                </span>
-              </td>
-              <td>
-                @if (cita.estado === 'CONFIRMADA') {
-                  <button (click)="cancelarCita(cita.idCita)" class="btn-cancel">Cancelar</button>
-                } @else {
-                  <span class="action-disabled">-</span>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="empty-state">
-                <div class="empty-icon">📂</div>
-                <p>No hay citas registradas para este negocio todavía.</p>
-                <small>Las citas agendadas por los clientes a través del bot de WhatsApp aparecerán aquí automáticamente.</small>
-              </td>
-            </tr>
+    <!-- Main Content Table -->
+    <div class="main-card">
+      <div class="card-header-table">
+        <h2>Listado de Citas (Agente de WhatsApp)</h2>
+        <button (click)="cargarCitas()" class="btn-refresh" [disabled]="isLoading">
+          @if (isLoading) {
+            <span>Actualizando...</span>
+          } @else {
+            <span>Refrescar Lista 🔄</span>
           }
-        </tbody>
-      </table>
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Servicio</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cita of citas; track cita.idCita) {
+              <tr class="fade-in-row">
+                <td class="client-name">{{ cita.clienteNombre }}</td>
+                <td>{{ cita.clienteTelefono }}</td>
+                <td class="service-tag">{{ cita.servicioNombre }}</td>
+                <td>{{ cita.fechaHoraInicio | date:'medium' }}</td>
+                <td>{{ cita.fechaHoraFin | date:'shortTime' }}</td>
+                <td>
+                  <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
+                    {{ cita.estado }}
+                  </span>
+                </td>
+                <td>
+                  @if (cita.estado === 'CONFIRMADA') {
+                    <button (click)="cancelarCita(cita.idCita)" class="btn-cancel">Cancelar</button>
+                  } @else {
+                    <span class="action-disabled">-</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty-state">
+                  <div class="empty-icon">📂</div>
+                  <p>No hay citas registradas para este negocio todavía.</p>
+                  <small>Las citas agendadas por los clientes a través del bot de WhatsApp aparecerán aquí automáticamente.</small>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  }
+
+  <!-- TAB: PERFIL DEL NEGOCIO -->
+  @if (activeTab === 'negocio') {
+    <div class="settings-grid">
+      <!-- Formulario de Configuración -->
+      <div class="main-card form-card">
+        <h2>Información del Negocio</h2>
+        <p class="subtitle">Personaliza los datos con los que el agente inteligente interactúa</p>
+        
+        <form (ngSubmit)="guardarDatosEmpresa()" class="settings-form">
+          <div class="form-group">
+            <label for="nombre">Nombre de la Empresa</label>
+            <input 
+              type="text" 
+              id="nombre" 
+              name="nombre" 
+              [(ngModel)]="empresa.nombre" 
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+            <input 
+              type="text" 
+              id="whatsappPhoneId" 
+              name="whatsappPhoneId" 
+              [(ngModel)]="empresa.whatsappPhoneId" 
+              required
+            />
+            <small class="help-text">El ID que vincula tu bot de WhatsApp desde Meta.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="telefonoContacto">Teléfono de Soporte o Local</label>
+            <input 
+              type="text" 
+              id="telefonoContacto" 
+              name="telefonoContacto" 
+              [(ngModel)]="empresa.telefonoContacto"
+              placeholder="Ej: 525512345678"
+            />
+            <small class="help-text">El número de teléfono directo al que el bot enviará a los clientes si solicitan hablar con un humano.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="direccion">Dirección Física del Local</label>
+            <input 
+              type="text" 
+              id="direccion" 
+              name="direccion" 
+              [(ngModel)]="empresa.direccion"
+              placeholder="Ej: Av. Juárez 456, Col. Centro"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="mapsLink">Enlace de Google Maps del Local</label>
+            <input 
+              type="text" 
+              id="mapsLink" 
+              name="mapsLink" 
+              [(ngModel)]="empresa.mapsLink"
+              placeholder="Ej: https://maps.google.com/?q=..."
+            />
+            <small class="help-text">El enlace del mapa (GPS) que el bot compartirá cuando el cliente le pida indicaciones para llegar o cómo llegar.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcionNegocio">Instrucciones del Negocio para el Bot (Prompt Especializado)</label>
+            <textarea 
+              id="descripcionNegocio" 
+              name="descripcionNegocio" 
+              [(ngModel)]="empresa.descripcionNegocio"
+              placeholder="Ej: Somos una barbería clásica. Ofrecemos bebidas de cortesía y atendemos únicamente con cita..."
+              rows="5"
+            ></textarea>
+            <small class="help-text">La descripción del negocio le sirve a la IA de WhatsApp para responder de forma personalizada sobre tus reglas o cultura.</small>
+          </div>
+
+          <button type="submit" [disabled]="isLoading" class="btn-submit">
+            <span>Guardar Configuración</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Estatus de Suscripción / Stripe -->
+      <div class="side-card">
+        <div class="subscription-box" [class.active]="empresa.suscripcionActiva">
+          <h3>Estatus del Servicio</h3>
+          
+          @if (empresa.suscripcionActiva) {
+            <div class="sub-badge active">Suscripción Activa</div>
+            <p class="sub-text">Tu agente virtual de recepción WhatsApp está funcionando normalmente y recibiendo citas de clientes reales.</p>
+            <button (click)="pagarSuscripcion()" class="btn-renew">Gestionar en Stripe</button>
+          } @else {
+            <div class="sub-badge inactive">Servicio Suspendido</div>
+            <p class="sub-text">El bot se encuentra suspendido. Tus clientes no pueden agendar a través de WhatsApp en este momento.</p>
+            <button (click)="pagarSuscripcion()" class="btn-pay">Activar Recepcionista ($599/mes)</button>
+          }
+        </div>
+
+        <div class="info-box">
+          <h4>¿Cómo funciona la IA?</h4>
+          <p>El bot utiliza tus catálogos de servicios, disponibilidad y horarios para contestarle a tus clientes en segundos a cualquier hora.</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB: HORARIOS DE ATENCIÓN -->
+  @if (activeTab === 'horarios') {
+    <div class="main-card">
+      <h2>Horarios de Trabajo Generales</h2>
+      <p class="subtitle">Define los rangos de horarios en que tu local se encuentra abierto. El agente validará las citas basándose en estos días y horas.</p>
+
+      <form (ngSubmit)="guardarHorariosAgenda()" class="schedule-form">
+        <div class="schedule-grid">
+          @for (h of horarios; track h.diaSemana) {
+            <div class="schedule-row" [class.closed-row]="h.cerrado">
+              <div class="day-cell">
+                <strong>{{ h.nombreDia }}</strong>
+              </div>
+              
+              <div class="toggle-cell">
+                <label class="switch-label">
+                  <input type="checkbox" name="cerrado-{{h.diaSemana}}" [(ngModel)]="h.cerrado">
+                  <span class="switch-text">{{ h.cerrado ? 'Cerrado 🛑' : 'Abierto 🟢' }}</span>
+                </label>
+              </div>
+
+              <div class="time-cell">
+                <label>Apertura</label>
+                <input 
+                  type="time" 
+                  name="inicio-{{h.diaSemana}}" 
+                  [(ngModel)]="h.horaInicio"
+                  [disabled]="h.cerrado"
+                />
+              </div>
+
+              <div class="time-cell">
+                <label>Cierre</label>
+                <input 
+                  type="time" 
+                  name="fin-{{h.diaSemana}}" 
+                  [(ngModel)]="h.horaFin"
+                  [disabled]="h.cerrado"
+                />
+              </div>
+            </div>
+          }
+        </div>
+
+        <button type="submit" [disabled]="isLoading" class="btn-submit">
+          <span>Actualizar Horarios</span>
+        </button>
+      </form>
+    </div>
+  }
 </div>

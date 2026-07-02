@@ -2,7 +2,7 @@
   <div class="glass-card">
     <div class="card-header">
       <h2>Registrar Propietario</h2>
-      <p>Vincula tu cuenta a un negocio existente</p>
+      <p>Crea tu cuenta de administración y vincula tu negocio</p>
     </div>
 
     @if (errorMessage) {
@@ -17,7 +17,28 @@
       </div>
     }
 
+    <!-- Selector de modo de Empresa -->
+    <div class="toggle-container">
+      <button 
+        type="button" 
+        class="toggle-btn" 
+        [class.active]="crearNuevaEmpresa"
+        (click)="toggleCrearEmpresa(true)">
+        Nuevo Negocio
+      </button>
+      <button 
+        type="button" 
+        class="toggle-btn" 
+        [class.active]="!crearNuevaEmpresa"
+        (click)="toggleCrearEmpresa(false)">
+        Vincular Existente
+      </button>
+    </div>
+
     <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+      <!-- Datos del Administrador -->
+      <div class="section-title">Datos de Acceso</div>
+      
       <div class="form-group">
         <label for="username">Nombre de Usuario</label>
         <input 
@@ -44,24 +65,98 @@
         />
       </div>
 
-      <div class="form-group">
-        <label for="empresaId">ID de la Empresa (UUID)</label>
-        <input 
-          type="text" 
-          id="empresaId" 
-          name="empresaId" 
-          [(ngModel)]="empresaId" 
-          placeholder="Ej: a5e7c10b-d24f..." 
-          required
-        />
-        <small class="help-text">Ingresa el ID del negocio asignado en tu base de datos.</small>
-      </div>
+      <!-- Datos del Negocio (Condicional) -->
+      <div class="section-title">Datos del Negocio</div>
+
+      @if (crearNuevaEmpresa) {
+        <div class="form-group">
+          <label for="nombreEmpresa">Nombre del Negocio</label>
+          <input 
+            type="text" 
+            id="nombreEmpresa" 
+            name="nombreEmpresa" 
+            [(ngModel)]="nombreEmpresa" 
+            placeholder="Ej: Barbería Estilo Clásico" 
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="whatsappPhoneId">WhatsApp Phone Number ID</label>
+          <input 
+            type="text" 
+            id="whatsappPhoneId" 
+            name="whatsappPhoneId" 
+            [(ngModel)]="whatsappPhoneId" 
+            placeholder="Ej: 1124241077447249" 
+            required
+          />
+          <small class="help-text">El ID de teléfono asignado en tu API de Meta Developer.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="direccion">Dirección Física (Opcional)</label>
+          <input 
+            type="text" 
+            id="direccion" 
+            name="direccion" 
+            [(ngModel)]="direccion" 
+            placeholder="Ej: Av. Reforma 123, CDMX"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="mapsLink">Enlace de Google Maps (Opcional)</label>
+          <input 
+            type="text" 
+            id="mapsLink" 
+            name="mapsLink" 
+            [(ngModel)]="mapsLink" 
+            placeholder="Ej: https://maps.google.com/?q=..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="telefonoContacto">Teléfono de Soporte o Local (Opcional)</label>
+          <input 
+            type="text" 
+            id="telefonoContacto" 
+            name="telefonoContacto" 
+            [(ngModel)]="telefonoContacto" 
+            placeholder="Ej: 525512345678"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="descripcionNegocio">Descripción o Prompt (Opcional)</label>
+          <input 
+            type="text" 
+            id="descripcionNegocio" 
+            name="descripcionNegocio" 
+            [(ngModel)]="descripcionNegocio" 
+            placeholder="Ej: Barbería clásica con afeitado tradicional..."
+          />
+        </div>
+      } @else {
+        <div class="form-group">
+          <label for="empresaId">ID de la Empresa (UUID)</label>
+          <input 
+            type="text" 
+            id="empresaId" 
+            name="empresaId" 
+            [(ngModel)]="empresaId" 
+            placeholder="Ej: a5e7c10b-d24f..." 
+            required
+          />
+          <small class="help-text">Vincula tu usuario a un negocio ya dado de alta previamente.</small>
+        </div>
+      }
 
       <button type="submit" [disabled]="isLoading" class="btn-submit">
         @if (isLoading) {
           <span>Registrando...</span>
         } @else {
-          <span>Registrar</span>
+          <span>Crear Cuenta</span>
         }
       </button>
     </form>

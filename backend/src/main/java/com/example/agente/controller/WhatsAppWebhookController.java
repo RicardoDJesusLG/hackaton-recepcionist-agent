@@ -107,6 +107,11 @@ public class WhatsAppWebhookController {
 
         // Invocar el ciclo de pensamiento del agente si se detecta un mensaje
         if (userMessage != null && customerPhone != null && businessPhoneId != null) {
+            // Normalizar número del cliente (quitar el '1' para prefijo celular en México) de inmediato
+            if (customerPhone.startsWith("521") && customerPhone.length() == 13) {
+                customerPhone = "52" + customerPhone.substring(3);
+            }
+            
             System.out.println("[WhatsAppWebhookController] Mensaje de texto recibido de " + customerPhone + ": " + userMessage);
             
             // Validar la suscripción de la empresa asociada
@@ -122,7 +127,14 @@ public class WhatsAppWebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            String agentResponse = antigravityAgent.chat(userMessage);
+            // Invocar al agente con contexto de la empresa si existe
+            String agentResponse;
+            if (empresaOpt.isPresent()) {
+                Empresa empresa = empresaOpt.get();
+                agentResponse = antigravityAgent.chat(userMessage, empresa.getId().toString(), empresa.getNombre(), empresa.getTelefonoContacto(), empresa.getDireccion(), empresa.getMapsLink(), customerPhone);
+            } else {
+                agentResponse = antigravityAgent.chat(userMessage);
+            }
             System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
 
             // Enviar mensaje de vuelta usando el servicio

@@ -25,15 +25,22 @@ public class WhatsAppService {
             return;
         }
 
+        // Normalización para números de México (quitar el '1' después del código de país '52' en ambiente de Sandbox)
+        String targetNumber = to;
+        if (targetNumber.startsWith("521") && targetNumber.length() == 13) {
+            targetNumber = "52" + targetNumber.substring(3);
+            System.out.println("[WhatsAppService] Detectado número de México con prefijo '521'. Normalizando a '" + targetNumber + "' para compatibilidad con Sandbox.");
+        }
+
         if (apiToken == null || apiToken.trim().isEmpty() || "CAMBIAR_POR_TOKEN_REAL".equals(apiToken)) {
             System.out.println("[WhatsAppService] [MOCK] Omitiendo envío real de WhatsApp (token de API no configurado).");
-            System.out.println("  Para: " + to);
+            System.out.println("  Para: " + targetNumber);
             System.out.println("  ID Teléfono Negocio: " + businessPhoneId);
             System.out.println("  Contenido: " + messageBody);
             return;
         }
 
-        System.out.println("[WhatsAppService] Enviando mensaje real a " + to + " desde " + businessPhoneId + "...");
+        System.out.println("[WhatsAppService] Enviando mensaje real a " + targetNumber + " desde " + businessPhoneId + "...");
 
         try {
             String url = "https://graph.facebook.com/v20.0/" + businessPhoneId + "/messages";
@@ -47,7 +54,7 @@ public class WhatsAppService {
 
             String jsonPayload = String.format(
                     "{\"messaging_product\":\"whatsapp\",\"recipient_type\":\"individual\",\"to\":\"%s\",\"type\":\"text\",\"text\":{\"body\":\"%s\"}}",
-                    to, escapedMessage
+                    targetNumber, escapedMessage
             );
 
             HttpRequest request = HttpRequest.newBuilder()

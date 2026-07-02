@@ -1,0 +1,185 @@
+# Plan de Acción: De Sandbox a Producción — Recepcionista IA WhatsApp
+
+## Estado Actual del Proyecto
+
+El proyecto funciona end-to-end en modo de prueba:
+- ✅ Backend Spring Boot + PostgreSQL + Vertex AI (Gemini 2.5 Flash)
+- ✅ Agente IA con Function Calling (catálogo de servicios)
+- ✅ WhatsApp Cloud API recibe y responde mensajes
+- ✅ Dashboard Angular (login, registro, gestión de citas)
+- ✅ Integración Stripe (mock + estructura real)
+- ✅ Sistema multi-tenant por `empresaId`
+
+### Problemas Identificados
+
+| # | Problema | Impacto |
+|---|---------|---------|
+| 1 | **Túnel temporal** (localtunnel/ngrok) cambia URL cada reinicio | Hay que actualizar Meta manualmente cada vez |
+| 2 | **Token WhatsApp temporal** expira cada ~24h | Hay que regenerar en Meta y reiniciar backend |
+| 3 | **Número de prueba** de Meta — solo funciona con números registrados en el sandbox | Clientes reales no pueden escribir |
+| 4 | **Backend local** — si se apaga la PC, todo se cae | No hay alta disponibilidad |
+| 5 | **Credenciales hardcodeadas** en `application.properties` | Riesgo de seguridad |
+
+---
+
+## Propuesta de Solución por Fases
+
+### Fase 1: Despliegue en la Nube (Prioridad ALTA — resolver problemas 1 y 4)
+
+> [!IMPORTANT]
+> Este paso elimina la necesidad de túneles temporales y reiniciar manualmente.
+
+**Objetivo**: Mover el backend a un servidor en la nube con URL pública fija.
+
+**Opciones recomendadas** (de menor a mayor complejidad):
+
+| Opción | Costo | Esfuerzo | Ventaja |
+|--------|-------|----------|---------|
+| **Google Cloud Run** (recomendado) | ~$0 en free tier | Medio | Ya usas GCP para Vertex AI, docker + deploy automático, URL HTTPS fija |
+| **Railway.app** | $5/mes | Bajo | Deploy desde Git, PostgreSQL incluido, mínima config |
+| **Render.com** | $0–$7/mes | Bajo | Similar a Railway, tiene PostgreSQL gratuito |
+| **VM en GCP (Compute Engine)** | ~$10/mes | Alto | Control total pero más trabajo de mantenimiento |
+
+**Cambios técnicos necesarios**:
+- Crear un `Dockerfile` para el backend Spring Boot
+- Migrar PostgreSQL a un servicio managed (Cloud SQL, Neon, o Railway Postgres)
+- Configurar variables de entorno en vez de `application.properties` hardcodeados
+- La URL fija resultante (ej: `https://mi-app-xyz.run.app`) se configura UNA VEZ en Meta
+
+---
+
+### Fase 2: Token Permanente de WhatsApp (Prioridad ALTA — resolver problema 2)
+
+> [!IMPORTANT]
+> Sin esto, el token expira cada 24 horas y hay que regenerarlo manualmente en Meta.
+
+**Situación actual**: Usas un *Temporary Access Token* del panel de Meta, que expira en ~24h.
+
+**Solución**: Generar un **System User Token** permanente en Meta Business Suite:
+
+1. Ir a [Meta Business Suite](https://business.facebook.com) → Configuración → Usuarios del sistema
+2. Crear un **System User** con rol Admin
+3. Asignarle permisos: `whatsapp_business_messaging`, `whatsapp_business_management`
+4. Generar un token **permanente** (no expira)
+5. Reemplazar el token en `application.properties` (o en variables de entorno)
+
+**Cambios en código**: Ninguno. Solo cambiar el valor de `whatsapp.api.token`.
+
+---
+
+### Fase 3: Número de WhatsApp Propio (Prioridad ALTA — resolver problema 3)
+
+> [!WARNING]
+> Actualmente usas el número de prueba de Meta (`15556663474`). Los clientes reales no pueden escribir a ese número.
+
+**Proceso para obtener un número propio**:
+
+1. **Verificar tu negocio en Meta Business**: Subir documentos de la empresa (acta constitutiva o RFC)
+2. **Registrar un número telefónico real** en la plataforma WhatsApp Business:
+   - Puede ser un número de teléfono existente (perderás WhatsApp personal en ese número)
+   - O comprar un número SIM dedicado para el negocio
+3. **Configurar el número en la API de Meta**: Una vez verificado, Meta asigna un `phone_number_id` nuevo
+4. **Actualizar la entidad `Empresa`** en la BD con el nuevo `whatsapp_phone_id`
+
+**Modelo Multi-Negocio (para dar de alta múltiples empresas)**:
+
+El sistema ya soporta multi-tenant — cada `Empresa` tiene su `whatsappPhoneId`. Hay dos opciones:
+
+| Estrategia | Descripción | Requisito |
+|------------|-------------|-----------|
+| **Un WABA, múltiples números** | Tu propia cuenta WhatsApp Business API con N números | Cada empresa cliente compra/registra su número y lo vinculas a tu WABA |
+| **BSP (Business Solution Provider)** | Te conviertes en proveedor de WhatsApp | Requiere aprobación de Meta, más complejo pero escala mejor |
+
+**Para el hackathon/MVP**: Usa tu WABA con 1–2 números propios registrados.
+
+**Para producción a escala**: Cada empresa cliente traería su propio número y tú lo vinculas a tu WABA con la Graph API:
+```
+POST /v20.0/{waba-id}/phone_numbers
+```
+
+**Cambios en código necesarios**:
+- Agregar endpoint en el dashboard para que el Owner registre el `phone_number_id` de su empresa
+- Almacenar el token de WhatsApp **por empresa** en vez de uno global (para escalar a BSP)
+
+---
+
+### Fase 4: Variables de Entorno y Seguridad (Prioridad MEDIA — resolver problema 5)
+
+> [!CAUTION]
+> Actualmente los tokens de WhatsApp, Stripe y credenciales de BD están en texto plano en `application.properties`, visible en Git.
+
+**Cambios propuestos en** [application.properties](file:///c:/Users/Ricardo/.gemini/antigravity/scratch/hackaton-recepcionist-agent/backend/src/main/resources/application.properties):
+
+```properties
+# En vez de valores hardcodeados, usar variables de entorno:
+spring.datasource.url=${DATABASE_URL}
+spring.datasource.username=${DATABASE_USER}
+spring.datasource.password=${DATABASE_PASSWORD}
+whatsapp.api.token=${WHATSAPP_API_TOKEN}
+whatsapp.verification.token=${WHATSAPP_VERIFY_TOKEN}
+stripe.api.key=${STRIPE_API_KEY}
+stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
+```
+
+- Agregar `.env` al `.gitignore`
+- Para desarrollo local: crear un `.env` con los valores
+- Para producción: configurar las variables en Cloud Run / Railway
+
+---
+
+### Fase 5: Mejoras Funcionales del Agente (Prioridad MEDIA)
+
+El agente actualmente solo tiene 1 skill (catálogo de servicios). Propongo agregar:
+
+| Skill | Descripción | Estado |
+|-------|-------------|--------|
+| `obtenerCatalogoServicios` | Lista servicios de la empresa | ✅ Implementado |
+| `consultarDisponibilidad` | Muestra horarios libres para una fecha | 🔲 Endpoint existe, falta Function Calling |
+| `agendarCita` | Crea una cita desde WhatsApp | 🔲 Endpoint existe, falta Function Calling |
+| `cancelarCita` | Cancela una cita del cliente | 🔲 Por implementar |
+| `obtenerMisCitas` | Muestra citas futuras del cliente | 🔲 Por implementar |
+
+**Cambios necesarios**: Agregar `FunctionDeclaration` en [AntigravityAgent.java](file:///c:/Users/Ricardo/.gemini/antigravity/scratch/hackaton-recepcionist-agent/backend/src/main/java/com/example/agente/agent/AntigravityAgent.java) para cada nuevo skill y el handler correspondiente.
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **¿Dónde quieres desplegar?** La decisión de plataforma cloud afecta toda la arquitectura. ¿Tienes preferencia entre Google Cloud Run (ya usas GCP), Railway, o Render?
+
+> [!IMPORTANT]
+> **¿Es esto para el hackathon o para producción real?** Si es solo para el hackathon, podemos quedarnos con el túnel temporal y el token de prueba y enfocarnos en pulir las funcionalidades del agente. Si es para producción, las fases 1-4 son obligatorias.
+
+> [!IMPORTANT]
+> **¿Tienes cuenta de Meta Business verificada?** Sin verificación empresarial en Meta, no puedes registrar números propios ni obtener tokens permanentes.
+
+> [!IMPORTANT]
+> **¿Cuál es el alcance de "multi-empresa"?** ¿Quieres que cada empresa use su propio número de WhatsApp, o que todas compartan tu número de prueba por ahora?
+
+---
+
+## Orden de Ejecución Recomendado
+
+```mermaid
+graph TD
+    A["Fase 2: Token Permanente<br/>(30 min, sin código)"] --> B["Fase 4: Variables de Entorno<br/>(1 hora)"]
+    B --> C["Fase 1: Deploy a Cloud<br/>(2-3 horas)"]
+    C --> D["Fase 3: Número Propio<br/>(1-5 días, depende de Meta)"]
+    C --> E["Fase 5: Más Skills del Agente<br/>(3-4 horas)"]
+    
+    style A fill:#22c55e,color:#fff
+    style B fill:#3b82f6,color:#fff
+    style C fill:#f59e0b,color:#fff
+    style D fill:#ef4444,color:#fff
+    style E fill:#8b5cf6,color:#fff
+```
+
+## Resumen de Status Actual (Mientras Tanto)
+
+- ✅ **Backend corriendo** en `http://localhost:8080`
+- ✅ **Túnel activo**: `https://itchy-doodles-switch.loca.lt`
+- 📋 **URL del webhook para Meta**: `https://itchy-doodles-switch.loca.lt/api/v1/whatsapp/webhook`
+- 🔑 **Verify Token**: `MiTokenSecretoDelHackathon2026`
+
+Configura esta URL en Meta para continuar probando mientras decidimos los pasos siguientes.

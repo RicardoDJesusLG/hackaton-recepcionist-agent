@@ -35,6 +35,12 @@ public class Empresa {
     @Builder.Default
     private Boolean suscripcionActiva = true;
 
+    @Column(name = "telefono_contacto", length = 20)
+    private String telefonoContacto;
+
+    @Column(name = "maps_link", columnDefinition = "TEXT")
+    private String mapsLink;
+
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 }
