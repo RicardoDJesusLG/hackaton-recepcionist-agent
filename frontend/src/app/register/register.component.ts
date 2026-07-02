@@ -14,25 +14,63 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  // Datos de usuario
   username = '';
   password = '';
+
+  // Configuración de empresa
+  crearNuevaEmpresa = true;
   empresaId = '';
+  
+  // Datos de nueva empresa
+  nombreEmpresa = '';
+  whatsappPhoneId = '';
+  direccion = '';
+  descripcionNegocio = '';
+  telefonoContacto = '';
+  mapsLink = '';
+
   errorMessage = '';
   successMessage = '';
   isLoading = false;
 
   onSubmit(): void {
-    if (!this.username.trim() || !this.password.trim() || !this.empresaId.trim()) {
-      this.errorMessage = 'Todos los campos son obligatorios.';
+    if (!this.username.trim() || !this.password.trim()) {
+      this.errorMessage = 'El nombre de usuario y contraseña son obligatorios.';
       return;
+    }
+
+    const payload: any = {
+      username: this.username,
+      password: this.password,
+      crearNuevaEmpresa: this.crearNuevaEmpresa
+    };
+
+    if (this.crearNuevaEmpresa) {
+      if (!this.nombreEmpresa.trim() || !this.whatsappPhoneId.trim()) {
+        this.errorMessage = 'El nombre de la empresa y el ID de WhatsApp son obligatorios.';
+        return;
+      }
+      payload.nombreEmpresa = this.nombreEmpresa.trim();
+      payload.whatsappPhoneId = this.whatsappPhoneId.trim();
+      payload.direccion = this.direccion.trim();
+      payload.descripcionNegocio = this.descripcionNegocio.trim();
+      payload.telefonoContacto = this.telefonoContacto.trim();
+      payload.mapsLink = this.mapsLink.trim();
+    } else {
+      if (!this.empresaId.trim()) {
+        this.errorMessage = 'El ID de la empresa es obligatorio.';
+        return;
+      }
+      payload.empresaId = this.empresaId.trim();
     }
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.authService.register(this.username, this.password, this.empresaId).subscribe({
-      next: () => {
+    this.authService.register(payload).subscribe({
+      next: (res) => {
         this.isLoading = false;
         this.successMessage = 'Registro exitoso. Redirigiendo al inicio de sesión...';
         setTimeout(() => {
@@ -44,11 +82,18 @@ export class RegisterComponent {
         if (err.status === 409) {
           this.errorMessage = 'El nombre de usuario ya está tomado.';
         } else if (err.status === 400) {
-          this.errorMessage = 'ID de empresa no válido o datos incorrectos.';
+          this.errorMessage = err.error?.error || 'ID de empresa no válido o datos incorrectos.';
+        } else if (err.status === 404) {
+          this.errorMessage = 'La empresa vinculada no existe.';
         } else {
           this.errorMessage = 'Error en el servidor. Inténtalo más tarde.';
         }
       }
     });
+  }
+
+  toggleCrearEmpresa(val: boolean): void {
+    this.crearNuevaEmpresa = val;
+    this.errorMessage = '';
   }
 }

@@ -19,4 +19,15 @@ public interface CitaRepository extends JpaRepository<Cita, UUID> {
     );
 
     List<Cita> findByEmpresaIdOrderByFechaHoraInicioDesc(UUID empresaId);
+
+    /**
+     * Busca citas futuras (no canceladas) de un usuario en una empresa específica.
+     * Usado por el skill "obtenerMisCitas" del agente.
+     */
+    List<Cita> findByUsuarioIdAndEmpresaIdAndFechaHoraInicioAfterAndEstadoNotOrderByFechaHoraInicioAsc(
+            UUID usuarioId,
+            UUID empresaId,
+            LocalDateTime after,
+            EstadoCita estado
+    );
 }

@@ -4,14 +4,19 @@ import com.example.agente.model.Cita;
 import com.example.agente.model.EstadoCita;
 import com.example.agente.model.Servicio;
 import com.example.agente.model.Usuario;
+import com.example.agente.model.Empresa;
+import com.example.agente.model.AgendaConfig;
 import com.example.agente.repository.CitaRepository;
 import com.example.agente.repository.ServicioRepository;
 import com.example.agente.repository.UsuarioRepository;
+import com.example.agente.repository.EmpresaRepository;
+import com.example.agente.repository.AgendaConfigRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +30,19 @@ public class DashboardController {
     private final CitaRepository citaRepository;
     private final ServicioRepository servicioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EmpresaRepository empresaRepository;
+    private final AgendaConfigRepository agendaConfigRepository;
 
     public DashboardController(CitaRepository citaRepository,
                                ServicioRepository servicioRepository,
-                               UsuarioRepository usuarioRepository) {
+                               UsuarioRepository usuarioRepository,
+                               EmpresaRepository empresaRepository,
+                               AgendaConfigRepository agendaConfigRepository) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
+        this.empresaRepository = empresaRepository;
+        this.agendaConfigRepository = agendaConfigRepository;
     }
 
     /**
@@ -129,5 +140,136 @@ public class DashboardController {
         citaRepository.save(cita);
 
         return ResponseEntity.ok(Map.of("message", "Cita cancelada con éxito", "idCita", cita.getId().toString()));
+    }
+
+    /**
+     * Obtiene la información de la empresa del propietario autenticado.
+     */
+    @GetMapping("/empresa")
+    public ResponseEntity<?> obtenerDetalleEmpresa(HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        return ResponseEntity.ok(empresaOpt.get());
+    }
+
+    /**
+     * Actualiza la información de la empresa del propietario autenticado.
+     */
+    @PutMapping("/empresa")
+    public ResponseEntity<?> actualizarEmpresa(@RequestBody Map<String, String> requestBody, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        Empresa empresa = empresaOpt.get();
+
+        String nombre = requestBody.get("nombre");
+        String direccion = requestBody.get("direccion");
+        String descripcionNegocio = requestBody.get("descripcionNegocio");
+        String whatsappPhoneId = requestBody.get("whatsappPhoneId");
+        String telefonoContacto = requestBody.get("telefonoContacto");
+        String mapsLink = requestBody.get("mapsLink");
+
+        if (nombre != null && !nombre.trim().isEmpty()) {
+            empresa.setNombre(nombre.trim());
+        }
+        if (whatsappPhoneId != null && !whatsappPhoneId.trim().isEmpty()) {
+            empresa.setWhatsappPhoneId(whatsappPhoneId.trim());
+        }
+        empresa.setDireccion(direccion);
+        empresa.setDescripcionNegocio(descripcionNegocio);
+        empresa.setTelefonoContacto(telefonoContacto);
+        empresa.setMapsLink(mapsLink);
+
+        empresaRepository.save(empresa);
+
+        return ResponseEntity.ok(empresa);
+    }
+
+    /**
+     * Obtiene la configuración de horarios (AgendaConfig) de la empresa.
+     */
+    @GetMapping("/empresa/agenda")
+    public ResponseEntity<?> obtenerHorariosAgenda(HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        List<AgendaConfig> configs = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            Optional<AgendaConfig> cfgOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, i);
+            if (cfgOpt.isPresent()) {
+                configs.add(cfgOpt.get());
+            } else {
+                // Config default en memoria para retornar
+                configs.add(AgendaConfig.builder()
+                        .empresaId(empresaId)
+                        .diaSemana(i)
+                        .horaInicio(LocalTime.of(9, 0))
+                        .horaFin(LocalTime.of(18, 0))
+                        .build());
+            }
+        }
+
+        return ResponseEntity.ok(configs);
+    }
+
+    /**
+     * Guarda o actualiza los horarios de atención de la empresa.
+     */
+    @PutMapping("/empresa/agenda")
+    public ResponseEntity<?> actualizarHorariosAgenda(@RequestBody List<Map<String, Object>> agendaData, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        for (Map<String, Object> dayData : agendaData) {
+            Integer diaSemana = (Integer) dayData.get("diaSemana");
+            String horaInicioStr = (String) dayData.get("horaInicio");
+            String horaFinStr = (String) dayData.get("horaFin");
+            Boolean cerrado = (Boolean) dayData.get("cerrado");
+
+            if (diaSemana == null) continue;
+
+            Optional<AgendaConfig> configOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, diaSemana);
+            
+            if (Boolean.TRUE.equals(cerrado)) {
+                // Si marca como cerrado, removemos de BD o definimos horaInicio == horaFin
+                configOpt.ifPresent(agendaConfigRepository::delete);
+            } else {
+                if (horaInicioStr == null || horaFinStr == null) continue;
+                
+                LocalTime horaInicio = LocalTime.parse(horaInicioStr);
+                LocalTime horaFin = LocalTime.parse(horaFinStr);
+
+                AgendaConfig config = configOpt.orElse(AgendaConfig.builder()
+                        .empresaId(empresaId)
+                        .diaSemana(diaSemana)
+                        .build());
+                
+                config.setHoraInicio(horaInicio);
+                config.setHoraFin(horaFin);
+                
+                agendaConfigRepository.save(config);
+            }
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Horarios de agenda actualizados con éxito."));
     }
 }
