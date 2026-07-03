@@ -32,7 +32,7 @@ public class SecurityConfig {
                 // Webhook público de WhatsApp Meta
                 .requestMatchers("/api/v1/whatsapp/**").permitAll()
                 // Endpoints públicos para Vertex AI (catálogos y disponibilidad)
-                .requestMatchers("/api/v1/servicios/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/servicios").permitAll()
                 .requestMatchers("/api/v1/disponibilidad/**").permitAll()
                 .requestMatchers("/api/v1/citas/**").permitAll()
                 // Webhook de Stripe público

@@ -157,14 +157,38 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
         }
 
-        return ResponseEntity.ok(empresaOpt.get());
+        Empresa empresa = empresaOpt.get();
+        String maskedToken = null;
+        if (empresa.getWhatsappToken() != null && !empresa.getWhatsappToken().trim().isEmpty()) {
+            String token = empresa.getWhatsappToken().trim();
+            if (token.length() > 10) {
+                maskedToken = token.substring(0, 6) + "..." + token.substring(token.length() - 4);
+            } else {
+                maskedToken = "********";
+            }
+        }
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", empresa.getId());
+        response.put("nombre", empresa.getNombre() != null ? empresa.getNombre() : "");
+        response.put("whatsappPhoneId", empresa.getWhatsappPhoneId() != null ? empresa.getWhatsappPhoneId() : "");
+        response.put("whatsappToken", maskedToken != null ? maskedToken : "");
+        response.put("direccion", empresa.getDireccion() != null ? empresa.getDireccion() : "");
+        response.put("descripcionNegocio", empresa.getDescripcionNegocio() != null ? empresa.getDescripcionNegocio() : "");
+        response.put("suscripcionActiva", empresa.getSuscripcionActiva());
+        response.put("telefonoContacto", empresa.getTelefonoContacto() != null ? empresa.getTelefonoContacto() : "");
+        response.put("mapsLink", empresa.getMapsLink() != null ? empresa.getMapsLink() : "");
+        response.put("promocionActiva", empresa.getPromocionActiva() != null ? empresa.getPromocionActiva() : false);
+        response.put("promocionDescripcion", empresa.getPromocionDescripcion() != null ? empresa.getPromocionDescripcion() : "");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Actualiza la información de la empresa del propietario autenticado.
      */
     @PutMapping("/empresa")
-    public ResponseEntity<?> actualizarEmpresa(@RequestBody Map<String, String> requestBody, HttpServletRequest request) {
+    public ResponseEntity<?> actualizarEmpresa(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         UUID empresaId = (UUID) request.getAttribute("empresaId");
         if (empresaId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
@@ -177,12 +201,21 @@ public class DashboardController {
 
         Empresa empresa = empresaOpt.get();
 
-        String nombre = requestBody.get("nombre");
-        String direccion = requestBody.get("direccion");
-        String descripcionNegocio = requestBody.get("descripcionNegocio");
-        String whatsappPhoneId = requestBody.get("whatsappPhoneId");
-        String telefonoContacto = requestBody.get("telefonoContacto");
-        String mapsLink = requestBody.get("mapsLink");
+        String nombre = (String) requestBody.get("nombre");
+        String direccion = (String) requestBody.get("direccion");
+        String descripcionNegocio = (String) requestBody.get("descripcionNegocio");
+        String whatsappPhoneId = (String) requestBody.get("whatsappPhoneId");
+        String whatsappToken = (String) requestBody.get("whatsappToken");
+        String telefonoContacto = (String) requestBody.get("telefonoContacto");
+        String mapsLink = (String) requestBody.get("mapsLink");
+        Object promocionActivaObj = requestBody.get("promocionActiva");
+        String promocionDescripcion = (String) requestBody.get("promocionDescripcion");
+
+        if (esPromptSospechoso(descripcionNegocio) || esPromptSospechoso(promocionDescripcion)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Se detectaron directivas sospechosas que intentan alterar la seguridad de la IA (Inyección de Prompt). Por favor, introduce solo reglas informativas de tu negocio sin intentar cambiar la personalidad del bot."
+            ));
+        }
 
         if (nombre != null && !nombre.trim().isEmpty()) {
             empresa.setNombre(nombre.trim());
@@ -190,14 +223,48 @@ public class DashboardController {
         if (whatsappPhoneId != null && !whatsappPhoneId.trim().isEmpty()) {
             empresa.setWhatsappPhoneId(whatsappPhoneId.trim());
         }
+        if (whatsappToken != null && !whatsappToken.trim().isEmpty() && !whatsappToken.contains("...") && !whatsappToken.contains("****")) {
+            empresa.setWhatsappToken(whatsappToken.trim());
+        }
         empresa.setDireccion(direccion);
         empresa.setDescripcionNegocio(descripcionNegocio);
         empresa.setTelefonoContacto(telefonoContacto);
         empresa.setMapsLink(mapsLink);
+        
+        if (promocionActivaObj instanceof Boolean) {
+            empresa.setPromocionActiva((Boolean) promocionActivaObj);
+        } else if (promocionActivaObj instanceof String) {
+            empresa.setPromocionActiva(Boolean.parseBoolean((String) promocionActivaObj));
+        }
+        empresa.setPromocionDescripcion(promocionDescripcion);
 
         empresaRepository.save(empresa);
 
-        return ResponseEntity.ok(empresa);
+        // Retornar la versión enmascarada para ser consistentes
+        String maskedToken = null;
+        if (empresa.getWhatsappToken() != null && !empresa.getWhatsappToken().trim().isEmpty()) {
+            String token = empresa.getWhatsappToken().trim();
+            if (token.length() > 10) {
+                maskedToken = token.substring(0, 6) + "..." + token.substring(token.length() - 4);
+            } else {
+                maskedToken = "********";
+            }
+        }
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", empresa.getId());
+        response.put("nombre", empresa.getNombre());
+        response.put("whatsappPhoneId", empresa.getWhatsappPhoneId());
+        response.put("whatsappToken", maskedToken != null ? maskedToken : "");
+        response.put("direccion", empresa.getDireccion());
+        response.put("descripcionNegocio", empresa.getDescripcionNegocio());
+        response.put("suscripcionActiva", empresa.getSuscripcionActiva());
+        response.put("telefonoContacto", empresa.getTelefonoContacto());
+        response.put("mapsLink", empresa.getMapsLink());
+        response.put("promocionActiva", empresa.getPromocionActiva());
+        response.put("promocionDescripcion", empresa.getPromocionDescripcion());
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -271,5 +338,27 @@ public class DashboardController {
         }
 
         return ResponseEntity.ok(Map.of("message", "Horarios de agenda actualizados con éxito."));
+    }
+
+    private boolean esPromptSospechoso(String prompt) {
+        if (prompt == null || prompt.trim().isEmpty()) {
+            return false;
+        }
+        String lower = prompt.toLowerCase().trim();
+
+        // Patrones conocidos de prompt injection e instrucciones maliciosas
+        String[] patrones = {
+            "ignore all", "ignora todo", "ignora las instrucciones", "olvida tus instrucciones",
+            "system prompt", "bypass system", "rompe todo el sistema", "rompe el sistema",
+            "romper el sistema", "you are no longer", "ya no eres", "olvida tu rol",
+            "forget your role", "olvida las instrucciones"
+        };
+
+        for (String patron : patrones) {
+            if (lower.contains(patron)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

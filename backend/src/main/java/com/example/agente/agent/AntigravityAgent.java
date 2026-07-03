@@ -244,20 +244,30 @@ public class AntigravityAgent {
         return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, null, customerPhone);
     }
 
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String customerPhone) {
+        return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, null, false, null, customerPhone);
+    }
+
     /**
-     * Sobrecarga que inyecta el contexto de la empresa, el teléfono del local, la dirección física, el enlace de Google Maps y el teléfono del cliente automáticamente,
+     * Sobrecarga completa que inyecta el contexto de la empresa, descripción del negocio, promociones y teléfono del cliente,
      * utilizando una sesión persistente para retener la memoria del chat.
      */
-    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String customerPhone) {
-        // Mapeamos la fecha y hora actual del sistema junto con los identificadores en cada mensaje
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, Boolean promocionActiva, String promocionDescripcion, String customerPhone) {
         String fechaHoraActual = java.time.LocalDateTime.now().toString();
+        
+        String promoActivaText = (promocionActiva != null && promocionActiva) ? "SÍ" : "NO";
+        String promoDescText = (promocionDescripcion != null && !promocionDescripcion.trim().isEmpty()) ? promocionDescripcion : "Ninguna";
+        
         String contextMessage = String.format(
-                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Cliente Tel: %s]\n" +
+                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Promoción Activa: %s, Detalle de Promoción: %s, Cliente Tel: %s]\n" +
+                "Instrucción para el bot: Si hay una promoción activa, aplícala y calcula de forma dinámica los costos con descuento cuando el cliente te pregunte por servicios o precios.\n" +
                 "Mensaje del cliente: %s",
                 fechaHoraActual, empresaNombre, empresaId, 
                 (telefonoContacto != null && !telefonoContacto.trim().isEmpty()) ? telefonoContacto : "No registrado", 
                 (direccion != null && !direccion.trim().isEmpty()) ? direccion : "No registrada", 
                 (mapsLink != null && !mapsLink.trim().isEmpty()) ? mapsLink : "No registrado",
+                (descripcionNegocio != null && !descripcionNegocio.trim().isEmpty()) ? descripcionNegocio : "No registrada",
+                promoActivaText, promoDescText,
                 customerPhone, userMessage
         );
         

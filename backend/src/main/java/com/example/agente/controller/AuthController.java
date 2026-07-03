@@ -63,6 +63,7 @@ public class AuthController {
         if (Boolean.TRUE.equals(crearNuevaEmpresa)) {
             String nombreEmpresa = (String) request.get("nombreEmpresa");
             String whatsappPhoneId = (String) request.get("whatsappPhoneId");
+            String whatsappToken = (String) request.get("whatsappToken");
             String direccion = (String) request.get("direccion");
             String descripcionNegocio = (String) request.get("descripcionNegocio");
             String telefonoContacto = (String) request.get("telefonoContacto");
@@ -76,6 +77,7 @@ public class AuthController {
             Empresa nuevaEmpresa = Empresa.builder()
                     .nombre(nombreEmpresa.trim())
                     .whatsappPhoneId(whatsappPhoneId.trim())
+                    .whatsappToken(whatsappToken != null ? whatsappToken.trim() : null)
                     .direccion(direccion != null ? direccion.trim() : "")
                     .descripcionNegocio(descripcionNegocio != null ? descripcionNegocio.trim() : "")
                     .telefonoContacto(telefonoContacto != null ? telefonoContacto.trim() : "")

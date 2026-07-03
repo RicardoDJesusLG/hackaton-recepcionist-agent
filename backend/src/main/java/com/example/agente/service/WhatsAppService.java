@@ -20,6 +20,10 @@ public class WhatsAppService {
             .build();
 
     public void enviarMensajeTexto(String to, String messageBody, String businessPhoneId) {
+        enviarMensajeTexto(to, messageBody, businessPhoneId, null);
+    }
+
+    public void enviarMensajeTexto(String to, String messageBody, String businessPhoneId, String customToken) {
         if (to == null || messageBody == null || businessPhoneId == null) {
             System.err.println("[WhatsAppService] Error: Parámetros nulos al enviar mensaje.");
             return;
@@ -32,7 +36,9 @@ public class WhatsAppService {
             System.out.println("[WhatsAppService] Detectado número de México con prefijo '521'. Normalizando a '" + targetNumber + "' para compatibilidad con Sandbox.");
         }
 
-        if (apiToken == null || apiToken.trim().isEmpty() || "CAMBIAR_POR_TOKEN_REAL".equals(apiToken)) {
+        String tokenToUse = (customToken != null && !customToken.trim().isEmpty()) ? customToken : this.apiToken;
+
+        if (tokenToUse == null || tokenToUse.trim().isEmpty() || "CAMBIAR_POR_TOKEN_REAL".equals(tokenToUse)) {
             System.out.println("[WhatsAppService] [MOCK] Omitiendo envío real de WhatsApp (token de API no configurado).");
             System.out.println("  Para: " + targetNumber);
             System.out.println("  ID Teléfono Negocio: " + businessPhoneId);
@@ -59,7 +65,7 @@ public class WhatsAppService {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + apiToken)
+                    .header("Authorization", "Bearer " + tokenToUse)
                     .header("Content-Type", "application/json; charset=utf-8")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();

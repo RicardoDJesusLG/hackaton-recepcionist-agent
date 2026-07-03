@@ -95,6 +95,19 @@
         </div>
 
         <div class="form-group">
+          <label for="whatsappToken">WhatsApp Access Token</label>
+          <input 
+            type="password" 
+            id="whatsappToken" 
+            name="whatsappToken" 
+            [(ngModel)]="whatsappToken" 
+            placeholder="Ej: EAAb..." 
+            required
+          />
+          <small class="help-text">El token permanente o temporal de acceso de tu API de Meta Developer.</small>
+        </div>
+
+        <div class="form-group">
           <label for="direccion">Dirección Física (Opcional)</label>
           <input 
             type="text" 

@@ -25,6 +25,9 @@ public class Empresa {
     @Column(name = "whatsapp_phone_id", unique = true, nullable = false, length = 50)
     private String whatsappPhoneId;
 
+    @Column(name = "whatsapp_token", columnDefinition = "TEXT")
+    private String whatsappToken;
+
     @Column(name = "direccion", columnDefinition = "TEXT")
     private String direccion;
 
@@ -34,6 +37,13 @@ public class Empresa {
     @Column(name = "suscripcion_activa", nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private Boolean suscripcionActiva = true;
+
+    @Column(name = "promocion_activa", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean promocionActiva = false;
+
+    @Column(name = "promocion_descripcion", columnDefinition = "TEXT")
+    private String promocionDescripcion;
 
     @Column(name = "telefono_contacto", length = 20)
     private String telefonoContacto;

@@ -116,6 +116,8 @@ public class WhatsAppWebhookController {
             
             // Validar la suscripción de la empresa asociada
             Optional<Empresa> empresaOpt = empresaRepository.findByWhatsappPhoneId(businessPhoneId);
+            String customToken = empresaOpt.map(Empresa::getWhatsappToken).orElse(null);
+
             if (empresaOpt.isPresent() && !empresaOpt.get().getSuscripcionActiva()) {
                 System.out.println("[WhatsAppWebhookController] Mensaje bloqueado. Empresa " + 
                         empresaOpt.get().getNombre() + " tiene la suscripción inactiva.");
@@ -123,7 +125,7 @@ public class WhatsAppWebhookController {
                 String blockMessage = "Lo sentimos, el servicio de recepción de este negocio se encuentra "
                         + "temporalmente suspendido por falta de pago. Si eres el dueño del negocio, "
                         + "por favor ingresa a tu Panel de Administración para reactivarlo.";
-                whatsAppService.enviarMensajeTexto(customerPhone, blockMessage, businessPhoneId);
+                whatsAppService.enviarMensajeTexto(customerPhone, blockMessage, businessPhoneId, customToken);
                 return ResponseEntity.ok().build();
             }
 
@@ -131,14 +133,25 @@ public class WhatsAppWebhookController {
             String agentResponse;
             if (empresaOpt.isPresent()) {
                 Empresa empresa = empresaOpt.get();
-                agentResponse = antigravityAgent.chat(userMessage, empresa.getId().toString(), empresa.getNombre(), empresa.getTelefonoContacto(), empresa.getDireccion(), empresa.getMapsLink(), customerPhone);
+                agentResponse = antigravityAgent.chat(
+                    userMessage, 
+                    empresa.getId().toString(), 
+                    empresa.getNombre(), 
+                    empresa.getTelefonoContacto(), 
+                    empresa.getDireccion(), 
+                    empresa.getMapsLink(), 
+                    empresa.getDescripcionNegocio(),
+                    empresa.getPromocionActiva(),
+                    empresa.getPromocionDescripcion(),
+                    customerPhone
+                );
             } else {
                 agentResponse = antigravityAgent.chat(userMessage);
             }
             System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
 
             // Enviar mensaje de vuelta usando el servicio
-            whatsAppService.enviarMensajeTexto(customerPhone, agentResponse, businessPhoneId);
+            whatsAppService.enviarMensajeTexto(customerPhone, agentResponse, businessPhoneId, customToken);
         } else {
             System.out.println("[WhatsAppWebhookController] Payload recibido no contiene la información mínima para responder.");
         }
