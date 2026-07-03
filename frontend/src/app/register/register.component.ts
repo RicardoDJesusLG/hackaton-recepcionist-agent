@@ -25,6 +25,7 @@ export class RegisterComponent {
   // Datos de nueva empresa
   nombreEmpresa = '';
   whatsappPhoneId = '';
+  whatsappToken = '';
   direccion = '';
   descripcionNegocio = '';
   telefonoContacto = '';
@@ -47,12 +48,13 @@ export class RegisterComponent {
     };
 
     if (this.crearNuevaEmpresa) {
-      if (!this.nombreEmpresa.trim() || !this.whatsappPhoneId.trim()) {
-        this.errorMessage = 'El nombre de la empresa y el ID de WhatsApp son obligatorios.';
+      if (!this.nombreEmpresa.trim() || !this.whatsappPhoneId.trim() || !this.whatsappToken.trim()) {
+        this.errorMessage = 'El nombre de la empresa, el ID de WhatsApp y el token de acceso son obligatorios.';
         return;
       }
       payload.nombreEmpresa = this.nombreEmpresa.trim();
       payload.whatsappPhoneId = this.whatsappPhoneId.trim();
+      payload.whatsappToken = this.whatsappToken.trim();
       payload.direccion = this.direccion.trim();
       payload.descripcionNegocio = this.descripcionNegocio.trim();
       payload.telefonoContacto = this.telefonoContacto.trim();

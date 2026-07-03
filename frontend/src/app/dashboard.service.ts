@@ -37,4 +37,20 @@ export class DashboardService {
   crearCheckoutSession(idNegocio: string): Observable<any> {
     return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio });
   }
+
+  getServicios(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/api/v1/servicios/admin`);
+  }
+
+  crearServicio(servicio: any): Observable<any> {
+    return this.http.post<any>(`http://localhost:8080/api/v1/servicios`, servicio);
+  }
+
+  updateServicio(id: string, servicio: any): Observable<any> {
+    return this.http.put<any>(`http://localhost:8080/api/v1/servicios/${id}`, servicio);
+  }
+
+  eliminarServicio(id: string): Observable<any> {
+    return this.http.delete<any>(`http://localhost:8080/api/v1/servicios/${id}`);
+  }
 }

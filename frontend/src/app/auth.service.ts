@@ -25,6 +25,10 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/register`, payload);
   }
 
+  verificarCredenciales(username: string, password: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, { username, password });
+  }
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
