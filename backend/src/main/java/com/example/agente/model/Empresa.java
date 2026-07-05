@@ -34,9 +34,9 @@ public class Empresa {
     @Column(name = "descripcion_negocio", columnDefinition = "TEXT")
     private String descripcionNegocio;
 
-    @Column(name = "suscripcion_activa", nullable = false, columnDefinition = "boolean default true")
+    @Column(name = "suscripcion_activa", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
-    private Boolean suscripcionActiva = true;
+    private Boolean suscripcionActiva = false;
 
     @Column(name = "promocion_activa", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
@@ -50,6 +50,12 @@ public class Empresa {
 
     @Column(name = "maps_link", columnDefinition = "TEXT")
     private String mapsLink;
+
+    @Column(name = "stripe_customer_id", length = 255)
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_subscription_id", length = 255)
+    private String stripeSubscriptionId;
 
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
     private LocalDateTime fechaCreacion;

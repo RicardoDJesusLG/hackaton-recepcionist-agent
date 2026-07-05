@@ -245,13 +245,13 @@
           <h3>Estatus del Servicio</h3>
           
           @if (empresa.suscripcionActiva) {
-            <div class="sub-badge active">Suscripción Activa</div>
+            <div class="sub-badge active">SUSCRIPCIÓN ACTIVA</div>
             <p class="sub-text">Tu agente virtual de recepción WhatsApp está funcionando normalmente y recibiendo citas de clientes reales.</p>
-            <button (click)="pagarSuscripcion()" class="btn-renew">Gestionar en Stripe</button>
+            <button (click)="gestionarSuscripcion()" class="btn-renew">Gestionar Suscripción</button>
           } @else {
-            <div class="sub-badge inactive">Servicio Suspendido</div>
-            <p class="sub-text">El bot se encuentra suspendido. Tus clientes no pueden agendar a través de WhatsApp en este momento.</p>
-            <button (click)="pagarSuscripcion()" class="btn-pay">Activar Recepcionista ($599/mes)</button>
+            <div class="sub-badge inactive">SUSCRIPCIÓN INACTIVA</div>
+            <p class="sub-text">Tu agente virtual está pausado. Activa tu membresía para comenzar a recibir citas automatizadas.</p>
+            <button (click)="pagarSuscripcion()" class="btn-pay">Suscribirse ($599/mes)</button>
           }
         </div>
 

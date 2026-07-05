@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class DashboardService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/api/v1/dashboard';
-  private stripeUrl = 'http://localhost:8080/api/v1/stripe';
+  private paymentsUrl = 'http://localhost:8080/api/v1/payments';
 
   getCitas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/citas`);
@@ -34,8 +34,8 @@ export class DashboardService {
     return this.http.put<any>(`${this.apiUrl}/empresa/agenda`, agendaData);
   }
 
-  crearCheckoutSession(idNegocio: string): Observable<any> {
-    return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio });
+  crearCheckoutSession(empresaId: string): Observable<any> {
+    return this.http.post<any>(`${this.paymentsUrl}/create-checkout-session`, { empresaId });
   }
 
   getServicios(): Observable<any[]> {

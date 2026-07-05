@@ -35,8 +35,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/servicios").permitAll()
                 .requestMatchers("/api/v1/disponibilidad/**").permitAll()
                 .requestMatchers("/api/v1/citas/**").permitAll()
-                // Webhook de Stripe público
-                .requestMatchers("/api/v1/stripe/webhook").permitAll()
+                // Endpoints públicos de pagos (Stripe Checkout y Webhooks)
+                .requestMatchers("/api/v1/payments/**").permitAll()
                 // Permitir OPTIONS pre-flight requests para CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Todo lo demás (Dashboard) protegido
