@@ -88,6 +88,12 @@
 			<artifactId>stripe-java</artifactId>
 			<version>25.10.0</version>
 		</dependency>
+		<!-- Google Cloud SQL Socket Factory -->
+		<dependency>
+			<groupId>com.google.cloud.sql</groupId>
+			<artifactId>postgres-socket-factory</artifactId>
+			<version>1.18.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
