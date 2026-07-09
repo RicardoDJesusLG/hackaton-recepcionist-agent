@@ -625,3 +625,217 @@ td {
   }
 }
 
+/* --- ESTILOS DE SUSCRIPCIONES Y PLANES --- */
+.badge-lock {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.plan-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.plan-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.plan-pill.basic {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.plan-pill.pro {
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #c084fc;
+}
+
+.plan-pill.premium {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fde047;
+}
+
+/* Barra de progreso de consumo */
+.usage-stat {
+  margin-bottom: 16px;
+}
+
+.usage-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 6px;
+}
+
+.usage-label strong {
+  color: #ffffff;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.services-bar {
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+}
+
+.appointments-bar {
+  background: linear-gradient(90deg, #14b8a6, #10b981);
+}
+
+/* Selector de Planes */
+.plans-selector-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.plans-selector-box h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.plan-option-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.plan-option-card:last-child {
+  margin-bottom: 0;
+}
+
+.plan-option-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.plan-option-card.current {
+  background: rgba(99, 102, 241, 0.04);
+  border: 1.5px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.plan-card-header h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.plan-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.plan-price small {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-features li span {
+  font-weight: bold;
+}
+
+.plan-features li span:contains("✓") {
+  color: #10b981;
+}
+
+.plan-features li span:contains("❌") {
+  color: #ef4444;
+}
+
+.btn-select-plan {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.btn-select-plan:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-select-plan:disabled {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #34d399 !important;
+  cursor: default;
+  transform: none;
+}
+
+.plan-option-card.current .btn-select-plan {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+

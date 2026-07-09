@@ -41,7 +41,18 @@ export class DashboardComponent implements OnInit {
     descripcionNegocio: '',
     telefonoContacto: '',
     mapsLink: '',
-    suscripcionActiva: true
+    suscripcionActiva: true,
+    planSuscripcion: 'BASIC'
+  };
+
+  // Estadísticas de Suscripción
+  subStats: any = {
+    planSuscripcion: 'BASIC',
+    suscripcionActiva: true,
+    totalServicios: 0,
+    limiteServicios: 3,
+    citasMesActual: 0,
+    limiteCitas: 30
   };
 
   // Horarios de Agenda
@@ -60,6 +71,7 @@ export class DashboardComponent implements OnInit {
     this.cargarCitas();
     this.cargarDatosEmpresa();
     this.cargarHorariosAgenda();
+    this.cargarEstadisticasSuscripcion();
   }
 
   // --- NAVEGACIÓN ---
@@ -132,6 +144,7 @@ export class DashboardComponent implements OnInit {
         this.empresa = data;
         this.successMessage = 'Información de la empresa guardada correctamente.';
         this.isLoading = false;
+        this.cargarEstadisticasSuscripcion();
       },
       error: (err) => {
         this.isLoading = false;
@@ -201,9 +214,9 @@ export class DashboardComponent implements OnInit {
   }
 
   // --- STRIPE BILLING ---
-  pagarSuscripcion(): void {
+  pagarSuscripcion(plan: string): void {
     this.isLoading = true;
-    this.dashboardService.crearCheckoutSession(this.empresaId).subscribe({
+    this.dashboardService.crearCheckoutSession(this.empresaId, plan).subscribe({
       next: (res) => {
         if (res && res.url) {
           window.location.href = res.url;
@@ -216,6 +229,19 @@ export class DashboardComponent implements OnInit {
         this.isLoading = false;
         alert('Error al conectar con Stripe.');
         console.error(err);
+      }
+    });
+  }
+
+  cargarEstadisticasSuscripcion(): void {
+    this.dashboardService.getSubscriptionStats().subscribe({
+      next: (data) => {
+        this.subStats = data;
+        this.empresa.suscripcionActiva = data.suscripcionActiva;
+        this.empresa.planSuscripcion = data.planSuscripcion;
+      },
+      error: (err) => {
+        console.error('Error al cargar estadísticas de suscripción:', err);
       }
     });
   }

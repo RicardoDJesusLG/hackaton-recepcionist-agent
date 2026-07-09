@@ -193,13 +193,18 @@
           </div>
 
           <div class="form-group">
-            <label for="mapsLink">Enlace de Google Maps del Local</label>
+            <label for="mapsLink">Enlace de Google Maps del Local 
+              @if (empresa.planSuscripcion === 'BASIC') {
+                <span class="badge-lock">🔒 Solo Pro/Premium</span>
+              }
+            </label>
             <input 
               type="text" 
               id="mapsLink" 
               name="mapsLink" 
               [(ngModel)]="empresa.mapsLink"
-              placeholder="Ej: https://maps.google.com/?q=..."
+              [disabled]="empresa.planSuscripcion === 'BASIC'"
+              [placeholder]="empresa.planSuscripcion === 'BASIC' ? 'Límite del plan Básico (mejora tu plan para habilitar)' : 'Ej: https://maps.google.com/?q=...'"
             />
             <small class="help-text">El enlace del mapa (GPS) que el bot compartirá cuando el cliente le pida indicaciones para llegar o cómo llegar.</small>
           </div>
@@ -224,23 +229,123 @@
 
       <!-- Estatus de Suscripción / Stripe -->
       <div class="side-card">
-        <div class="subscription-box" [class.active]="empresa.suscripcionActiva">
-          <h3>Estatus del Servicio</h3>
+        <!-- Tarjeta de Suscripción Actual -->
+        <div class="subscription-box" [class.active]="subStats.suscripcionActiva">
+          <h3>Suscripción Actual</h3>
           
-          @if (empresa.suscripcionActiva) {
-            <div class="sub-badge active">Suscripción Activa</div>
-            <p class="sub-text">Tu agente virtual de recepción WhatsApp está funcionando normalmente y recibiendo citas de clientes reales.</p>
-            <button (click)="pagarSuscripcion()" class="btn-renew">Gestionar en Stripe</button>
-          } @else {
-            <div class="sub-badge inactive">Servicio Suspendido</div>
-            <p class="sub-text">El bot se encuentra suspendido. Tus clientes no pueden agendar a través de WhatsApp en este momento.</p>
-            <button (click)="pagarSuscripcion()" class="btn-pay">Activar Recepcionista ($599/mes)</button>
-          }
+          <div class="plan-status-header">
+            <span class="plan-pill" [class]="subStats.planSuscripcion?.toLowerCase()">
+              PLAN {{ subStats.planSuscripcion || 'BÁSICO' }}
+            </span>
+            @if (subStats.suscripcionActiva) {
+              <div class="sub-badge active">Activo</div>
+            } @else {
+              <div class="sub-badge inactive">Suspendido</div>
+            }
+          </div>
+
+          <!-- Uso de Servicios -->
+          <div class="usage-stat">
+            <div class="usage-label">
+              <span>Servicios Activos</span>
+              <strong>
+                {{ subStats.totalServicios }} / 
+                {{ subStats.limiteServicios === 2147483647 ? '∞' : subStats.limiteServicios }}
+              </strong>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar services-bar" 
+                   [style.width.%]="subStats.limiteServicios === 2147483647 ? 100 : (subStats.totalServicios / subStats.limiteServicios * 100)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Uso de Citas -->
+          <div class="usage-stat">
+            <div class="usage-label">
+              <span>Citas este Mes</span>
+              <strong>
+                {{ subStats.citasMesActual }} / 
+                {{ subStats.limiteCitas === 2147483647 ? '∞' : subStats.limiteCitas }}
+              </strong>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar appointments-bar" 
+                   [style.width.%]="subStats.limiteCitas === 2147483647 ? 100 : (subStats.citasMesActual / subStats.limiteCitas * 100)">
+              </div>
+            </div>
+          </div>
+
+          <p class="sub-text">
+            @if (subStats.suscripcionActiva) {
+              Tu bot de WhatsApp está respondiendo y recibiendo citas con normalidad.
+            } @else {
+              El servicio del bot está suspendido. Contrata un plan para reactivarlo.
+            }
+          </p>
         </div>
 
-        <div class="info-box">
-          <h4>¿Cómo funciona la IA?</h4>
-          <p>El bot utiliza tus catálogos de servicios, disponibilidad y horarios para contestarle a tus clientes en segundos a cualquier hora.</p>
+        <!-- Selector de Planes de Suscripción -->
+        <div class="plans-selector-box">
+          <h4>Nuestros Planes</h4>
+          
+          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
+            <div class="plan-card-header">
+              <h5>Básico</h5>
+              <span class="plan-price">$199<small>/mes</small></span>
+            </div>
+            <ul class="plan-features">
+              <li><span>✓</span> Hasta 3 servicios activos</li>
+              <li><span>✓</span> Hasta 30 citas/mes</li>
+              <li><span>❌</span> Sin Google Maps</li>
+            </ul>
+            <button 
+              (click)="pagarSuscripcion('BASIC')" 
+              class="btn-select-plan basic-btn"
+              [disabled]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva || isLoading"
+            >
+              {{ subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Básico' }}
+            </button>
+          </div>
+
+          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva">
+            <div class="plan-card-header">
+              <h5>Profesional</h5>
+              <span class="plan-price">$599<small>/mes</small></span>
+            </div>
+            <ul class="plan-features">
+              <li><span>✓</span> Hasta 10 servicios activos</li>
+              <li><span>✓</span> Hasta 150 citas/mes</li>
+              <li><span>✓</span> Con Google Maps</li>
+            </ul>
+            <button 
+              (click)="pagarSuscripcion('PRO')" 
+              class="btn-select-plan pro-btn"
+              [disabled]="subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva || isLoading"
+            >
+              {{ subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Pro' }}
+            </button>
+          </div>
+
+          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva">
+            <div class="plan-card-header">
+              <h5>Premium</h5>
+              <span class="plan-price">$999<small>/mes</small></span>
+            </div>
+            <ul class="plan-features">
+              <li><span>✓</span> Servicios ilimitados</li>
+              <li><span>✓</span> Citas ilimitadas</li>
+              <li><span>✓</span> Con Google Maps</li>
+              <li><span>★</span> Soporte Prioritario</li>
+            </ul>
+            <button 
+              (click)="pagarSuscripcion('PREMIUM')" 
+              class="btn-select-plan premium-btn"
+              [disabled]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva || isLoading"
+            >
+              {{ subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Premium' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

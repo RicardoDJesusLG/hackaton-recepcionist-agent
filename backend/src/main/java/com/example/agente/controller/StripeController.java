@@ -40,6 +40,7 @@ public class StripeController {
     @PostMapping("/checkout")
     public ResponseEntity<?> crearCheckoutSession(@RequestBody Map<String, String> request) {
         String idNegocioStr = request.get("idNegocio");
+        String plan = request.get("plan");
 
         if (idNegocioStr == null || idNegocioStr.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "ID de negocio requerido"));
@@ -57,12 +58,39 @@ public class StripeController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
         }
 
+        if (plan == null || plan.trim().isEmpty()) {
+            plan = "PRO";
+        }
+        plan = plan.trim().toUpperCase();
+
+        long unitAmount = 59900L;
+        String productName = "Membresía Recepción Profesional";
+        String productDesc = "Suscripción mensual al bot WhatsApp con límite de 150 citas/mes y 10 servicios.";
+
+        if ("BASIC".equals(plan)) {
+            unitAmount = 19900L;
+            productName = "Membresía Recepción Básica";
+            productDesc = "Suscripción mensual al bot WhatsApp con límite de 30 citas/mes y 3 servicios.";
+        } else if ("PREMIUM".equals(plan)) {
+            unitAmount = 99900L;
+            productName = "Membresía Recepción Premium";
+            productDesc = "Suscripción mensual al bot WhatsApp ilimitada con soporte prioritario.";
+        } else {
+            plan = "PRO";
+        }
+
         // Modo MOCK si no hay llave de Stripe configurada
         if (stripeApiKey == null || stripeApiKey.trim().isEmpty() || "CAMBIAR_POR_LLAVE_REAL".equals(stripeApiKey)) {
-            System.out.println("[StripeController] [MOCK] Generando sesión simulada para el negocio: " + idNegocio);
+            System.out.println("[StripeController] [MOCK] Generando sesión simulada para el negocio: " + idNegocio + " en plan: " + plan);
             
-            // Simular respuesta exitosa redireccionando con éxito simulado
-            String mockUrl = "http://localhost:4200/dashboard?payment=success&mock=true&idNegocio=" + idNegocio;
+            // Activar de una vez la suscripción en base de datos para facilitar pruebas locales
+            Empresa empresa = empresaOpt.get();
+            empresa.setSuscripcionActiva(true);
+            empresa.setPlanSuscripcion(plan);
+            empresaRepository.save(empresa);
+            System.out.println("[StripeController] [MOCK] Suscripción activada exitosamente en BD para " + empresa.getNombre() + " en plan: " + plan);
+
+            String mockUrl = "http://localhost:4200/dashboard?payment=success&mock=true&idNegocio=" + idNegocio + "&plan=" + plan;
             return ResponseEntity.ok(Map.of("url", mockUrl));
         }
 
@@ -70,7 +98,7 @@ public class StripeController {
         try {
             Stripe.apiKey = stripeApiKey;
 
-            String successUrl = "http://localhost:4200/dashboard?payment=success&idNegocio=" + idNegocio;
+            String successUrl = "http://localhost:4200/dashboard?payment=success&idNegocio=" + idNegocio + "&plan=" + plan;
             String cancelUrl = "http://localhost:4200/dashboard?payment=cancel";
 
             SessionCreateParams params = SessionCreateParams.builder()
@@ -83,7 +111,7 @@ public class StripeController {
                                     .setPriceData(
                                             SessionCreateParams.LineItem.PriceData.builder()
                                                     .setCurrency("mxn")
-                                                    .setUnitAmount(59900L) // $599.00 MXN mensuales
+                                                    .setUnitAmount(unitAmount)
                                                     .setRecurring(
                                                             SessionCreateParams.LineItem.PriceData.Recurring.builder()
                                                                     .setInterval(SessionCreateParams.LineItem.PriceData.Recurring.Interval.MONTH)
@@ -91,8 +119,8 @@ public class StripeController {
                                                     )
                                                     .setProductData(
                                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                    .setName("Membresía Recepción Inteligente")
-                                                                    .setDescription("Suscripción mensual al bot WhatsApp de recepción y agenda.")
+                                                                    .setName(productName)
+                                                                    .setDescription(productDesc)
                                                                     .build()
                                                     )
                                                     .build()
@@ -100,6 +128,7 @@ public class StripeController {
                                     .build()
                     )
                     .putMetadata("idNegocio", idNegocio.toString())
+                    .putMetadata("plan", plan)
                     .build();
 
             Session session = Session.create(params);
@@ -149,6 +178,11 @@ public class StripeController {
             if (sessionOpt.isPresent()) {
                 Session session = sessionOpt.get();
                 String idNegocioStr = session.getMetadata().get("idNegocio");
+                String planStr = session.getMetadata().get("plan");
+
+                if (planStr == null) {
+                    planStr = "PRO";
+                }
 
                 if (idNegocioStr != null) {
                     try {
@@ -158,8 +192,10 @@ public class StripeController {
                         if (empresaOpt.isPresent()) {
                             Empresa empresa = empresaOpt.get();
                             empresa.setSuscripcionActiva(true);
+                            empresa.setPlanSuscripcion(planStr.toUpperCase());
                             empresaRepository.save(empresa);
-                            System.out.println("[StripeWebhook] ¡Suscripción activada con éxito para la empresa: " + empresa.getNombre() + "!");
+                            System.out.println("[StripeWebhook] ¡Suscripción activada con éxito para la empresa: " 
+                                    + empresa.getNombre() + " en plan: " + planStr + "!");
                         } else {
                             System.err.println("[StripeWebhook] Empresa no encontrada con ID: " + idNegocio);
                         }

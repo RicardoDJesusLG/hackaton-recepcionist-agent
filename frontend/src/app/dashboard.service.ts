@@ -34,7 +34,11 @@ export class DashboardService {
     return this.http.put<any>(`${this.apiUrl}/empresa/agenda`, agendaData);
   }
 
-  crearCheckoutSession(idNegocio: string): Observable<any> {
-    return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio });
+  crearCheckoutSession(idNegocio: string, plan: string): Observable<any> {
+    return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio, plan });
+  }
+
+  getSubscriptionStats(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/suscripcion/stats`);
   }
 }

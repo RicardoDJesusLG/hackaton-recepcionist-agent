@@ -193,7 +193,12 @@ public class DashboardController {
         empresa.setDireccion(direccion);
         empresa.setDescripcionNegocio(descripcionNegocio);
         empresa.setTelefonoContacto(telefonoContacto);
-        empresa.setMapsLink(mapsLink);
+        
+        if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
+            empresa.setMapsLink(null);
+        } else {
+            empresa.setMapsLink(mapsLink);
+        }
 
         empresaRepository.save(empresa);
 
@@ -271,5 +276,56 @@ public class DashboardController {
         }
 
         return ResponseEntity.ok(Map.of("message", "Horarios de agenda actualizados con éxito."));
+    }
+
+    /**
+     * Obtiene estadísticas de uso y el plan de suscripción de la empresa.
+     */
+    @GetMapping("/suscripcion/stats")
+    public ResponseEntity<?> obtenerEstadisticasSuscripcion(HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        Empresa empresa = empresaOpt.get();
+        String plan = empresa.getPlanSuscripcion();
+        boolean activa = empresa.getSuscripcionActiva();
+
+        // Contar servicios activos
+        long totalServicios = servicioRepository.countByEmpresaIdAndActivoTrue(empresaId);
+
+        // Contar citas este mes calendario
+        java.time.LocalDateTime ahora = java.time.LocalDateTime.now();
+        java.time.LocalDateTime inicioMes = ahora.withDayOfMonth(1).with(LocalTime.MIN);
+        java.time.LocalDateTime finMes = ahora.plusMonths(1).withDayOfMonth(1).minusDays(1).with(LocalTime.MAX);
+        long citasMesActual = citaRepository.countByEmpresaIdAndFechaHoraInicioBetweenAndEstadoNot(
+                empresaId, inicioMes, finMes, EstadoCita.CANCELADA
+        );
+
+        int limiteServicios = Integer.MAX_VALUE;
+        int limiteCitas = Integer.MAX_VALUE;
+
+        if ("BASIC".equalsIgnoreCase(plan)) {
+            limiteServicios = 3;
+            limiteCitas = 30;
+        } else if ("PRO".equalsIgnoreCase(plan)) {
+            limiteServicios = 10;
+            limiteCitas = 150;
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "planSuscripcion", plan,
+                "suscripcionActiva", activa,
+                "totalServicios", totalServicios,
+                "limiteServicios", limiteServicios,
+                "citasMesActual", citasMesActual,
+                "limiteCitas", limiteCitas
+        ));
     }
 }

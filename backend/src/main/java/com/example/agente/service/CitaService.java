@@ -22,15 +22,18 @@ public class CitaService {
     private final ServicioRepository servicioRepository;
     private final UsuarioRepository usuarioRepository;
     private final AgendaConfigRepository agendaConfigRepository;
+    private final EmpresaRepository empresaRepository;
 
     public CitaService(CitaRepository citaRepository,
                        ServicioRepository servicioRepository,
                        UsuarioRepository usuarioRepository,
-                       AgendaConfigRepository agendaConfigRepository) {
+                       AgendaConfigRepository agendaConfigRepository,
+                       EmpresaRepository empresaRepository) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
         this.agendaConfigRepository = agendaConfigRepository;
+        this.empresaRepository = empresaRepository;
     }
 
     /**
@@ -101,6 +104,32 @@ public class CitaService {
         String telefono = request.telefonoCliente();
         
         LocalDateTime startDateTime = LocalDateTime.parse(request.fechaHoraInicio());
+
+        // 0. Validar límite del plan de suscripción del negocio
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isPresent()) {
+            Empresa empresa = empresaOpt.get();
+            String plan = empresa.getPlanSuscripcion();
+            int maxCitasMes = Integer.MAX_VALUE;
+            if ("BASIC".equalsIgnoreCase(plan)) {
+                maxCitasMes = 30;
+            } else if ("PRO".equalsIgnoreCase(plan)) {
+                maxCitasMes = 150;
+            }
+
+            if (maxCitasMes < Integer.MAX_VALUE) {
+                LocalDateTime ahora = LocalDateTime.now();
+                LocalDateTime inicioMes = ahora.withDayOfMonth(1).with(LocalTime.MIN);
+                LocalDateTime finMes = ahora.plusMonths(1).withDayOfMonth(1).minusDays(1).with(LocalTime.MAX);
+                long citasActivasEsteMes = citaRepository.countByEmpresaIdAndFechaHoraInicioBetweenAndEstadoNot(
+                        empresaId, inicioMes, finMes, EstadoCita.CANCELADA
+                );
+
+                if (citasActivasEsteMes >= maxCitasMes) {
+                    throw new IllegalStateException("El negocio ha alcanzado el límite mensual de citas de su plan de suscripción.");
+                }
+            }
+        }
 
         // 1. Obtener servicio y calcular hora fin
         Servicio servicio = servicioRepository.findById(servicioId)
