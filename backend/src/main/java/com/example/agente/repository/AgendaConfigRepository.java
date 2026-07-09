@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface AgendaConfigRepository extends JpaRepository<AgendaConfig, UUID> {
     Optional<AgendaConfig> findByEmpresaIdAndDiaSemana(UUID empresaId, Integer diaSemana);
+    java.util.List<AgendaConfig> findByEmpresaId(UUID empresaId);
 }

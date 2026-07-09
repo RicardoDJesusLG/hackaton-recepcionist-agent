@@ -9,12 +9,12 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/api/v1/auth';
 
-  login(username: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }).pipe(
+  login(email: string, password: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, { email, password }).pipe(
       tap(res => {
         if (res && res.token) {
           localStorage.setItem('token', res.token);
-          localStorage.setItem('username', res.username);
+          localStorage.setItem('email', res.email);
           localStorage.setItem('empresaId', res.empresaId);
         }
       })
@@ -25,13 +25,13 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/register`, payload);
   }
 
-  verificarCredenciales(username: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/login`, { username, password });
+  verificarCredenciales(email: string, password: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, { email, password });
   }
 
   logout(): void {
     localStorage.removeItem('token');
-    localStorage.removeItem('username');
+    localStorage.removeItem('email');
     localStorage.removeItem('empresaId');
   }
 
@@ -39,8 +39,8 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  getUsername(): string | null {
-    return localStorage.getItem('username');
+  getEmail(): string | null {
+    return localStorage.getItem('email');
   }
 
   getEmpresaId(): string | null {
@@ -49,5 +49,13 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return !!this.getToken();
+  }
+
+  solicitarRecuperacion(email: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  restablecerContrasena(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, payload);
   }
 }

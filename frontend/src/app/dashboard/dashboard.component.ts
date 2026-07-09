@@ -21,7 +21,7 @@ export class DashboardComponent implements OnInit {
   activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' = 'citas';
 
   // Datos del Propietario
-  username = '';
+  email = '';
   empresaId = '';
   errorMessage = '';
   successMessage = '';
@@ -42,9 +42,7 @@ export class DashboardComponent implements OnInit {
     descripcionNegocio: '',
     telefonoContacto: '',
     mapsLink: '',
-    suscripcionActiva: true,
-    promocionActiva: false,
-    promocionDescripcion: ''
+    suscripcionActiva: true
   };
 
   // Catálogo de Servicios
@@ -57,15 +55,20 @@ export class DashboardComponent implements OnInit {
     descripcion: '',
     precio: 0,
     duracionMinutos: 30,
-    activo: true
+    activo: true,
+    tipoPromocion: 'NINGUNA',
+    valorPromocion: '',
+    promocionActiva: false
   };
 
   // Re-autenticación
   mostrarModalReauth = false;
-  reauthUsername = '';
+  reauthEmail = '';
   reauthPassword = '';
   errorReauth = '';
   descripcionNegocioOriginal = '';
+  prefijoTelefono = '52';
+  telefonoLocal = '';
 
   // Horarios de Agenda
   horarios: any[] = [];
@@ -77,7 +80,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.username = this.authService.getUsername() || '';
+    this.email = this.authService.getEmail() || '';
     this.empresaId = this.authService.getEmpresaId() || '';
     
     this.cargarCitas();
@@ -143,6 +146,7 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.empresa = data;
         this.descripcionNegocioOriginal = data.descripcionNegocio || '';
+        this.extraerPrefijoYNumero();
       },
       error: (err) => {
         console.error('Error al cargar datos de empresa:', err);
@@ -150,11 +154,30 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  extraerPrefijoYNumero(): void {
+    const tel = this.empresa.telefonoContacto || '';
+    if (!tel) {
+      this.prefijoTelefono = '52';
+      this.telefonoLocal = '';
+      return;
+    }
+    const limpio = tel.startsWith('+') ? tel.substring(1) : tel;
+    const prefijos = ['52', '57', '54', '56', '51', '34', '1'];
+    const coincidencia = prefijos.find(p => limpio.startsWith(p));
+    if (coincidencia) {
+      this.prefijoTelefono = coincidencia;
+      this.telefonoLocal = limpio.substring(coincidencia.length);
+    } else {
+      this.prefijoTelefono = '52';
+      this.telefonoLocal = limpio;
+    }
+  }
+
   guardarDatosEmpresa(): void {
     const nuevaDescripcion = this.empresa.descripcionNegocio || '';
     if (nuevaDescripcion.trim() !== this.descripcionNegocioOriginal.trim()) {
       this.mostrarModalReauth = true;
-      this.reauthUsername = this.username;
+      this.reauthEmail = this.email;
       this.reauthPassword = '';
       this.errorReauth = '';
       return;
@@ -168,10 +191,14 @@ export class DashboardComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
+    const numLimpio = this.telefonoLocal.replace(/\D/g, '');
+    this.empresa.telefonoContacto = numLimpio ? `+${this.prefijoTelefono}${numLimpio}` : '';
+
     this.dashboardService.updateEmpresa(this.empresa).subscribe({
       next: (data) => {
         this.empresa = data;
         this.descripcionNegocioOriginal = data.descripcionNegocio || '';
+        this.extraerPrefijoYNumero();
         this.successMessage = 'Información de la empresa guardada correctamente.';
         this.isLoading = false;
       },
@@ -181,14 +208,6 @@ export class DashboardComponent implements OnInit {
         console.error(err);
       }
     });
-  }
-
-  eliminarPromocion(): void {
-    if (confirm('¿Estás seguro de que deseas eliminar la promoción? Esto la desactivará y borrará su descripción.')) {
-      this.empresa.promocionActiva = false;
-      this.empresa.promocionDescripcion = '';
-      this.guardarDatosEmpresa();
-    }
   }
 
   // --- RE-AUTENTICACIÓN MÉTODOS ---
@@ -201,7 +220,7 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.errorReauth = '';
 
-    this.authService.verificarCredenciales(this.reauthUsername, this.reauthPassword).subscribe({
+    this.authService.verificarCredenciales(this.reauthEmail, this.reauthPassword).subscribe({
       next: () => {
         this.mostrarModalReauth = false;
         this.isLoading = false;
@@ -249,7 +268,10 @@ export class DashboardComponent implements OnInit {
         descripcion: '',
         precio: 0,
         duracionMinutos: 30,
-        activo: true
+        activo: true,
+        tipoPromocion: 'NINGUNA',
+        valorPromocion: '',
+        promocionActiva: false
       };
     }
     this.mostrarModalServicio = true;

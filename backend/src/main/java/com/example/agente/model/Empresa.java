@@ -38,12 +38,7 @@ public class Empresa {
     @Builder.Default
     private Boolean suscripcionActiva = true;
 
-    @Column(name = "promocion_activa", nullable = false, columnDefinition = "boolean default false")
-    @Builder.Default
-    private Boolean promocionActiva = false;
 
-    @Column(name = "promocion_descripcion", columnDefinition = "TEXT")
-    private String promocionDescripcion;
 
     @Column(name = "telefono_contacto", length = 20)
     private String telefonoContacto;

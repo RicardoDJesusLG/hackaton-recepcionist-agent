@@ -8,5 +8,8 @@ public record ServicioDTO(
         String nombre,
         String descripcion,
         BigDecimal precio,
-        Integer duracionMinutos
+        Integer duracionMinutos,
+        String tipoPromocion,
+        String valorPromocion,
+        Boolean promocionActiva
 ) {}

@@ -18,8 +18,8 @@ public class Owner {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "username", unique = true, nullable = false, length = 100)
-    private String username;
+    @Column(name = "email", unique = true, nullable = false, length = 150)
+    private String email;
 
     @Column(name = "password", nullable = false, length = 255)
     private String password;
