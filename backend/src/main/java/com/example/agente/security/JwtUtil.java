@@ -30,9 +30,9 @@ public class JwtUtil {
     /**
      * Genera un token JWT para un propietario de negocio, incluyendo su empresaId en los claims.
      */
-    public String generarToken(String username, UUID empresaId) {
+    public String generarToken(String email, UUID empresaId) {
         return Jwts.builder()
-                .subject(username)
+                .subject(email)
                 .claim("empresaId", empresaId.toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
@@ -41,9 +41,9 @@ public class JwtUtil {
     }
 
     /**
-     * Extrae el username (subject) del token.
+     * Extrae el email (subject) del token.
      */
-    public String obtenerUsername(String token) {
+    public String obtenerEmail(String token) {
         return obtenerClaims(token).getSubject();
     }
 

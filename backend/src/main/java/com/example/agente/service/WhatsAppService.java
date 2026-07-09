@@ -23,18 +23,33 @@ public class WhatsAppService {
         enviarMensajeTexto(to, messageBody, businessPhoneId, null);
     }
 
+    public static String normalizarNumero(String telefono) {
+        if (telefono == null) return null;
+        
+        // Quitar todos los caracteres no numéricos
+        String num = telefono.replaceAll("[^0-9]", "");
+        
+        // Si tiene 10 dígitos (México sin clave de país), anteponer "52"
+        if (num.length() == 10) {
+            num = "52" + num;
+        }
+        
+        // Si tiene el prefijo de celular de México "521" (13 dígitos), quitar el "1" para Sandbox
+        if (num.startsWith("521") && num.length() == 13) {
+            num = "52" + num.substring(3);
+        }
+        
+        return num;
+    }
+
     public void enviarMensajeTexto(String to, String messageBody, String businessPhoneId, String customToken) {
         if (to == null || messageBody == null || businessPhoneId == null) {
             System.err.println("[WhatsAppService] Error: Parámetros nulos al enviar mensaje.");
             return;
         }
 
-        // Normalización para números de México (quitar el '1' después del código de país '52' en ambiente de Sandbox)
-        String targetNumber = to;
-        if (targetNumber.startsWith("521") && targetNumber.length() == 13) {
-            targetNumber = "52" + targetNumber.substring(3);
-            System.out.println("[WhatsAppService] Detectado número de México con prefijo '521'. Normalizando a '" + targetNumber + "' para compatibilidad con Sandbox.");
-        }
+        String targetNumber = normalizarNumero(to);
+        System.out.println("[WhatsAppService] Número original: " + to + " | Normalizado: " + targetNumber);
 
         String tokenToUse = (customToken != null && !customToken.trim().isEmpty()) ? customToken : this.apiToken;
 

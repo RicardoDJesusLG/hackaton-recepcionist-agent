@@ -178,8 +178,7 @@ public class DashboardController {
         response.put("suscripcionActiva", empresa.getSuscripcionActiva());
         response.put("telefonoContacto", empresa.getTelefonoContacto() != null ? empresa.getTelefonoContacto() : "");
         response.put("mapsLink", empresa.getMapsLink() != null ? empresa.getMapsLink() : "");
-        response.put("promocionActiva", empresa.getPromocionActiva() != null ? empresa.getPromocionActiva() : false);
-        response.put("promocionDescripcion", empresa.getPromocionDescripcion() != null ? empresa.getPromocionDescripcion() : "");
+
 
         return ResponseEntity.ok(response);
     }
@@ -208,10 +207,9 @@ public class DashboardController {
         String whatsappToken = (String) requestBody.get("whatsappToken");
         String telefonoContacto = (String) requestBody.get("telefonoContacto");
         String mapsLink = (String) requestBody.get("mapsLink");
-        Object promocionActivaObj = requestBody.get("promocionActiva");
-        String promocionDescripcion = (String) requestBody.get("promocionDescripcion");
 
-        if (esPromptSospechoso(descripcionNegocio) || esPromptSospechoso(promocionDescripcion)) {
+
+        if (esPromptSospechoso(descripcionNegocio)) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Se detectaron directivas sospechosas que intentan alterar la seguridad de la IA (Inyección de Prompt). Por favor, introduce solo reglas informativas de tu negocio sin intentar cambiar la personalidad del bot."
             ));
@@ -231,12 +229,7 @@ public class DashboardController {
         empresa.setTelefonoContacto(telefonoContacto);
         empresa.setMapsLink(mapsLink);
         
-        if (promocionActivaObj instanceof Boolean) {
-            empresa.setPromocionActiva((Boolean) promocionActivaObj);
-        } else if (promocionActivaObj instanceof String) {
-            empresa.setPromocionActiva(Boolean.parseBoolean((String) promocionActivaObj));
-        }
-        empresa.setPromocionDescripcion(promocionDescripcion);
+
 
         empresaRepository.save(empresa);
 
@@ -261,8 +254,7 @@ public class DashboardController {
         response.put("suscripcionActiva", empresa.getSuscripcionActiva());
         response.put("telefonoContacto", empresa.getTelefonoContacto());
         response.put("mapsLink", empresa.getMapsLink());
-        response.put("promocionActiva", empresa.getPromocionActiva());
-        response.put("promocionDescripcion", empresa.getPromocionDescripcion());
+
 
         return ResponseEntity.ok(response);
     }
@@ -277,22 +269,7 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
         }
 
-        List<AgendaConfig> configs = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
-            Optional<AgendaConfig> cfgOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, i);
-            if (cfgOpt.isPresent()) {
-                configs.add(cfgOpt.get());
-            } else {
-                // Config default en memoria para retornar
-                configs.add(AgendaConfig.builder()
-                        .empresaId(empresaId)
-                        .diaSemana(i)
-                        .horaInicio(LocalTime.of(9, 0))
-                        .horaFin(LocalTime.of(18, 0))
-                        .build());
-            }
-        }
-
+        List<AgendaConfig> configs = agendaConfigRepository.findByEmpresaId(empresaId);
         return ResponseEntity.ok(configs);
     }
 

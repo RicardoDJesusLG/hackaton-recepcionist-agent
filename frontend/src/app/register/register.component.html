@@ -40,15 +40,15 @@
       <div class="section-title">Datos de Acceso</div>
       
       <div class="form-group">
-        <label for="username">Nombre de Usuario</label>
+        <label for="email">Correo Electrónico</label>
         <input 
-          type="text" 
-          id="username" 
-          name="username" 
-          [(ngModel)]="username" 
-          placeholder="Elige un usuario" 
+          type="email" 
+          id="email" 
+          name="email" 
+          [(ngModel)]="email" 
+          placeholder="tucorreo@ejemplo.com" 
           required 
-          autocomplete="username"
+          autocomplete="email"
         />
       </div>
 
@@ -131,13 +131,30 @@
 
         <div class="form-group">
           <label for="telefonoContacto">Teléfono de Soporte o Local (Opcional)</label>
-          <input 
-            type="text" 
-            id="telefonoContacto" 
-            name="telefonoContacto" 
-            [(ngModel)]="telefonoContacto" 
-            placeholder="Ej: 525512345678"
-          />
+          <div class="phone-input-group" style="display: flex; gap: 8px;">
+            <select 
+              id="prefijoTelefono" 
+              name="prefijoTelefono" 
+              [(ngModel)]="prefijoTelefono" 
+              style="width: 140px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none;"
+            >
+              <option value="52">+52 (MX)</option>
+              <option value="1">+1 (US/CA)</option>
+              <option value="57">+57 (CO)</option>
+              <option value="54">+54 (AR)</option>
+              <option value="56">+56 (CL)</option>
+              <option value="51">+51 (PE)</option>
+              <option value="34">+34 (ES)</option>
+            </select>
+            <input 
+              type="text" 
+              id="telefonoContacto" 
+              name="telefonoContacto" 
+              [(ngModel)]="telefonoContacto" 
+              placeholder="Ej: 5522069771"
+              style="flex: 1;"
+            />
+          </div>
         </div>
 
         <div class="form-group">

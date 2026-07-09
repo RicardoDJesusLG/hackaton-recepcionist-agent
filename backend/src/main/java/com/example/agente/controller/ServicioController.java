@@ -2,6 +2,7 @@ package com.example.agente.controller;
 
 import com.example.agente.dto.ServicioDTO;
 import com.example.agente.model.Servicio;
+import com.example.agente.model.TipoPromocion;
 import com.example.agente.repository.ServicioRepository;
 import com.example.agente.service.ServicioSkill;
 import jakarta.servlet.http.HttpServletRequest;
@@ -111,7 +112,12 @@ public class ServicioController {
                 .precio(precio)
                 .duracionMinutos(duracionMinutos)
                 .activo(activo != null ? activo : true)
+                .tipoPromocion(TipoPromocion.NINGUNA)
+                .promocionActiva(false)
                 .build();
+
+        ResponseEntity<?> error = validarYAsignarPromocion(body, nuevo);
+        if (error != null) return error;
 
         nuevo = servicioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
@@ -175,6 +181,9 @@ public class ServicioController {
             servicio.setActivo(activo);
         }
 
+        ResponseEntity<?> error = validarYAsignarPromocion(body, servicio);
+        if (error != null) return error;
+
         servicio = servicioRepository.save(servicio);
         return ResponseEntity.ok(servicio);
     }
@@ -201,7 +210,7 @@ public class ServicioController {
 
         try {
             servicioRepository.delete(servicio);
-            return ResponseEntity.ok(Map.of("message", "Servicio eliminado con éxito"));
+            return ResponseEntity.ok(Map.of("mensaje", "Servicio eliminado correctamente"));
         } catch (Exception e) {
             // Soft delete en caso de existir citas asociadas (evita violación de llave foránea restrictiva)
             servicio.setActivo(false);
@@ -211,5 +220,55 @@ public class ServicioController {
                     "softDeleted", true
             ));
         }
+    }
+
+    private ResponseEntity<?> validarYAsignarPromocion(Map<String, Object> body, Servicio servicio) {
+        Boolean promocionActiva = (Boolean) body.get("promocionActiva");
+        String tipoPromocionStr = (String) body.get("tipoPromocion");
+        String valorPromocion = (String) body.get("valorPromocion");
+
+        if (promocionActiva != null) servicio.setPromocionActiva(promocionActiva);
+
+        if (tipoPromocionStr != null) {
+            try {
+                TipoPromocion tipo = TipoPromocion.valueOf(tipoPromocionStr);
+                servicio.setTipoPromocion(tipo);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Tipo de promoción inválido."));
+            }
+        }
+
+        if (servicio.getTipoPromocion() != null && servicio.getTipoPromocion() != TipoPromocion.NINGUNA) {
+            if (valorPromocion == null || valorPromocion.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El valor de la promoción es requerido."));
+            }
+            valorPromocion = valorPromocion.trim();
+            
+            if (servicio.getTipoPromocion() == TipoPromocion.DESCUENTO_PORCENTAJE) {
+                try {
+                    int percent = Integer.parseInt(valorPromocion);
+                    if (percent <= 0 || percent > 100) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "El porcentaje debe estar entre 1 y 100."));
+                    }
+                } catch (NumberFormatException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "El porcentaje de descuento debe ser un número entero válido."));
+                }
+            } else if (servicio.getTipoPromocion() == TipoPromocion.PERSONALIZADA) {
+                if (valorPromocion.length() > 60) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción personalizada no puede exceder 60 caracteres."));
+                }
+                String lower = valorPromocion.toLowerCase();
+                if (lower.contains("ignora") || lower.contains("todas") || lower.contains("sistema") || lower.contains("instrucciones") || lower.contains("gratis a todos")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción contiene palabras no permitidas."));
+                }
+                if (!valorPromocion.matches("^[a-zA-Z0-9\\s.,!¡¿?%$-]+$")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción contiene caracteres inválidos. Solo se permiten letras, números y .,!¡¿?%$-"));
+                }
+            }
+            servicio.setValorPromocion(valorPromocion);
+        } else {
+            servicio.setValorPromocion(null);
+        }
+        return null;
     }
 }

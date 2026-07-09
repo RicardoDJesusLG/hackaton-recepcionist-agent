@@ -129,29 +129,39 @@ public class WhatsAppWebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            // Invocar al agente con contexto de la empresa si existe
-            String agentResponse;
-            if (empresaOpt.isPresent()) {
-                Empresa empresa = empresaOpt.get();
-                agentResponse = antigravityAgent.chat(
-                    userMessage, 
-                    empresa.getId().toString(), 
-                    empresa.getNombre(), 
-                    empresa.getTelefonoContacto(), 
-                    empresa.getDireccion(), 
-                    empresa.getMapsLink(), 
-                    empresa.getDescripcionNegocio(),
-                    empresa.getPromocionActiva(),
-                    empresa.getPromocionDescripcion(),
-                    customerPhone
-                );
-            } else {
-                agentResponse = antigravityAgent.chat(userMessage);
-            }
-            System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
+            final String finalCustomerPhone = customerPhone;
+            final String finalUserMessage = userMessage;
+            final String finalBusinessPhoneId = businessPhoneId;
+            final String finalCustomToken = customToken;
+            final Optional<Empresa> finalEmpresaOpt = empresaOpt;
 
-            // Enviar mensaje de vuelta usando el servicio
-            whatsAppService.enviarMensajeTexto(customerPhone, agentResponse, businessPhoneId, customToken);
+            // Procesar de forma asíncrona para responder rápido a Meta y evitar reintentos duplicados
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    String agentResponse;
+                    if (finalEmpresaOpt.isPresent()) {
+                        Empresa empresa = finalEmpresaOpt.get();
+                        agentResponse = antigravityAgent.chat(
+                            finalUserMessage, 
+                            empresa.getId().toString(), 
+                            empresa.getNombre(), 
+                            empresa.getTelefonoContacto(), 
+                            empresa.getDireccion(), 
+                            empresa.getMapsLink(), 
+                            empresa.getDescripcionNegocio(),
+                            finalCustomerPhone
+                        );
+                    } else {
+                        agentResponse = antigravityAgent.chat(finalUserMessage);
+                    }
+                    System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
+
+                    // Enviar mensaje de vuelta usando el servicio
+                    whatsAppService.enviarMensajeTexto(finalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
+                } catch (Exception ex) {
+                    System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma asíncrona: " + ex.getMessage());
+                }
+            });
         } else {
             System.out.println("[WhatsAppWebhookController] Payload recibido no contiene la información mínima para responder.");
         }

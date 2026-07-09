@@ -13,15 +13,15 @@
 
     <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
       <div class="form-group">
-        <label for="username">Nombre de Usuario</label>
+        <label for="email">Correo Electrónico</label>
         <input 
-          type="text" 
-          id="username" 
-          name="username" 
-          [(ngModel)]="username" 
-          placeholder="Ingresa tu usuario" 
+          type="email" 
+          id="email" 
+          name="email" 
+          [(ngModel)]="email" 
+          placeholder="tucorreo@ejemplo.com" 
           required 
-          autocomplete="username"
+          autocomplete="email"
         />
       </div>
 
@@ -36,6 +36,9 @@
           required 
           autocomplete="current-password"
         />
+        <div style="text-align: right; margin-top: 8px;">
+          <a href="javascript:void(0)" (click)="abrirModalRecuperar()" style="font-size: 0.85rem; color: #a5b4fc; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#c7d2fe'" onmouseout="this.style.color='#a5b4fc'">¿Olvidaste tu contraseña?</a>
+        </div>
       </div>
 
       <button type="submit" [disabled]="isLoading" class="btn-submit">
@@ -52,3 +55,83 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de Recuperación de Contraseña -->
+@if (mostrarModalRecuperar) {
+  <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: linear-gradient(135deg, rgba(20,20,35,0.95), rgba(10,10,20,0.95)); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; width: 450px; max-width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.5); position: relative; color: #fff;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #fff;">Restablecer Contraseña</h3>
+        <button type="button" (click)="cerrarModalRecuperar()" style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.5rem; cursor: pointer; transition: color 0.2s; outline: none;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">&times;</button>
+      </div>
+
+      @if (errorRecuperar) {
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #fca5a5;">
+          {{ errorRecuperar }}
+        </div>
+      }
+
+      @if (mensajeRecuperar) {
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.9rem; color: #a7f3d0;">
+          {{ mensajeRecuperar }}
+        </div>
+      }
+
+      @if (recuperarPaso === 'solicitar') {
+        <form (ngSubmit)="enviarCodigo()">
+          <div style="margin-bottom: 20px;">
+            <p style="font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 16px;">
+              Ingresa tu correo electrónico registrado. Te enviaremos un código de seguridad de 6 dígitos.
+            </p>
+            <label style="display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Correo Electrónico</label>
+            <input 
+              type="email" 
+              name="recuperarEmail" 
+              [(ngModel)]="recuperarEmail" 
+              placeholder="tucorreo@ejemplo.com"
+              required 
+              style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; box-sizing: border-box; outline: none; font-size: 1rem;"
+            />
+          </div>
+          
+          <button type="submit" [disabled]="cargandoRecuperar" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, filter 0.2s; outline: none;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'">
+            {{ cargandoRecuperar ? 'Enviando...' : 'Enviar código de verificación' }}
+          </button>
+        </form>
+      }
+
+      @if (recuperarPaso === 'restablecer') {
+        <form (ngSubmit)="confirmarRestablecimiento()">
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Código de Verificación</label>
+            <input 
+              type="text" 
+              name="recuperarCodigo" 
+              [(ngModel)]="recuperarCodigo" 
+              placeholder="Ingresa el código de 6 dígitos"
+              required 
+              style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; box-sizing: border-box; outline: none; font-size: 1rem;"
+            />
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <label style="display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.5); margin-bottom: 8px;">Nueva Contraseña</label>
+            <input 
+              type="password" 
+              name="recuperarNuevaPass" 
+              [(ngModel)]="recuperarNuevaPass" 
+              placeholder="Ingresa tu nueva contraseña"
+              required 
+              style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; box-sizing: border-box; outline: none; font-size: 1rem;"
+            />
+          </div>
+
+          <button type="submit" [disabled]="cargandoRecuperar" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, filter 0.2s; outline: none;" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='none'">
+            {{ cargandoRecuperar ? 'Restableciendo...' : 'Restablecer contraseña' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+}

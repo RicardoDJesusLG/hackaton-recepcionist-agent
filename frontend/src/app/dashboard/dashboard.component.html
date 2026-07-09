@@ -35,7 +35,7 @@
     </nav>
 
     <div class="user-profile">
-      <span class="username">Propietario: <strong>{{ username }}</strong></span>
+      <span class="username">Administrador: <strong>{{ email }}</strong></span>
       <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
     </div>
   </header>
@@ -188,13 +188,30 @@
 
           <div class="form-group">
             <label for="telefonoContacto">Teléfono de Soporte o Local</label>
-            <input 
-              type="text" 
-              id="telefonoContacto" 
-              name="telefonoContacto" 
-              [(ngModel)]="empresa.telefonoContacto"
-              placeholder="Ej: 525512345678"
-            />
+            <div class="phone-input-group" style="display: flex; gap: 8px;">
+              <select 
+                id="prefijoTelefono" 
+                name="prefijoTelefono" 
+                [(ngModel)]="prefijoTelefono" 
+                style="width: 140px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none;"
+              >
+                <option value="52">+52 (MX)</option>
+                <option value="1">+1 (US/CA)</option>
+                <option value="57">+57 (CO)</option>
+                <option value="54">+54 (AR)</option>
+                <option value="56">+56 (CL)</option>
+                <option value="51">+51 (PE)</option>
+                <option value="34">+34 (ES)</option>
+              </select>
+              <input 
+                type="text" 
+                id="telefonoLocal" 
+                name="telefonoLocal" 
+                [(ngModel)]="telefonoLocal" 
+                placeholder="Ej: 5522069771"
+                style="flex: 1;"
+              />
+            </div>
             <small class="help-text">El número de teléfono directo al que el bot enviará a los clientes si solicitan hablar con un humano.</small>
           </div>
 
@@ -255,35 +272,6 @@
           }
         </div>
 
-        <!-- Tarjeta de Promociones -->
-        <div class="subscription-box">
-          <h3>Promoción del Negocio</h3>
-          <p class="sub-text">Define una promoción activa para que el agente virtual la aplique y calcule descuentos automáticamente en el chat.</p>
-          
-          <div class="form-group" style="margin-bottom: 15px;">
-            <label class="switch-label">
-              <input type="checkbox" name="promocionActiva" [(ngModel)]="empresa.promocionActiva" (change)="guardarDatosEmpresa()">
-              <span class="switch-text">{{ empresa.promocionActiva ? 'Promoción Activa 🟢' : 'Promoción Inactiva 🛑' }}</span>
-            </label>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 15px;">
-            <label for="promocionDescripcion" style="display: block; margin-bottom: 6px; font-size: 13px; color: rgba(255,255,255,0.7);">Descripción de la Promoción</label>
-            <textarea 
-              id="promocionDescripcion" 
-              name="promocionDescripcion" 
-              [(ngModel)]="empresa.promocionDescripcion"
-              placeholder="Ej: 15% de descuento en cortes de cabello hoy martes..."
-              rows="3"
-              style="width: 100%; min-height: 80px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 14px; box-sizing: border-box; outline: none; resize: vertical;"
-            ></textarea>
-          </div>
-
-          <div style="display: flex; gap: 10px;">
-            <button type="button" (click)="guardarDatosEmpresa()" class="btn-renew" style="flex: 1; padding: 10px; font-size: 13px;">Guardar</button>
-            <button type="button" (click)="eliminarPromocion()" class="btn-pay" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Eliminar</button>
-          </div>
-        </div>
 
         <div class="info-box">
           <h4>¿Cómo funciona la IA?</h4>
@@ -432,7 +420,42 @@
             </div>
           </div>
 
-          <div class="form-group" style="margin-top: 10px;">
+          <div class="form-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <h4 style="margin-bottom: 15px; color: #a78bfa;">Opciones de Promoción</h4>
+            
+            <label class="switch-label" style="margin-bottom: 15px;">
+              <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
+              <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa 🟢' : 'Promoción Inactiva 🛑' }}</span>
+            </label>
+
+            @if (formServicio.promocionActiva) {
+              <div class="form-group">
+                <label for="srvTipoPromocion">Tipo de Promoción</label>
+                <select id="srvTipoPromocion" name="srvTipoPromocion" [(ngModel)]="formServicio.tipoPromocion" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none; margin-bottom: 15px;">
+                  <option value="NINGUNA">Ninguna</option>
+                  <option value="DESCUENTO_PORCENTAJE">Descuento (%)</option>
+                  <option value="SERVICIO_GRATIS">Servicio Gratis</option>
+                  <option value="DOS_POR_UNO">2x1</option>
+                  <option value="PERSONALIZADA">Personalizada</option>
+                </select>
+              </div>
+
+              @if (formServicio.tipoPromocion === 'DESCUENTO_PORCENTAJE') {
+                <div class="form-group">
+                  <label for="srvValorPromocionPorc">Porcentaje de Descuento (%)</label>
+                  <input type="number" id="srvValorPromocionPorc" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required min="1" max="100" placeholder="Ej: 15">
+                </div>
+              } @else if (formServicio.tipoPromocion === 'PERSONALIZADA') {
+                <div class="form-group">
+                  <label for="srvValorPromocionPers">Descripción de la Promoción</label>
+                  <input type="text" id="srvValorPromocionPers" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required maxlength="60" placeholder="Ej: Gratis en la compra de un shampoo">
+                  <small class="help-text">Máximo 60 caracteres. No incluir directivas de IA.</small>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="form-group" style="margin-top: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
             <label class="switch-label">
               <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
               <span class="switch-text">{{ formServicio.activo ? 'Servicio Activo 🟢' : 'Servicio Inactivo 🛑' }}</span>
@@ -467,8 +490,8 @@
 
         <form (ngSubmit)="confirmarReauthYGuardar()">
           <div class="form-group">
-            <label for="reauthUsername">Usuario</label>
-            <input type="text" id="reauthUsername" name="reauthUsername" [(ngModel)]="reauthUsername" required autocomplete="username">
+            <label for="reauthEmail">Correo Electrónico</label>
+            <input type="email" id="reauthEmail" name="reauthEmail" [(ngModel)]="reauthEmail" required autocomplete="email">
           </div>
 
           <div class="form-group">
