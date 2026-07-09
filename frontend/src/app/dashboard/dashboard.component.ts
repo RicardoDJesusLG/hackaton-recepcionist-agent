@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../dashboard.service';
@@ -16,6 +16,7 @@ export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Navegación
   activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' = 'citas';
@@ -87,6 +88,31 @@ export class DashboardComponent implements OnInit {
     this.cargarDatosEmpresa();
     this.cargarHorariosAgenda();
     this.cargarServicios();
+
+    // Escuchar parámetros de pago de Stripe
+    this.route.queryParams.subscribe(params => {
+      if (params['payment'] === 'success') {
+        this.successMessage = '¡Gracias por tu pago! Tu suscripción ha sido procesada con éxito.';
+        this.cargarDatosEmpresa();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { payment: null, mock: null, idNegocio: null },
+          queryParamsHandling: 'merge'
+        });
+      } else if (params['payment'] === 'cancel') {
+        this.errorMessage = 'El proceso de pago fue cancelado.';
+        this.cargarDatosEmpresa();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { payment: null, mock: null, idNegocio: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+    });
   }
 
   // --- NAVEGACIÓN ---
@@ -405,6 +431,25 @@ export class DashboardComponent implements OnInit {
         } else {
           this.isLoading = false;
           alert('Error al iniciar pasarela de pagos.');
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        alert('Error al conectar con Stripe.');
+        console.error(err);
+      }
+    });
+  }
+
+  gestionarSuscripcion(): void {
+    this.isLoading = true;
+    this.dashboardService.crearCheckoutSession(this.empresaId).subscribe({
+      next: (res) => {
+        if (res && res.url) {
+          window.location.href = res.url;
+        } else {
+          this.isLoading = false;
+          alert('Error al abrir el portal de gestión.');
         }
       },
       error: (err) => {
