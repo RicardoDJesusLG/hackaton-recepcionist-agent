@@ -141,13 +141,17 @@ public class WhatsAppWebhookController {
                     String agentResponse;
                     if (finalEmpresaOpt.isPresent()) {
                         Empresa empresa = finalEmpresaOpt.get();
+                        String mapsLink = empresa.getMapsLink();
+                        if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
+                            mapsLink = null;
+                        }
                         agentResponse = antigravityAgent.chat(
                             finalUserMessage, 
                             empresa.getId().toString(), 
                             empresa.getNombre(), 
                             empresa.getTelefonoContacto(), 
                             empresa.getDireccion(), 
-                            empresa.getMapsLink(), 
+                            mapsLink, 
                             empresa.getDescripcionNegocio(),
                             finalCustomerPhone
                         );

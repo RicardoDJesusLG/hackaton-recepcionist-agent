@@ -43,7 +43,18 @@ export class DashboardComponent implements OnInit {
     descripcionNegocio: '',
     telefonoContacto: '',
     mapsLink: '',
-    suscripcionActiva: true
+    suscripcionActiva: true,
+    planSuscripcion: 'BASIC'
+  };
+
+  // Estadísticas de Suscripción
+  subStats: any = {
+    planSuscripcion: 'BASIC',
+    suscripcionActiva: true,
+    totalServicios: 0,
+    limiteServicios: 3,
+    citasMesActual: 0,
+    limiteCitas: 30
   };
 
   // Catálogo de Servicios
@@ -88,12 +99,14 @@ export class DashboardComponent implements OnInit {
     this.cargarDatosEmpresa();
     this.cargarHorariosAgenda();
     this.cargarServicios();
+    this.cargarEstadisticasSuscripcion();
 
     // Escuchar parámetros de pago de Stripe
     this.route.queryParams.subscribe(params => {
       if (params['payment'] === 'success') {
         this.successMessage = '¡Gracias por tu pago! Tu suscripción ha sido procesada con éxito.';
         this.cargarDatosEmpresa();
+        this.cargarEstadisticasSuscripcion();
         
         // Limpiar parámetros de la URL
         this.router.navigate([], {
@@ -104,6 +117,7 @@ export class DashboardComponent implements OnInit {
       } else if (params['payment'] === 'cancel') {
         this.errorMessage = 'El proceso de pago fue cancelado.';
         this.cargarDatosEmpresa();
+        this.cargarEstadisticasSuscripcion();
         
         // Limpiar parámetros de la URL
         this.router.navigate([], {
@@ -227,6 +241,7 @@ export class DashboardComponent implements OnInit {
         this.extraerPrefijoYNumero();
         this.successMessage = 'Información de la empresa guardada correctamente.';
         this.isLoading = false;
+        this.cargarEstadisticasSuscripcion();
       },
       error: (err) => {
         this.isLoading = false;
@@ -422,9 +437,9 @@ export class DashboardComponent implements OnInit {
   }
 
   // --- STRIPE BILLING ---
-  pagarSuscripcion(): void {
+  pagarSuscripcion(plan: string): void {
     this.isLoading = true;
-    this.dashboardService.crearCheckoutSession(this.empresaId).subscribe({
+    this.dashboardService.crearCheckoutSession(this.empresaId, plan).subscribe({
       next: (res) => {
         if (res && res.url) {
           window.location.href = res.url;
@@ -441,21 +456,15 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  gestionarSuscripcion(): void {
-    this.isLoading = true;
-    this.dashboardService.crearCheckoutSession(this.empresaId).subscribe({
-      next: (res) => {
-        if (res && res.url) {
-          window.location.href = res.url;
-        } else {
-          this.isLoading = false;
-          alert('Error al abrir el portal de gestión.');
-        }
+  cargarEstadisticasSuscripcion(): void {
+    this.dashboardService.getSubscriptionStats().subscribe({
+      next: (data) => {
+        this.subStats = data;
+        this.empresa.suscripcionActiva = data.suscripcionActiva;
+        this.empresa.planSuscripcion = data.planSuscripcion;
       },
       error: (err) => {
-        this.isLoading = false;
-        alert('Error al conectar con Stripe.');
-        console.error(err);
+        console.error('Error al cargar estadísticas de suscripción:', err);
       }
     });
   }
