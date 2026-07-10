@@ -135,42 +135,40 @@ public class WhatsAppWebhookController {
             final String finalCustomToken = customToken;
             final Optional<Empresa> finalEmpresaOpt = empresaOpt;
 
-            // Procesar de forma asíncrona para responder rápido a Meta y evitar reintentos duplicados
-            java.util.concurrent.CompletableFuture.runAsync(() -> {
-                try {
-                    String agentResponse;
-                    if (finalEmpresaOpt.isPresent()) {
-                        Empresa empresa = finalEmpresaOpt.get();
-                        String mapsLink = empresa.getMapsLink();
-                        if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
-                            mapsLink = null;
-                        }
-                        agentResponse = antigravityAgent.chat(
-                            finalUserMessage, 
-                            empresa.getId().toString(), 
-                            empresa.getNombre(), 
-                            empresa.getTelefonoContacto(), 
-                            empresa.getDireccion(), 
-                            mapsLink, 
-                            empresa.getDescripcionNegocio(),
-                            finalCustomerPhone
-                        );
-                    } else {
-                        agentResponse = antigravityAgent.chat(finalUserMessage);
+            // Procesar de forma síncrona para garantizar que Cloud Run mantenga la CPU asignada durante la ejecución
+            try {
+                String agentResponse;
+                if (finalEmpresaOpt.isPresent()) {
+                    Empresa empresa = finalEmpresaOpt.get();
+                    String mapsLink = empresa.getMapsLink();
+                    if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
+                        mapsLink = null;
                     }
-                    System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
-
-                    // Enviar mensaje de vuelta usando el servicio
-                    whatsAppService.enviarMensajeTexto(finalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
-                } catch (Exception ex) {
-                    System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma asíncrona: " + ex.getMessage());
+                    agentResponse = antigravityAgent.chat(
+                        finalUserMessage, 
+                        empresa.getId().toString(), 
+                        empresa.getNombre(), 
+                        empresa.getTelefonoContacto(), 
+                        empresa.getDireccion(), 
+                        mapsLink, 
+                        empresa.getDescripcionNegocio(),
+                        finalCustomerPhone
+                    );
+                } else {
+                    agentResponse = antigravityAgent.chat(finalUserMessage);
                 }
-            });
+                System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
+
+                // Enviar mensaje de vuelta usando el servicio
+                whatsAppService.enviarMensajeTexto(finalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
+            } catch (Exception ex) {
+                System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma síncrona: " + ex.getMessage());
+            }
         } else {
             System.out.println("[WhatsAppWebhookController] Payload recibido no contiene la información mínima para responder.");
         }
 
-        // Retornamos de inmediato un 200 OK para cumplir con la latencia que exige Meta
+        // Retornamos 200 OK
         return ResponseEntity.ok().build();
     }
 
