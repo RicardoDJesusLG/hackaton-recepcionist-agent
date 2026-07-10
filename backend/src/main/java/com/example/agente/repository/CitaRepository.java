@@ -18,6 +18,13 @@ public interface CitaRepository extends JpaRepository<Cita, UUID> {
             EstadoCita estado
     );
 
+    long countByEmpresaIdAndFechaHoraInicioBetweenAndEstadoNot(
+            UUID empresaId,
+            LocalDateTime start,
+            LocalDateTime end,
+            EstadoCita estado
+    );
+
     List<Cita> findByEmpresaIdOrderByFechaHoraInicioDesc(UUID empresaId);
 
     /**

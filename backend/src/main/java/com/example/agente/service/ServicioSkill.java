@@ -1,11 +1,14 @@
 package com.example.agente.service;
 
 import com.example.agente.dto.ServicioDTO;
+import com.example.agente.model.Empresa;
 import com.example.agente.model.Servicio;
+import com.example.agente.repository.EmpresaRepository;
 import com.example.agente.repository.ServicioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -18,9 +21,11 @@ import java.util.stream.Collectors;
 public class ServicioSkill {
 
     private final ServicioRepository servicioRepository;
+    private final EmpresaRepository empresaRepository;
 
-    public ServicioSkill(ServicioRepository servicioRepository) {
+    public ServicioSkill(ServicioRepository servicioRepository, EmpresaRepository empresaRepository) {
         this.servicioRepository = servicioRepository;
+        this.empresaRepository = empresaRepository;
     }
 
     /**
@@ -36,9 +41,20 @@ public class ServicioSkill {
             throw new IllegalArgumentException("El ID de la empresa no puede ser nulo");
         }
 
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        String plan = empresaOpt.map(Empresa::getPlanSuscripcion).orElse("BASIC");
+
+        int limit = Integer.MAX_VALUE;
+        if ("BASIC".equalsIgnoreCase(plan)) {
+            limit = 3;
+        } else if ("PRO".equalsIgnoreCase(plan)) {
+            limit = 10;
+        }
+
         List<Servicio> servicios = servicioRepository.findByEmpresaIdAndActivoTrue(empresaId);
 
         return servicios.stream()
+                .limit(limit)
                 .map(s -> new ServicioDTO(
                         s.getId(),
                         s.getNombre(),

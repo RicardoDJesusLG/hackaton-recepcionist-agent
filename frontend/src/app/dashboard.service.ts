@@ -9,6 +9,7 @@ export class DashboardService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/api/v1/dashboard';
   private paymentsUrl = 'http://localhost:8080/api/v1/payments';
+  private stripeUrl = 'http://localhost:8080/api/v1/stripe';
 
   getCitas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/citas`);
@@ -34,8 +35,12 @@ export class DashboardService {
     return this.http.put<any>(`${this.apiUrl}/empresa/agenda`, agendaData);
   }
 
-  crearCheckoutSession(empresaId: string): Observable<any> {
-    return this.http.post<any>(`${this.paymentsUrl}/create-checkout-session`, { empresaId });
+  crearCheckoutSession(idNegocio: string, plan: string): Observable<any> {
+    return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio, plan });
+  }
+
+  getSubscriptionStats(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/suscripcion/stats`);
   }
 
   getServicios(): Observable<any[]> {

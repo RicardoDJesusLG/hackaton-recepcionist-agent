@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface ServicioRepository extends JpaRepository<Servicio, UUID> {
     List<Servicio> findByEmpresaIdAndActivoTrue(UUID empresaId);
     List<Servicio> findByEmpresaId(UUID empresaId);
+    long countByEmpresaIdAndActivoTrue(UUID empresaId);
 }

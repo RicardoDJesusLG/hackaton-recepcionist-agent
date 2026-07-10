@@ -40,6 +40,10 @@ public class Empresa {
 
 
 
+    @Column(name = "plan_suscripcion", nullable = false, columnDefinition = "varchar(50) default 'BASIC'")
+    @Builder.Default
+    private String planSuscripcion = "BASIC";
+
     @Column(name = "telefono_contacto", length = 20)
     private String telefonoContacto;
 

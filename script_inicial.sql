@@ -4,13 +4,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. Crear ENUM para los estados de las citas
 CREATE TYPE estado_cita AS ENUM ('PENDIENTE', 'CONFIRMADA', 'CANCELADA');
 
--- 3. Tabla de Empresas (Modificada con campos de información del negocio)
+-- 3. Tabla de Empresas (Modificada con campos de información del negocio y plan de suscripción)
 CREATE TABLE empresas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nombre VARCHAR(100) NOT NULL,
     whatsapp_phone_id VARCHAR(50) UNIQUE NOT NULL,
     direccion TEXT,                                 -- ¡Para que la IA sepa dónde están!
     descripcion_negocio TEXT,                       -- Ej: "Barbería premium estilo clásico"
+    suscripcion_activa BOOLEAN NOT NULL DEFAULT TRUE,
+    plan_suscripcion VARCHAR(50) NOT NULL DEFAULT 'BASIC',
+    telefono_contacto VARCHAR(20),
+    maps_link TEXT,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
