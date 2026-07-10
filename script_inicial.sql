@@ -9,13 +9,24 @@ CREATE TABLE empresas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nombre VARCHAR(100) NOT NULL,
     whatsapp_phone_id VARCHAR(50) UNIQUE NOT NULL,
+    whatsapp_token TEXT,
     direccion TEXT,                                 -- ¡Para que la IA sepa dónde están!
     descripcion_negocio TEXT,                       -- Ej: "Barbería premium estilo clásico"
     suscripcion_activa BOOLEAN NOT NULL DEFAULT TRUE,
     plan_suscripcion VARCHAR(50) NOT NULL DEFAULT 'BASIC',
     telefono_contacto VARCHAR(20),
     maps_link TEXT,
+    stripe_customer_id VARCHAR(255),
+    stripe_subscription_id VARCHAR(255),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3b. Tabla de Propietarios (Owners) para login administrativo
+CREATE TABLE owners (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    empresa_id UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE
 );
 
 -- 4. Tabla de Usuarios / Clientes Finales
