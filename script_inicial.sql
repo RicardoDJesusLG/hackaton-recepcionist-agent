@@ -46,6 +46,9 @@ CREATE TABLE servicios (
     duracion_minutos INT NOT NULL DEFAULT 30,
     precio NUMERIC(10, 2) NOT NULL,
     activo BOOLEAN DEFAULT TRUE,
+    tipo_promocion VARCHAR(50),
+    valor_promocion VARCHAR(100),
+    promocion_activa BOOLEAN,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
