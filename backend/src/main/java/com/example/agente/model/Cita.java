@@ -37,8 +37,7 @@ public class Cita {
     private LocalDateTime fechaHoraFin;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "estado", columnDefinition = "estado_cita")
+    @Column(name = "estado", length = 50)
     private EstadoCita estado;
 
     @Column(name = "detalles_adicionales", columnDefinition = "TEXT")
