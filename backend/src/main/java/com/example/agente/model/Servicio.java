@@ -36,4 +36,14 @@ public class Servicio {
 
     @Column(name = "activo", nullable = false)
     private Boolean activo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_promocion")
+    private TipoPromocion tipoPromocion;
+
+    @Column(name = "valor_promocion", length = 100)
+    private String valorPromocion;
+
+    @Column(name = "promocion_activa")
+    private Boolean promocionActiva;
 }

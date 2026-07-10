@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface EmpresaRepository extends JpaRepository<Empresa, UUID> {
     Optional<Empresa> findByWhatsappPhoneId(String whatsappPhoneId);
+    Optional<Empresa> findByStripeSubscriptionId(String stripeSubscriptionId);
 }

@@ -1,31 +1,38 @@
 package com.example.agente.controller;
 
 import com.example.agente.dto.ServicioDTO;
+import com.example.agente.model.Servicio;
+import com.example.agente.model.TipoPromocion;
+import com.example.agente.repository.ServicioRepository;
 import com.example.agente.service.ServicioSkill;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Controlador REST complementario para exponer el catálogo de servicios de forma directa por HTTP.
+ * Controlador REST para exponer y administrar el catálogo de servicios.
  */
 @RestController
 @RequestMapping("/api/v1/servicios")
 public class ServicioController {
 
     private final ServicioSkill servicioSkill;
+    private final ServicioRepository servicioRepository;
 
-    public ServicioController(ServicioSkill servicioSkill) {
+    public ServicioController(ServicioSkill servicioSkill, ServicioRepository servicioRepository) {
         this.servicioSkill = servicioSkill;
+        this.servicioRepository = servicioRepository;
     }
 
     /**
-     * Endpoint GET para obtener la lista de servicios de un negocio.
-     *
-     * @param idNegocio El ID de la empresa en formato String (convertido internamente a UUID).
-     * @return Una respuesta HTTP conteniendo la lista de ServicioDTO del catálogo.
+     * Endpoint GET público para obtener la lista de servicios activos de un negocio (usado por Vertex AI).
      */
     @GetMapping
     public ResponseEntity<List<ServicioDTO>> obtenerServicios(@RequestParam("id_negocio") String idNegocio) {
@@ -42,5 +49,226 @@ public class ServicioController {
 
         List<ServicioDTO> servicios = servicioSkill.obtenerCatalogoServicios(empresaId);
         return ResponseEntity.ok(servicios);
+    }
+
+    /**
+     * Endpoint GET privado para obtener TODOS los servicios (activos e inactivos) del negocio autenticado.
+     */
+    @GetMapping("/admin")
+    public ResponseEntity<?> obtenerServiciosAdmin(HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        List<Servicio> servicios = servicioRepository.findByEmpresaId(empresaId);
+        return ResponseEntity.ok(servicios);
+    }
+
+    /**
+     * Endpoint POST privado para crear un nuevo servicio.
+     */
+    @PostMapping
+    public ResponseEntity<?> crearServicio(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        String nombre = (String) body.get("nombre");
+        String descripcion = (String) body.get("descripcion");
+        Object precioObj = body.get("precio");
+        Object duracionObj = body.get("duracionMinutos");
+        Boolean activo = (Boolean) body.get("activo");
+
+        if (nombre == null || nombre.trim().isEmpty() || precioObj == null || duracionObj == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nombre, precio y duración son requeridos."));
+        }
+
+        BigDecimal precio;
+        try {
+            if (precioObj instanceof Integer) {
+                precio = BigDecimal.valueOf((Integer) precioObj);
+            } else if (precioObj instanceof Double) {
+                precio = BigDecimal.valueOf((Double) precioObj);
+            } else {
+                precio = new BigDecimal(precioObj.toString());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Precio inválido."));
+        }
+
+        Integer duracionMinutos;
+        try {
+            duracionMinutos = Integer.valueOf(duracionObj.toString());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Duración inválida."));
+        }
+
+        Servicio nuevo = Servicio.builder()
+                .empresaId(empresaId)
+                .nombre(nombre.trim())
+                .descripcion(descripcion != null ? descripcion.trim() : "")
+                .precio(precio)
+                .duracionMinutos(duracionMinutos)
+                .activo(activo != null ? activo : true)
+                .tipoPromocion(TipoPromocion.NINGUNA)
+                .promocionActiva(false)
+                .build();
+
+        ResponseEntity<?> error = validarYAsignarPromocion(body, nuevo);
+        if (error != null) return error;
+
+        nuevo = servicioRepository.save(nuevo);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
+    }
+
+    /**
+     * Endpoint PUT privado para actualizar un servicio existente.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> actualizarServicio(@PathVariable("id") UUID id, @RequestBody Map<String, Object> body, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Servicio> servicioOpt = servicioRepository.findById(id);
+        if (servicioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Servicio no encontrado"));
+        }
+
+        Servicio servicio = servicioOpt.get();
+        if (!servicio.getEmpresaId().equals(empresaId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "No tienes permisos sobre este servicio"));
+        }
+
+        String nombre = (String) body.get("nombre");
+        String descripcion = (String) body.get("descripcion");
+        Object precioObj = body.get("precio");
+        Object duracionObj = body.get("duracionMinutos");
+        Boolean activo = (Boolean) body.get("activo");
+
+        if (nombre != null && !nombre.trim().isEmpty()) {
+            servicio.setNombre(nombre.trim());
+        }
+        if (descripcion != null) {
+            servicio.setDescripcion(descripcion.trim());
+        }
+        if (precioObj != null) {
+            try {
+                BigDecimal precio;
+                if (precioObj instanceof Integer) {
+                    precio = BigDecimal.valueOf((Integer) precioObj);
+                } else if (precioObj instanceof Double) {
+                    precio = BigDecimal.valueOf((Double) precioObj);
+                } else {
+                    precio = new BigDecimal(precioObj.toString());
+                }
+                servicio.setPrecio(precio);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Precio inválido."));
+            }
+        }
+        if (duracionObj != null) {
+            try {
+                servicio.setDuracionMinutos(Integer.valueOf(duracionObj.toString()));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Duración inválida."));
+            }
+        }
+        if (activo != null) {
+            servicio.setActivo(activo);
+        }
+
+        ResponseEntity<?> error = validarYAsignarPromocion(body, servicio);
+        if (error != null) return error;
+
+        servicio = servicioRepository.save(servicio);
+        return ResponseEntity.ok(servicio);
+    }
+
+    /**
+     * Endpoint DELETE privado para eliminar o desactivar un servicio.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarServicio(@PathVariable("id") UUID id, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Servicio> servicioOpt = servicioRepository.findById(id);
+        if (servicioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Servicio no encontrado"));
+        }
+
+        Servicio servicio = servicioOpt.get();
+        if (!servicio.getEmpresaId().equals(empresaId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "No tienes permisos sobre este servicio"));
+        }
+
+        try {
+            servicioRepository.delete(servicio);
+            return ResponseEntity.ok(Map.of("mensaje", "Servicio eliminado correctamente"));
+        } catch (Exception e) {
+            // Soft delete en caso de existir citas asociadas (evita violación de llave foránea restrictiva)
+            servicio.setActivo(false);
+            servicioRepository.save(servicio);
+            return ResponseEntity.ok(Map.of(
+                    "message", "El servicio tiene citas asociadas. Se ha desactivado para nuevos agendamientos por seguridad.",
+                    "softDeleted", true
+            ));
+        }
+    }
+
+    private ResponseEntity<?> validarYAsignarPromocion(Map<String, Object> body, Servicio servicio) {
+        Boolean promocionActiva = (Boolean) body.get("promocionActiva");
+        String tipoPromocionStr = (String) body.get("tipoPromocion");
+        String valorPromocion = (String) body.get("valorPromocion");
+
+        if (promocionActiva != null) servicio.setPromocionActiva(promocionActiva);
+
+        if (tipoPromocionStr != null) {
+            try {
+                TipoPromocion tipo = TipoPromocion.valueOf(tipoPromocionStr);
+                servicio.setTipoPromocion(tipo);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Tipo de promoción inválido."));
+            }
+        }
+
+        if (servicio.getTipoPromocion() != null && servicio.getTipoPromocion() != TipoPromocion.NINGUNA) {
+            if (valorPromocion == null || valorPromocion.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El valor de la promoción es requerido."));
+            }
+            valorPromocion = valorPromocion.trim();
+            
+            if (servicio.getTipoPromocion() == TipoPromocion.DESCUENTO_PORCENTAJE) {
+                try {
+                    int percent = Integer.parseInt(valorPromocion);
+                    if (percent <= 0 || percent > 100) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "El porcentaje debe estar entre 1 y 100."));
+                    }
+                } catch (NumberFormatException ex) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "El porcentaje de descuento debe ser un número entero válido."));
+                }
+            } else if (servicio.getTipoPromocion() == TipoPromocion.PERSONALIZADA) {
+                if (valorPromocion.length() > 60) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción personalizada no puede exceder 60 caracteres."));
+                }
+                String lower = valorPromocion.toLowerCase();
+                if (lower.contains("ignora") || lower.contains("todas") || lower.contains("sistema") || lower.contains("instrucciones") || lower.contains("gratis a todos")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción contiene palabras no permitidas."));
+                }
+                if (!valorPromocion.matches("^[a-zA-Z0-9\\s.,!¡¿?%$-]+$")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La promoción contiene caracteres inválidos. Solo se permiten letras, números y .,!¡¿?%$-"));
+                }
+            }
+            servicio.setValorPromocion(valorPromocion);
+        } else {
+            servicio.setValorPromocion(null);
+        }
+        return null;
     }
 }

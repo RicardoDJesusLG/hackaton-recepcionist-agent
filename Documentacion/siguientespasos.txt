@@ -1,0 +1,77 @@
+1. ¿El cliente necesita obligatoriamente un número verificado?
+No de inmediato, pero sí para operar comercialmente. Aquí hay que separar dos tipos de "verificación" que Meta exige:
+
+La verificación del número de teléfono (Obligatoria para todos): Cualquier negocio que quiera usar la API de WhatsApp debe pasar un número telefónico real por un proceso de validación (Meta les hace una llamada o les manda un SMS con un código para demostrar que el número les pertenece). Esto toma 5 minutos y se hace directamente en su propio panel de Meta.
+
+La verificación de la empresa (Business Verification): Esto es subir el acta constitutiva o documentos fiscales del negocio a Meta para comprobar que la empresa es real. Para arrancar, no es obligatoria. Meta permite crear aplicaciones en un estado de "Acceso Limitado" (Unverified Account). En este estado, el negocio ya puede recibir mensajes de cualquier cliente real en producción, pero con un límite máximo de 250 conversaciones al día. Si el negocio crece y necesita más volumen, entonces sí tendrá que subir sus papeles para desbloquear el límite.
+
+Por lo tanto, pueden venderle el agente a cualquier negocio, incluso si son pequeños o no tienen una marca verificada (la palomita verde), siempre y cuando estén dispuestos a dar de alta su número en la plataforma.
+
+2. ¿Qué es WABA y cómo funciona el modelo de Concentrador?
+WABA significa WhatsApp Business Account (Cuenta de WhatsApp Business). No es un software externo ni una plataforma proveedora; es el nombre técnico que Meta le da al contenedor donde viven los números, las plantillas y la facturación de un negocio.
+
+Cuando quieres gestionar múltiples clientes (las empresas a las que les vas a vender el agente), existen dos modelos de arquitectura para administrar esos números desde tu infraestructura:
+
+Modelo A: Tú como Proveedor Independiente (Cada cliente con su WABA)
+Es el modelo más limpio y recomendado si vas empezando.
+
+Cada negocio entra a Meta Developers, crea su propia cuenta (su propia WABA) y da de alta su número de teléfono.
+
+En la configuración de su Webhook, ellos pegan la URL de tu backend de Java.
+
+Cómo lo concentras tú: En tu base de datos de Postgres, creas una tabla de Clientes o Empresas donde guardas el ID de la WABA o el Phone Number ID de cada cliente. Cuando Meta mande un webhook a tu servidor, el JSON incluirá un campo que dice de qué número proviene. Tu backend lee ese ID, busca en la base de datos a qué empresa pertenece, invoca el contexto correcto en Vertex AI y responde. Una sola aplicación de Spring Boot atiende a todos de forma aislada.
+
+Modelo B: Proveedor de Soluciones Empresariales (Tech Provider / ISV)
+Si tu idea de negocio a largo plazo es ser un concentrador masivo donde el cliente no tenga que meterse para nada a Meta Developers, puedes registrar tu cuenta de desarrollador como Tech Provider (Proveedor de Tecnología) en el panel de Meta.
+
+Tú creas una sola WABA maestra.
+
+A través de una API de Meta llamada Embedded Signup, permites que los clientes "te compartan" el control de sus números telefónicos mediante un par de clics dentro de tu propia plataforma angular.
+
+Todos los números quedan agrupados bajo tu control, y Meta te cobra a ti de forma concentrada el uso de la API, permitiéndote a ti cobrarle una suscripción final al cliente con tu propio margen de ganancia.
+
+Para el estado actual del MVP, el Modelo A es el camino más rápido: mantengan su backend multi-tenant identificando las peticiones entrantes por el ID del número de Meta, y guarden las credenciales de cada cliente en su base de datos para saber a quién responde el bot.
+
+¿Cuál de los dos enfoques hace más sentido para la estrategia comercial que tienen pensada para el agente?
+
+-----RESPUESTA MIA-----
+Okay, si decidimos optar por el modelo A para iniciar, quisiera saber si se genera algún tipo de costo. Evidentemente se le estará generando el cobro al local o a la microempresa, pero quisiera saber de cuánto sería para que también lo vayamos contemplando dentro del costo de nuestra membresía y podamos tener cierto margen de ganancia. En este caso tengo una duda. Se está utilizando un token temporal para que funcione nuestro backend, un token de WhatsApp API. Y me mencionaba Antigravity que podría yo generar un token pues permanente, pero solamente estaría funcionando en mi cuenta de Meta Developers, bueno, básicamente solamente en mi waba. Entonces, ¿qué pasaría con las otras empresas? O sea, ¿se tendría que estar generando un token distinto o ese token solamente es para realizar las pruebas con el número de prueba? 
+
+-----respuesta gemini---
+Vámonos directo a los números y a la arquitectura de tokens para el Modelo A, que es la forma más inteligente de arrancar sin asumir deudas ajenas.
+
+1. Costos de la API de WhatsApp (Meta)
+Meta no cobra una renta mensual fija por usar la API, sino que cobra por conversación (una ventana de 24 horas desde el primer mensaje). Cuando usas el Modelo A, los cargos van directo a la tarjeta de crédito que cada negocio registre en su propia WABA.
+
+El esquema de costos de Meta funciona bajo estas reglas:
+
+Conversaciones iniciadas por el usuario (Servicio al Cliente): Cuando un cliente real le escribe al WhatsApp del negocio para preguntar por un servicio y tu bot en Spring Boot responde, Meta cobra aproximadamente $0.01 USD a $0.02 USD por esa ventana de 24 horas (el costo exacto varía ligeramente por país e inflación, pero ronda los 20 a 40 centavos de peso mexicano por conversación completa).
+
+Las primeras 1,000 conversaciones de servicio de cada mes son 100% GRATIS. Para una microempresa (una estética, una veterinaria, un local mediano), es muy probable que sus interacciones mensuales ni siquiera superen este límite gratuito. Su costo de API con Meta sería de $0 MXN.
+
+Margen para tu membresía: Como Meta le cobra directamente al cliente a través de su WABA lo que exceda las 1,000 conversaciones gratis, tu startup no absorbe ese riesgo. Tú puedes cobrar tu membresía fija mensual (por ejemplo, $30 USD o $50 USD al mes) únicamente por el software, el hosting y el uso de la IA (Vertex AI/Gemini), vendiéndole al cliente el beneficio de que sus primeras 1,000 conversaciones con clientes son gratis gracias a Meta.
+
+2. La duda de los Tokens: ¿Un token por empresa o uno solo?
+El token temporal de 24 horas que estás usando en el panel de Meta Developers es exclusivo para el número de prueba del Sandbox. Para producción, necesitas tokens permanentes.
+
+En el Modelo A, la regla de oro es: Cada empresa cliente maneja su propio Token Permanente.
+
+Así es como funciona el flujo técnico y el almacenamiento en tu base de datos:
+
+El cliente genera su token: El dueño del negocio entra a su propio panel de Meta Developers (o tú lo guías), genera un System User Access Token (Token de Sistema) permanente dentro de su propia WABA y te lo proporciona.
+
+Tu base de datos concentradora (Postgres): En tu backend de Spring Boot, en la tabla de Empresas o Configuraciones, debes tener una columna llamada whatsapp_token y otra llamada phone_number_id.
+
+El bot responde de forma dinámica: Cuando tu backend procesa una respuesta para enviarla de vuelta a WhatsApp, el código de Java no debe usar una variable fija en el application.properties. En su lugar, el flujo debe ser:
+
+Llega el mensaje de un cliente.
+
+Identificas de qué WABA o número proviene.
+
+Haces un query a Postgres para traer el Token Permanente específico de esa empresa.
+
+Haces el POST a la API de Meta inyectando ese token dinámico en el Header de autorización.
+
+Conclusión: No usas tu token para los demás. Cada negocio te da su propio token permanente, tú los almacenas de forma segura en tu base de datos y tu backend multi-tenant los alterna dinámicamente según quién esté recibiendo el mensaje.
+
+¿Queda claro cómo estructurar la tabla en el backend para manejar estos tokens dinámicos?

@@ -15,7 +15,7 @@ export class RegisterComponent {
   private router = inject(Router);
 
   // Datos de usuario
-  username = '';
+  email = '';
   password = '';
 
   // Configuración de empresa
@@ -25,9 +25,11 @@ export class RegisterComponent {
   // Datos de nueva empresa
   nombreEmpresa = '';
   whatsappPhoneId = '';
+  whatsappToken = '';
   direccion = '';
   descripcionNegocio = '';
   telefonoContacto = '';
+  prefijoTelefono = '52';
   mapsLink = '';
 
   errorMessage = '';
@@ -35,27 +37,34 @@ export class RegisterComponent {
   isLoading = false;
 
   onSubmit(): void {
-    if (!this.username.trim() || !this.password.trim()) {
-      this.errorMessage = 'El nombre de usuario y contraseña son obligatorios.';
+    if (!this.email.trim() || !this.password.trim()) {
+      this.errorMessage = 'El correo electrónico y contraseña son obligatorios.';
+      return;
+    }
+
+    // Validación básica de formato de correo
+    if (!this.email.includes('@') || !this.email.includes('.')) {
+      this.errorMessage = 'Por favor ingresa un correo electrónico válido.';
       return;
     }
 
     const payload: any = {
-      username: this.username,
+      email: this.email.trim().toLowerCase(),
       password: this.password,
       crearNuevaEmpresa: this.crearNuevaEmpresa
     };
 
     if (this.crearNuevaEmpresa) {
-      if (!this.nombreEmpresa.trim() || !this.whatsappPhoneId.trim()) {
-        this.errorMessage = 'El nombre de la empresa y el ID de WhatsApp son obligatorios.';
+      if (!this.nombreEmpresa.trim() || !this.whatsappPhoneId.trim() || !this.whatsappToken.trim()) {
+        this.errorMessage = 'El nombre de la empresa, el ID de WhatsApp y el token de acceso son obligatorios.';
         return;
       }
       payload.nombreEmpresa = this.nombreEmpresa.trim();
       payload.whatsappPhoneId = this.whatsappPhoneId.trim();
+      payload.whatsappToken = this.whatsappToken.trim();
       payload.direccion = this.direccion.trim();
       payload.descripcionNegocio = this.descripcionNegocio.trim();
-      payload.telefonoContacto = this.telefonoContacto.trim();
+      payload.telefonoContacto = this.telefonoContacto.trim() ? `+${this.prefijoTelefono}${this.telefonoContacto.trim().replace(/\D/g, '')}` : '';
       payload.mapsLink = this.mapsLink.trim();
     } else {
       if (!this.empresaId.trim()) {
@@ -80,7 +89,7 @@ export class RegisterComponent {
       error: (err) => {
         this.isLoading = false;
         if (err.status === 409) {
-          this.errorMessage = 'El nombre de usuario ya está tomado.';
+          this.errorMessage = 'El correo electrónico ya está registrado.';
         } else if (err.status === 400) {
           this.errorMessage = err.error?.error || 'ID de empresa no válido o datos incorrectos.';
         } else if (err.status === 404) {

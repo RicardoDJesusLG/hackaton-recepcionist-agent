@@ -36,6 +36,10 @@ public class CitaService {
         this.empresaRepository = empresaRepository;
     }
 
+    public AgendaConfigRepository getAgendaConfigRepository() {
+        return agendaConfigRepository;
+    }
+
     /**
      * Calcula los bloques de tiempo libres para un servicio en una fecha específica.
      */
@@ -50,12 +54,13 @@ public class CitaService {
 
         // 3. Buscar la configuración de agenda de la empresa para ese día
         Optional<AgendaConfig> configOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, diaSemanaSql);
-        LocalTime horaInicio = LocalTime.of(9, 0);
-        LocalTime horaFin = LocalTime.of(18, 0);
-        if (configOpt.isPresent()) {
-            horaInicio = configOpt.get().getHoraInicio();
-            horaFin = configOpt.get().getHoraFin();
+        if (configOpt.isEmpty()) {
+            // Si no hay configuración para este día, el negocio está CERRADO.
+            return List.of();
         }
+        
+        LocalTime horaInicio = configOpt.get().getHoraInicio();
+        LocalTime horaFin = configOpt.get().getHoraFin();
 
         // 4. Obtener citas existentes del día que no estén canceladas
         LocalDateTime inicioDia = fecha.atTime(LocalTime.MIN);
@@ -85,7 +90,10 @@ public class CitaService {
             }
 
             if (!ocupado) {
-                slotsLibres.add(slotStart.toString() + " - " + slotEnd.toString());
+                // No mostrar horarios que ya pasaron si la fecha consultada es hoy
+                if (!fecha.equals(LocalDate.now()) || slotStartDateTime.isAfter(LocalDateTime.now())) {
+                    slotsLibres.add(slotStart.toString() + " - " + slotEnd.toString());
+                }
             }
 
             actual = actual.plusMinutes(paso);
@@ -136,6 +144,24 @@ public class CitaService {
                 .orElseThrow(() -> new IllegalArgumentException("Servicio no encontrado con el ID: " + servicioId));
         LocalDateTime endDateTime = startDateTime.plusMinutes(servicio.getDuracionMinutos());
 
+        // 1.5 Validar que el día y la hora solicitada estén dentro de la disponibilidad oficial de la agenda
+        int diaSemanaSql = startDateTime.toLocalDate().getDayOfWeek().getValue() % 7;
+        Optional<AgendaConfig> configOpt = agendaConfigRepository.findByEmpresaIdAndDiaSemana(empresaId, diaSemanaSql);
+        
+        if (configOpt.isEmpty()) {
+            throw new IllegalStateException("Lo siento, el negocio está CERRADO los días " 
+                    + (diaSemanaSql == 0 ? "Domingo" : diaSemanaSql == 1 ? "Lunes" : diaSemanaSql == 2 ? "Martes" : diaSemanaSql == 3 ? "Miércoles" : diaSemanaSql == 4 ? "Jueves" : diaSemanaSql == 5 ? "Viernes" : "Sábado") + ".");
+        }
+
+        LocalTime horaInicioTrabajo = configOpt.get().getHoraInicio();
+        LocalTime horaFinTrabajo = configOpt.get().getHoraFin();
+        LocalTime horaInicioCita = startDateTime.toLocalTime();
+        LocalTime horaFinCita = endDateTime.toLocalTime();
+
+        if (horaInicioCita.isBefore(horaInicioTrabajo) || horaFinCita.isAfter(horaFinTrabajo)) {
+            throw new IllegalStateException("El horario solicitado (" + horaInicioCita + " a " + horaFinCita + ") está fuera del horario de atención del negocio (" + horaInicioTrabajo + " a " + horaFinTrabajo + ").");
+        }
+
         // 2. Buscar o crear el cliente en la tabla usuarios
         Usuario usuario = usuarioRepository.findByTelefonoWhatsapp(telefono)
                 .orElseGet(() -> {
@@ -145,6 +171,20 @@ public class CitaService {
                             .build();
                     return usuarioRepository.save(nuevo);
                 });
+
+        // 2.5 Validar límite de citas pendientes (anti-spam)
+        List<Cita> citasFuturas = citaRepository.findByUsuarioIdAndEmpresaIdAndFechaHoraInicioAfterAndEstadoNotOrderByFechaHoraInicioAsc(
+                usuario.getId(), empresaId, LocalDateTime.now(), EstadoCita.CANCELADA
+        );
+        if (citasFuturas.size() >= 3) {
+            throw new IllegalStateException("Has alcanzado el límite máximo de 3 citas programadas. Por favor asiste a tus citas pendientes o cancela alguna antes de agendar una nueva.");
+        }
+        long citasMismoDia = citasFuturas.stream()
+                .filter(c -> c.getFechaHoraInicio().toLocalDate().equals(startDateTime.toLocalDate()))
+                .count();
+        if (citasMismoDia >= 3) {
+            throw new IllegalStateException("Has alcanzado el límite de 3 citas programadas para el día " + startDateTime.toLocalDate() + ". Por favor elige otra fecha.");
+        }
 
         // 3. Validar solapamiento con citas existentes
         LocalDateTime inicioDia = startDateTime.toLocalDate().atTime(LocalTime.MIN);
@@ -261,11 +301,7 @@ public class CitaService {
                 sb.append("- ").append(dias[i]).append(": ")
                   .append(configOpt.get().getHoraInicio()).append(" a ").append(configOpt.get().getHoraFin()).append("\n");
             } else {
-                if (i == 0) {
-                    sb.append("- ").append(dias[i]).append(": Cerrado\n");
-                } else {
-                    sb.append("- ").append(dias[i]).append(": 09:00 a 18:00\n");
-                }
+                sb.append("- ").append(dias[i]).append(": Cerrado\n");
             }
         }
         return sb.toString();

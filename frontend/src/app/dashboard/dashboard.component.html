@@ -26,10 +26,16 @@
         [class.active]="activeTab === 'horarios'">
         ⚙️ Horarios de Atención
       </button>
+      <button 
+        (click)="setTab('servicios')" 
+        class="tab-link" 
+        [class.active]="activeTab === 'servicios'">
+        🏷️ Servicios
+      </button>
     </nav>
 
     <div class="user-profile">
-      <span class="username">Propietario: <strong>{{ username }}</strong></span>
+      <span class="username">Administrador: <strong>{{ email }}</strong></span>
       <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
     </div>
   </header>
@@ -170,14 +176,42 @@
           </div>
 
           <div class="form-group">
-            <label for="telefonoContacto">Teléfono de Soporte o Local</label>
+            <label for="whatsappToken">WhatsApp Access Token</label>
             <input 
-              type="text" 
-              id="telefonoContacto" 
-              name="telefonoContacto" 
-              [(ngModel)]="empresa.telefonoContacto"
-              placeholder="Ej: 525512345678"
+              type="password" 
+              id="whatsappToken" 
+              name="whatsappToken" 
+              [(ngModel)]="empresa.whatsappToken"
             />
+            <small class="help-text">Token de Meta. Se muestra enmascarado por seguridad. Para cambiarlo, ingresa el nuevo valor y presiona Guardar.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="telefonoContacto">Teléfono de Soporte o Local</label>
+            <div class="phone-input-group" style="display: flex; gap: 8px;">
+              <select 
+                id="prefijoTelefono" 
+                name="prefijoTelefono" 
+                [(ngModel)]="prefijoTelefono" 
+                style="width: 140px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none;"
+              >
+                <option value="52">+52 (MX)</option>
+                <option value="1">+1 (US/CA)</option>
+                <option value="57">+57 (CO)</option>
+                <option value="54">+54 (AR)</option>
+                <option value="56">+56 (CL)</option>
+                <option value="51">+51 (PE)</option>
+                <option value="34">+34 (ES)</option>
+              </select>
+              <input 
+                type="text" 
+                id="telefonoLocal" 
+                name="telefonoLocal" 
+                [(ngModel)]="telefonoLocal" 
+                placeholder="Ej: 5522069771"
+                style="flex: 1;"
+              />
+            </div>
             <small class="help-text">El número de teléfono directo al que el bot enviará a los clientes si solicitan hablar con un humano.</small>
           </div>
 
@@ -399,6 +433,182 @@
           <span>Actualizar Horarios</span>
         </button>
       </form>
+    </div>
+  }
+
+  <!-- TAB: SERVICIOS -->
+  @if (activeTab === 'servicios') {
+    <div class="main-card">
+      <div class="card-header-table">
+        <h2>Catálogo de Servicios</h2>
+        <button (click)="abrirModalServicio()" class="btn-refresh">
+          <span>+ Agregar Servicio 🏷️</span>
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Duración (min)</th>
+              <th>Precio (MXN)</th>
+              <th>Estatus</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (srv of servicios; track srv.id) {
+              <tr class="fade-in-row">
+                <td class="client-name">{{ srv.nombre }}</td>
+                <td>{{ srv.descripcion || 'Sin descripción' }}</td>
+                <td>{{ srv.duracionMinutos }} mins</td>
+                <td>${{ srv.precio }}</td>
+                <td>
+                  <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-pendiente'">
+                    {{ srv.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <button (click)="abrirModalServicio(srv)" class="btn-renew" style="padding: 6px 12px; font-size: 12px; width: auto; height: auto;">Editar</button>
+                    <button (click)="eliminarServicio(srv.id)" class="btn-pay" style="padding: 6px 12px; font-size: 12px; width: auto; height: auto; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty-state">
+                  <div class="empty-icon">🏷️</div>
+                  <p>No hay servicios registrados para este negocio.</p>
+                  <small>Haz clic en "Agregar Servicio" para comenzar a poblar tu catálogo.</small>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: CREAR/EDITAR SERVICIO -->
+  @if (mostrarModalServicio) {
+    <div class="modal-overlay">
+      <div class="glass-card modal-card" style="max-width: 500px; width: 90%; margin: 40px auto; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 1001; position: relative;">
+        <div class="card-header" style="text-align: left; margin-bottom: 20px;">
+          <h2>{{ editandoServicio ? 'Editar Servicio' : 'Nuevo Servicio' }}</h2>
+          <p>Define los detalles del servicio ofrecido en tu local</p>
+        </div>
+
+        <form (ngSubmit)="guardarServicio()">
+          <div class="form-group">
+            <label for="srvNombre">Nombre del Servicio</label>
+            <input type="text" id="srvNombre" name="srvNombre" [(ngModel)]="formServicio.nombre" required placeholder="Ej: Corte de Cabello Masculino">
+          </div>
+
+          <div class="form-group">
+            <label for="srvDescripcion">Descripción (Opcional)</label>
+            <textarea id="srvDescripcion" name="srvDescripcion" [(ngModel)]="formServicio.descripcion" rows="3" placeholder="Ej: Incluye lavado, corte con tijera/máquina y peinado..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;"></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label for="srvDuracion">Duración (minutos)</label>
+              <input type="number" id="srvDuracion" name="srvDuracion" [(ngModel)]="formServicio.duracionMinutos" required min="5" placeholder="Ej: 30">
+            </div>
+
+            <div class="form-group">
+              <label for="srvPrecio">Precio ($ MXN)</label>
+              <input type="number" id="srvPrecio" name="srvPrecio" [(ngModel)]="formServicio.precio" required min="0" placeholder="Ej: 200">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <h4 style="margin-bottom: 15px; color: #a78bfa;">Opciones de Promoción</h4>
+            
+            <label class="switch-label" style="margin-bottom: 15px;">
+              <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
+              <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa 🟢' : 'Promoción Inactiva 🛑' }}</span>
+            </label>
+
+            @if (formServicio.promocionActiva) {
+              <div class="form-group">
+                <label for="srvTipoPromocion">Tipo de Promoción</label>
+                <select id="srvTipoPromocion" name="srvTipoPromocion" [(ngModel)]="formServicio.tipoPromocion" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none; margin-bottom: 15px;">
+                  <option value="NINGUNA">Ninguna</option>
+                  <option value="DESCUENTO_PORCENTAJE">Descuento (%)</option>
+                  <option value="SERVICIO_GRATIS">Servicio Gratis</option>
+                  <option value="DOS_POR_UNO">2x1</option>
+                  <option value="PERSONALIZADA">Personalizada</option>
+                </select>
+              </div>
+
+              @if (formServicio.tipoPromocion === 'DESCUENTO_PORCENTAJE') {
+                <div class="form-group">
+                  <label for="srvValorPromocionPorc">Porcentaje de Descuento (%)</label>
+                  <input type="number" id="srvValorPromocionPorc" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required min="1" max="100" placeholder="Ej: 15">
+                </div>
+              } @else if (formServicio.tipoPromocion === 'PERSONALIZADA') {
+                <div class="form-group">
+                  <label for="srvValorPromocionPers">Descripción de la Promoción</label>
+                  <input type="text" id="srvValorPromocionPers" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required maxlength="60" placeholder="Ej: Gratis en la compra de un shampoo">
+                  <small class="help-text">Máximo 60 caracteres. No incluir directivas de IA.</small>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="form-group" style="margin-top: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <label class="switch-label">
+              <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
+              <span class="switch-text">{{ formServicio.activo ? 'Servicio Activo 🟢' : 'Servicio Inactivo 🛑' }}</span>
+            </label>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="button" (click)="cerrarModalServicio()" class="btn-renew" style="flex: 1;">Cancelar</button>
+            <button type="submit" [disabled]="isLoading" class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px; height: auto;">{{ editandoServicio ? 'Guardar Cambios' : 'Crear Servicio' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: RE-AUTENTICACIÓN PARA PROMPT ESPECIALIZADO -->
+  @if (mostrarModalReauth) {
+    <div class="modal-overlay">
+      <div class="glass-card modal-card" style="max-width: 450px; width: 90%; margin: 80px auto; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 1px solid rgba(239, 68, 68, 0.2); z-index: 1001; position: relative;">
+        <div class="card-header" style="text-align: left; margin-bottom: 20px;">
+          <h2 style="color: #f87171; display: flex; align-items: center; gap: 10px;">⚠️ Confirmación Crítica</h2>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.4; margin-top: 10px;">
+            Advertencia: Modificar el <strong>Prompt Especializado</strong> cambiará la información de la base de datos de manera permanente y modificará el comportamiento del agente de WhatsApp en tiempo real. Por favor, confirma tus credenciales para proceder.
+          </p>
+        </div>
+
+        @if (errorReauth) {
+          <div class="alert alert-error" style="padding: 8px 12px; font-size: 13px; margin-bottom: 15px;">
+            {{ errorReauth }}
+          </div>
+        }
+
+        <form (ngSubmit)="confirmarReauthYGuardar()">
+          <div class="form-group">
+            <label for="reauthEmail">Correo Electrónico</label>
+            <input type="email" id="reauthEmail" name="reauthEmail" [(ngModel)]="reauthEmail" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label for="reauthPassword">Contraseña</label>
+            <input type="password" id="reauthPassword" name="reauthPassword" [(ngModel)]="reauthPassword" required autocomplete="current-password">
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button type="button" (click)="cancelarReauth()" class="btn-renew" style="flex: 1;">Cancelar</button>
+            <button type="submit" [disabled]="isLoading" class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); height: auto;">Autorizar</button>
+          </div>
+        </form>
+      </div>
     </div>
   }
 </div>

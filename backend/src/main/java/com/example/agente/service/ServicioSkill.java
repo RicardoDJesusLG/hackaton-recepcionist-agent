@@ -60,7 +60,10 @@ public class ServicioSkill {
                         s.getNombre(),
                         s.getDescripcion(),
                         s.getPrecio(),
-                        s.getDuracionMinutos()
+                        s.getDuracionMinutos(),
+                        s.getTipoPromocion() != null ? s.getTipoPromocion().name() : "NINGUNA",
+                        s.getValorPromocion(),
+                        s.getPromocionActiva()
                 ))
                 .collect(Collectors.toList());
     }

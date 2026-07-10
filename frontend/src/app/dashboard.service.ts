@@ -10,6 +10,7 @@ export class DashboardService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/dashboard`;
   private stripeUrl = `${environment.apiUrl}/stripe`;
+  private serviciosUrl = `${environment.apiUrl}/servicios`;
 
   getCitas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/citas`);
@@ -41,5 +42,21 @@ export class DashboardService {
 
   getSubscriptionStats(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/suscripcion/stats`);
+  }
+
+  getServicios(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.serviciosUrl}/admin`);
+  }
+
+  crearServicio(servicio: any): Observable<any> {
+    return this.http.post<any>(`${this.serviciosUrl}`, servicio);
+  }
+
+  updateServicio(id: string, servicio: any): Observable<any> {
+    return this.http.put<any>(`${this.serviciosUrl}/${id}`, servicio);
+  }
+
+  eliminarServicio(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.serviciosUrl}/${id}`);
   }
 }

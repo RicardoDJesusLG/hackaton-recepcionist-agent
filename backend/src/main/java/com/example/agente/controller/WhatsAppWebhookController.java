@@ -116,6 +116,8 @@ public class WhatsAppWebhookController {
             
             // Validar la suscripción de la empresa asociada
             Optional<Empresa> empresaOpt = empresaRepository.findByWhatsappPhoneId(businessPhoneId);
+            String customToken = empresaOpt.map(Empresa::getWhatsappToken).orElse(null);
+
             if (empresaOpt.isPresent() && !empresaOpt.get().getSuscripcionActiva()) {
                 System.out.println("[WhatsAppWebhookController] Mensaje bloqueado. Empresa " + 
                         empresaOpt.get().getNombre() + " tiene la suscripción inactiva.");
@@ -123,26 +125,47 @@ public class WhatsAppWebhookController {
                 String blockMessage = "Lo sentimos, el servicio de recepción de este negocio se encuentra "
                         + "temporalmente suspendido por falta de pago. Si eres el dueño del negocio, "
                         + "por favor ingresa a tu Panel de Administración para reactivarlo.";
-                whatsAppService.enviarMensajeTexto(customerPhone, blockMessage, businessPhoneId);
+                whatsAppService.enviarMensajeTexto(customerPhone, blockMessage, businessPhoneId, customToken);
                 return ResponseEntity.ok().build();
             }
 
-            // Invocar al agente con contexto de la empresa si existe
-            String agentResponse;
-            if (empresaOpt.isPresent()) {
-                Empresa empresa = empresaOpt.get();
-                String mapsLink = empresa.getMapsLink();
-                if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
-                    mapsLink = null;
-                }
-                agentResponse = antigravityAgent.chat(userMessage, empresa.getId().toString(), empresa.getNombre(), empresa.getTelefonoContacto(), empresa.getDireccion(), mapsLink, customerPhone);
-            } else {
-                agentResponse = antigravityAgent.chat(userMessage);
-            }
-            System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
+            final String finalCustomerPhone = customerPhone;
+            final String finalUserMessage = userMessage;
+            final String finalBusinessPhoneId = businessPhoneId;
+            final String finalCustomToken = customToken;
+            final Optional<Empresa> finalEmpresaOpt = empresaOpt;
 
-            // Enviar mensaje de vuelta usando el servicio
-            whatsAppService.enviarMensajeTexto(customerPhone, agentResponse, businessPhoneId);
+            // Procesar de forma asíncrona para responder rápido a Meta y evitar reintentos duplicados
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    String agentResponse;
+                    if (finalEmpresaOpt.isPresent()) {
+                        Empresa empresa = finalEmpresaOpt.get();
+                        String mapsLink = empresa.getMapsLink();
+                        if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
+                            mapsLink = null;
+                        }
+                        agentResponse = antigravityAgent.chat(
+                            finalUserMessage, 
+                            empresa.getId().toString(), 
+                            empresa.getNombre(), 
+                            empresa.getTelefonoContacto(), 
+                            empresa.getDireccion(), 
+                            mapsLink, 
+                            empresa.getDescripcionNegocio(),
+                            finalCustomerPhone
+                        );
+                    } else {
+                        agentResponse = antigravityAgent.chat(finalUserMessage);
+                    }
+                    System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
+
+                    // Enviar mensaje de vuelta usando el servicio
+                    whatsAppService.enviarMensajeTexto(finalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
+                } catch (Exception ex) {
+                    System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma asíncrona: " + ex.getMessage());
+                }
+            });
         } else {
             System.out.println("[WhatsAppWebhookController] Payload recibido no contiene la información mínima para responder.");
         }

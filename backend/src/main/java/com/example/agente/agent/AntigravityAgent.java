@@ -244,20 +244,27 @@ public class AntigravityAgent {
         return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, null, customerPhone);
     }
 
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String customerPhone) {
+        return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, null, customerPhone);
+    }
+
     /**
-     * Sobrecarga que inyecta el contexto de la empresa, el teléfono del local, la dirección física, el enlace de Google Maps y el teléfono del cliente automáticamente,
+     * Sobrecarga completa que inyecta el contexto de la empresa, descripción del negocio, promociones y teléfono del cliente,
      * utilizando una sesión persistente para retener la memoria del chat.
      */
-    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String customerPhone) {
-        // Mapeamos la fecha y hora actual del sistema junto con los identificadores en cada mensaje
-        String fechaHoraActual = java.time.LocalDateTime.now().toString();
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, String customerPhone) {
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' yyyy, HH:mm:ss", new java.util.Locale("es", "MX"));
+        String fechaHoraActual = java.time.LocalDateTime.now().format(formatter);
+        
         String contextMessage = String.format(
-                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Cliente Tel: %s]\n" +
+                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s]\n" +
+                "Instrucción para el bot: Si en el catálogo de servicios algún servicio tiene promoción activa, aplícala y calcula de forma dinámica los costos con descuento cuando el cliente te pregunte por servicios o precios.\n" +
                 "Mensaje del cliente: %s",
                 fechaHoraActual, empresaNombre, empresaId, 
                 (telefonoContacto != null && !telefonoContacto.trim().isEmpty()) ? telefonoContacto : "No registrado", 
                 (direccion != null && !direccion.trim().isEmpty()) ? direccion : "No registrada", 
                 (mapsLink != null && !mapsLink.trim().isEmpty()) ? mapsLink : "No registrado",
+                (descripcionNegocio != null && !descripcionNegocio.trim().isEmpty()) ? descripcionNegocio : "No registrada",
                 customerPhone, userMessage
         );
         
@@ -288,7 +295,7 @@ public class AntigravityAgent {
             
             GenerateContentResponse response = chatSession.sendMessage(userMessage);
 
-            // Ciclo de Function Calling: el modelo puede solicitar múltiples llamadas secuenciales
+            // Ciclo de Function Calling: el modelo puede solicitar múltiples llamadas secuenciales o en paralelo
             int maxIterations = 5; 
             for (int i = 0; i < maxIterations; i++) {
                 List<FunctionCall> functionCalls = ResponseHandler.getFunctionCalls(response);
@@ -296,16 +303,17 @@ public class AntigravityAgent {
                     break; // El modelo ya tiene su respuesta final
                 }
 
-                FunctionCall call = functionCalls.get(0);
-                String functionName = call.getName();
-                System.out.println("[AntigravityAgent] [" + customerPhone + "] Function Calling detectado: " + functionName);
+                java.util.List<Part> parts = new java.util.ArrayList<>();
+                for (FunctionCall call : functionCalls) {
+                    String functionName = call.getName();
+                    System.out.println("[AntigravityAgent] [" + customerPhone + "] Function Calling detectado: " + functionName);
+                    Struct responseStruct = executeFunctionCall(functionName, call);
+                    parts.add(PartMaker.fromFunctionResponse(functionName, responseStruct));
+                }
 
-                Struct responseStruct = executeFunctionCall(functionName, call);
-
-                // Devolver el resultado de la función al modelo para que continúe el razonamiento
+                // Devolver el resultado de todas las funciones al modelo en una sola respuesta
                 response = chatSession.sendMessage(
-                        ContentMaker.fromMultiModalData(
-                                PartMaker.fromFunctionResponse(functionName, responseStruct)));
+                        ContentMaker.fromMultiModalData(parts.toArray(new Part[0])));
             }
 
             return ResponseHandler.getText(response);
@@ -378,11 +386,26 @@ public class AntigravityAgent {
                     .build();
         }
 
+        // Verificar si el día está CERRADO (no tiene configuración de agenda)
+        int diaSemanaSql = fecha.getDayOfWeek().getValue() % 7;
+        String[] diasNombres = {"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+        java.util.Optional<com.example.agente.model.AgendaConfig> configOpt = 
+                citaService.getAgendaConfigRepository().findByEmpresaIdAndDiaSemana(empresaId, diaSemanaSql);
+        
+        if (configOpt.isEmpty()) {
+            String resultado = "CERRADO: El negocio NO abre los días " + diasNombres[diaSemanaSql] 
+                    + ". Informa al cliente que el negocio está cerrado ese día y sugiérele elegir otro día de la semana en el que sí esté abierto.";
+            System.out.println("[AntigravityAgent] Día cerrado detectado: " + diasNombres[diaSemanaSql]);
+            return Struct.newBuilder()
+                    .putFields("resultado", Value.newBuilder().setStringValue(resultado).build())
+                    .build();
+        }
+
         List<String> slots = citaService.obtenerDisponibilidad(empresaId, servicioId, fecha);
 
         String resultado;
         if (slots.isEmpty()) {
-            resultado = "No hay horarios disponibles para la fecha " + fechaStr + ". Sugiere al cliente probar otro día.";
+            resultado = "No hay horarios disponibles para la fecha " + fechaStr + ". Todos los horarios están ocupados. Sugiere al cliente probar otro día.";
         } else {
             StringBuilder sb = new StringBuilder();
             sb.append("Horarios disponibles para el ").append(fechaStr).append(":\n");
@@ -422,10 +445,9 @@ public class AntigravityAgent {
             return Struct.newBuilder()
                     .putFields("resultado", Value.newBuilder().setStringValue(resultado).build())
                     .build();
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             return Struct.newBuilder()
-                    .putFields("error", Value.newBuilder().setStringValue(
-                            "El horario solicitado ya está ocupado. Sugiere al cliente elegir otro horario de los disponibles.").build())
+                    .putFields("error", Value.newBuilder().setStringValue(e.getMessage()).build())
                     .build();
         }
     }
@@ -510,10 +532,10 @@ public class AntigravityAgent {
         sb.append("Servicios Disponibles:\n");
         for (ServicioDTO dto : catalogo) {
             sb.append("- ").append(dto.nombre())
-                    .append(" (ID: ").append(dto.id()).append(")")
                     .append(": ").append(dto.descripcion() != null ? dto.descripcion() : "Sin descripción")
                     .append(" | Precio: $").append(dto.precio())
-                    .append(" | Duración: ").append(dto.duracionMinutos()).append(" minutos\n");
+                    .append(" | Duración: ").append(dto.duracionMinutos()).append(" minutos")
+                    .append(" | [servicioId interno: ").append(dto.id()).append("]\n");
         }
         return sb.toString();
     }

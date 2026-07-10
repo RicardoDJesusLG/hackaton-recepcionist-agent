@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../dashboard.service';
@@ -16,12 +16,13 @@ export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Navegación
-  activeTab: 'citas' | 'negocio' | 'horarios' = 'citas';
+  activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' = 'citas';
 
   // Datos del Propietario
-  username = '';
+  email = '';
   empresaId = '';
   errorMessage = '';
   successMessage = '';
@@ -37,6 +38,7 @@ export class DashboardComponent implements OnInit {
   empresa: any = {
     nombre: '',
     whatsappPhoneId: '',
+    whatsappToken: '',
     direccion: '',
     descripcionNegocio: '',
     telefonoContacto: '',
@@ -55,6 +57,31 @@ export class DashboardComponent implements OnInit {
     limiteCitas: 30
   };
 
+  // Catálogo de Servicios
+  servicios: any[] = [];
+  mostrarModalServicio = false;
+  editandoServicio = false;
+  formServicio: any = {
+    id: '',
+    nombre: '',
+    descripcion: '',
+    precio: 0,
+    duracionMinutos: 30,
+    activo: true,
+    tipoPromocion: 'NINGUNA',
+    valorPromocion: '',
+    promocionActiva: false
+  };
+
+  // Re-autenticación
+  mostrarModalReauth = false;
+  reauthEmail = '';
+  reauthPassword = '';
+  errorReauth = '';
+  descripcionNegocioOriginal = '';
+  prefijoTelefono = '52';
+  telefonoLocal = '';
+
   // Horarios de Agenda
   horarios: any[] = [];
   diasSemanaNombres = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -65,20 +92,51 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.username = this.authService.getUsername() || '';
+    this.email = this.authService.getEmail() || '';
     this.empresaId = this.authService.getEmpresaId() || '';
     
     this.cargarCitas();
     this.cargarDatosEmpresa();
     this.cargarHorariosAgenda();
+    this.cargarServicios();
     this.cargarEstadisticasSuscripcion();
+
+    // Escuchar parámetros de pago de Stripe
+    this.route.queryParams.subscribe(params => {
+      if (params['payment'] === 'success') {
+        this.successMessage = '¡Gracias por tu pago! Tu suscripción ha sido procesada con éxito.';
+        this.cargarDatosEmpresa();
+        this.cargarEstadisticasSuscripcion();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { payment: null, mock: null, idNegocio: null },
+          queryParamsHandling: 'merge'
+        });
+      } else if (params['payment'] === 'cancel') {
+        this.errorMessage = 'El proceso de pago fue cancelado.';
+        this.cargarDatosEmpresa();
+        this.cargarEstadisticasSuscripcion();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { payment: null, mock: null, idNegocio: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+    });
   }
 
   // --- NAVEGACIÓN ---
-  setTab(tab: 'citas' | 'negocio' | 'horarios'): void {
+  setTab(tab: 'citas' | 'negocio' | 'horarios' | 'servicios'): void {
     this.activeTab = tab;
     this.errorMessage = '';
     this.successMessage = '';
+    if (tab === 'servicios') {
+      this.cargarServicios();
+    }
   }
 
   // --- GESTIÓN DE CITAS ---
@@ -127,6 +185,8 @@ export class DashboardComponent implements OnInit {
     this.dashboardService.getEmpresa().subscribe({
       next: (data) => {
         this.empresa = data;
+        this.descripcionNegocioOriginal = data.descripcionNegocio || '';
+        this.extraerPrefijoYNumero();
       },
       error: (err) => {
         console.error('Error al cargar datos de empresa:', err);
@@ -134,14 +194,51 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  extraerPrefijoYNumero(): void {
+    const tel = this.empresa.telefonoContacto || '';
+    if (!tel) {
+      this.prefijoTelefono = '52';
+      this.telefonoLocal = '';
+      return;
+    }
+    const limpio = tel.startsWith('+') ? tel.substring(1) : tel;
+    const prefijos = ['52', '57', '54', '56', '51', '34', '1'];
+    const coincidencia = prefijos.find(p => limpio.startsWith(p));
+    if (coincidencia) {
+      this.prefijoTelefono = coincidencia;
+      this.telefonoLocal = limpio.substring(coincidencia.length);
+    } else {
+      this.prefijoTelefono = '52';
+      this.telefonoLocal = limpio;
+    }
+  }
+
   guardarDatosEmpresa(): void {
+    const nuevaDescripcion = this.empresa.descripcionNegocio || '';
+    if (nuevaDescripcion.trim() !== this.descripcionNegocioOriginal.trim()) {
+      this.mostrarModalReauth = true;
+      this.reauthEmail = this.email;
+      this.reauthPassword = '';
+      this.errorReauth = '';
+      return;
+    }
+
+    this.ejecutarGuardarEmpresa();
+  }
+
+  ejecutarGuardarEmpresa(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
+    const numLimpio = this.telefonoLocal.replace(/\D/g, '');
+    this.empresa.telefonoContacto = numLimpio ? `+${this.prefijoTelefono}${numLimpio}` : '';
+
     this.dashboardService.updateEmpresa(this.empresa).subscribe({
       next: (data) => {
         this.empresa = data;
+        this.descripcionNegocioOriginal = data.descripcionNegocio || '';
+        this.extraerPrefijoYNumero();
         this.successMessage = 'Información de la empresa guardada correctamente.';
         this.isLoading = false;
         this.cargarEstadisticasSuscripcion();
@@ -149,6 +246,132 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = 'Error al guardar la información de la empresa.';
+        console.error(err);
+      }
+    });
+  }
+
+  // --- RE-AUTENTICACIÓN MÉTODOS ---
+  confirmarReauthYGuardar(): void {
+    if (!this.reauthPassword.trim()) {
+      this.errorReauth = 'La contraseña es requerida.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorReauth = '';
+
+    this.authService.verificarCredenciales(this.reauthEmail, this.reauthPassword).subscribe({
+      next: () => {
+        this.mostrarModalReauth = false;
+        this.isLoading = false;
+        this.ejecutarGuardarEmpresa();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorReauth = 'Contraseña incorrecta de administrador.';
+        console.error(err);
+      }
+    });
+  }
+
+  cancelarReauth(): void {
+    this.mostrarModalReauth = false;
+    this.empresa.descripcionNegocio = this.descripcionNegocioOriginal;
+    this.errorReauth = '';
+  }
+
+  // --- GESTIÓN DE SERVICIOS CRUD ---
+  cargarServicios(): void {
+    this.isLoading = true;
+    this.dashboardService.getServicios().subscribe({
+      next: (data) => {
+        this.servicios = data;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = 'Error al cargar el catálogo de servicios.';
+        console.error(err);
+      }
+    });
+  }
+
+  abrirModalServicio(servicio?: any): void {
+    if (servicio) {
+      this.editandoServicio = true;
+      this.formServicio = { ...servicio };
+    } else {
+      this.editandoServicio = false;
+      this.formServicio = {
+        id: '',
+        nombre: '',
+        descripcion: '',
+        precio: 0,
+        duracionMinutos: 30,
+        activo: true,
+        tipoPromocion: 'NINGUNA',
+        valorPromocion: '',
+        promocionActiva: false
+      };
+    }
+    this.mostrarModalServicio = true;
+  }
+
+  cerrarModalServicio(): void {
+    this.mostrarModalServicio = false;
+  }
+
+  guardarServicio(): void {
+    if (!this.formServicio.nombre.trim() || this.formServicio.precio < 0 || this.formServicio.duracionMinutos < 5) {
+      alert('Por favor llena los campos obligatorios con valores correctos.');
+      return;
+    }
+
+    this.isLoading = true;
+    if (this.editandoServicio) {
+      this.dashboardService.updateServicio(this.formServicio.id, this.formServicio).subscribe({
+        next: () => {
+          this.cerrarModalServicio();
+          this.cargarServicios();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          alert('Error al actualizar el servicio.');
+          console.error(err);
+        }
+      });
+    } else {
+      this.dashboardService.crearServicio(this.formServicio).subscribe({
+        next: () => {
+          this.cerrarModalServicio();
+          this.cargarServicios();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          alert('Error al crear el servicio.');
+          console.error(err);
+        }
+      });
+    }
+  }
+
+  eliminarServicio(id: string): void {
+    if (!confirm('¿Estás seguro de que deseas eliminar este servicio? Si tiene citas asociadas, se desactivará en su lugar.')) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.dashboardService.eliminarServicio(id).subscribe({
+      next: (res: any) => {
+        if (res && res.softDeleted) {
+          alert('El servicio se desactivó porque tiene citas asociadas.');
+        }
+        this.cargarServicios();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        alert('Error al eliminar el servicio.');
         console.error(err);
       }
     });
