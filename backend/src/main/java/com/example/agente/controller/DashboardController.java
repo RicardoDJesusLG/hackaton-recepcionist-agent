@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.agente.service.WhatsAppService;
+
 @RestController
 @RequestMapping("/api/v1/dashboard")
 public class DashboardController {
@@ -32,17 +34,20 @@ public class DashboardController {
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final AgendaConfigRepository agendaConfigRepository;
+    private final WhatsAppService whatsAppService;
 
     public DashboardController(CitaRepository citaRepository,
                                ServicioRepository servicioRepository,
                                UsuarioRepository usuarioRepository,
                                EmpresaRepository empresaRepository,
-                               AgendaConfigRepository agendaConfigRepository) {
+                               AgendaConfigRepository agendaConfigRepository,
+                               WhatsAppService whatsAppService) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
         this.agendaConfigRepository = agendaConfigRepository;
+        this.whatsAppService = whatsAppService;
     }
 
     /**
@@ -234,6 +239,11 @@ public class DashboardController {
         }
 
         empresaRepository.save(empresa);
+
+        // Auto-suscribir webhook de la app en Meta
+        if (empresa.getWhatsappPhoneId() != null && empresa.getWhatsappToken() != null) {
+            whatsAppService.suscribirAppAWaba(empresa.getWhatsappPhoneId(), empresa.getWhatsappToken());
+        }
 
         // Retornar la versión enmascarada para ser consistentes
         String maskedToken = null;

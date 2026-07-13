@@ -8,6 +8,7 @@ import com.example.agente.repository.EmpresaRepository;
 import com.example.agente.repository.AgendaConfigRepository;
 import com.example.agente.security.JwtUtil;
 import com.example.agente.service.EmailService;
+import com.example.agente.service.WhatsAppService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,6 +32,7 @@ public class AuthController {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private final WhatsAppService whatsAppService;
 
     // Caché en memoria para códigos de recuperación
     private final ConcurrentHashMap<String, RecoveryData> recoveryCache = new ConcurrentHashMap<>();
@@ -53,14 +55,17 @@ public class AuthController {
                           AgendaConfigRepository agendaConfigRepository,
                           BCryptPasswordEncoder passwordEncoder,
                           JwtUtil jwtUtil,
-                          EmailService emailService) {
+                          EmailService emailService,
+                          WhatsAppService whatsAppService) {
         this.ownerRepository = ownerRepository;
         this.empresaRepository = empresaRepository;
         this.agendaConfigRepository = agendaConfigRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
+        this.whatsAppService = whatsAppService;
     }
+
 
     /**
      * Registro de un nuevo propietario y opcionalmente creación de la empresa vinculada.
@@ -101,6 +106,12 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Nombre de empresa y ID de teléfono de WhatsApp son requeridos."));
             }
 
+            if (empresaRepository.findByWhatsappPhoneId(whatsappPhoneId.trim()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                        "error", "El WhatsApp Phone ID ya está en uso por otro negocio. Registra un ID diferente."
+                ));
+            }
+
             // 1. Crear empresa
             Empresa nuevaEmpresa = Empresa.builder()
                     .nombre(nombreEmpresa.trim())
@@ -115,6 +126,11 @@ public class AuthController {
 
             nuevaEmpresa = empresaRepository.save(nuevaEmpresa);
             empresaId = nuevaEmpresa.getId();
+
+            // Auto-suscribir webhook de la app en Meta
+            if (nuevaEmpresa.getWhatsappPhoneId() != null && nuevaEmpresa.getWhatsappToken() != null) {
+                whatsAppService.suscribirAppAWaba(nuevaEmpresa.getWhatsappPhoneId(), nuevaEmpresa.getWhatsappToken());
+            }
 
             // 2. Generar configuración de agenda por defecto (Lunes a Sábado de 9:00 AM a 6:00 PM)
             for (int i = 1; i <= 6; i++) {
