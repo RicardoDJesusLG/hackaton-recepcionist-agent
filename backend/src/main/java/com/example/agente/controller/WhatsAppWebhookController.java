@@ -107,16 +107,35 @@ public class WhatsAppWebhookController {
 
         // Invocar el ciclo de pensamiento del agente si se detecta un mensaje
         if (userMessage != null && customerPhone != null && businessPhoneId != null) {
-            // Normalizar número del cliente (quitar el '1' para prefijo celular en México) de inmediato
+            final String originalCustomerPhone = customerPhone; // Guardar el número original para responder al destinatario exacto
+            
+            // Normalizar número del cliente (quitar el '1' para prefijo celular en México) de inmediato para la DB y sesión
             if (customerPhone.startsWith("521") && customerPhone.length() == 13) {
                 customerPhone = "52" + customerPhone.substring(3);
             }
             
-            System.out.println("[WhatsAppWebhookController] Mensaje de texto recibido de " + customerPhone + ": " + userMessage);
+            System.out.println("[WhatsAppWebhookController] Mensaje de texto recibido de " + customerPhone + " (original: " + originalCustomerPhone + "): " + userMessage);
             
-            // Validar la suscripción de la empresa asociada
+            // Validar la suscripción de la empresa asociada y loguear diagnósticos claros
+            System.out.println("[WhatsAppWebhookController] Buscando empresa para el businessPhoneId recibido de Meta: " + businessPhoneId);
             Optional<Empresa> empresaOpt = empresaRepository.findByWhatsappPhoneId(businessPhoneId);
             String customToken = empresaOpt.map(Empresa::getWhatsappToken).orElse(null);
+
+            if (empresaOpt.isEmpty()) {
+                System.out.println("[WhatsAppWebhookController] ⚠️ ADVERTENCIA: No se encontró ninguna empresa en la base de datos con whatsappPhoneId = '" + businessPhoneId + "'.");
+                System.out.println("  Verifica lo siguiente:");
+                System.out.println("  1. ¿Registraste la empresa en el panel con este ID exacto?");
+                System.out.println("  2. ¿Confundiste el 'Phone Number ID' (ID de teléfono - 15 dígitos) con el 'WhatsApp Business Account ID' o tu número de teléfono real?");
+                System.out.println("  Se intentará responder usando el token por defecto del servidor, lo cual fallará si este webhook no proviene de tu Sandbox principal.");
+            } else {
+                Empresa e = empresaOpt.get();
+                System.out.println("[WhatsAppWebhookController] Empresa encontrada: '" + e.getNombre() + "' (ID Interno: " + e.getId() + ", Suscripción Activa: " + e.getSuscripcionActiva() + ")");
+                if (customToken == null || customToken.trim().isEmpty()) {
+                    System.out.println("[WhatsAppWebhookController] ⚠️ ADVERTENCIA: La empresa '" + e.getNombre() + "' no tiene un whatsappToken configurado. Se usará el token por defecto del servidor.");
+                } else {
+                    System.out.println("[WhatsAppWebhookController] Utilizando token personalizado configurado para '" + e.getNombre() + "'.");
+                }
+            }
 
             if (empresaOpt.isPresent() && !empresaOpt.get().getSuscripcionActiva()) {
                 System.out.println("[WhatsAppWebhookController] Mensaje bloqueado. Empresa " + 
@@ -125,7 +144,7 @@ public class WhatsAppWebhookController {
                 String blockMessage = "Lo sentimos, el servicio de recepción de este negocio se encuentra "
                         + "temporalmente suspendido por falta de pago. Si eres el dueño del negocio, "
                         + "por favor ingresa a tu Panel de Administración para reactivarlo.";
-                whatsAppService.enviarMensajeTexto(customerPhone, blockMessage, businessPhoneId, customToken);
+                whatsAppService.enviarMensajeTexto(originalCustomerPhone, blockMessage, businessPhoneId, customToken);
                 return ResponseEntity.ok().build();
             }
 
@@ -159,8 +178,8 @@ public class WhatsAppWebhookController {
                 }
                 System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
 
-                // Enviar mensaje de vuelta usando el servicio
-                whatsAppService.enviarMensajeTexto(finalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
+                // Enviar mensaje de vuelta usando el servicio al número original (con el '1' si venía así de Meta)
+                whatsAppService.enviarMensajeTexto(originalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
             } catch (Exception ex) {
                 System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma síncrona: " + ex.getMessage());
             }
