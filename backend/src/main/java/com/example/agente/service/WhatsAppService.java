@@ -61,7 +61,11 @@ public class WhatsAppService {
             return;
         }
 
-        System.out.println("[WhatsAppService] Enviando mensaje real a " + targetNumber + " desde " + businessPhoneId + "...");
+        enviarMensajeTextoReal(targetNumber, messageBody, businessPhoneId, tokenToUse, false);
+    }
+
+    private void enviarMensajeTextoReal(String targetNumber, String messageBody, String businessPhoneId, String tokenToUse, boolean esReintento) {
+        System.out.println("[WhatsAppService] Enviando mensaje real a " + targetNumber + " desde " + businessPhoneId + " (esReintento: " + esReintento + ")...");
 
         try {
             String url = "https://graph.facebook.com/v20.0/" + businessPhoneId + "/messages";
@@ -92,6 +96,15 @@ public class WhatsAppService {
                         } else {
                             System.err.println("[WhatsAppService] Error al enviar mensaje. Código HTTP: " + response.statusCode());
                             System.err.println("[WhatsAppService] Detalle del error: " + response.body());
+
+                            // Si falla por número no incluido en la lista del sandbox, y es número de México, intentamos el formato alterno
+                            if (!esReintento && response.statusCode() == 400 && response.body().contains("131030") && targetNumber.startsWith("52")) {
+                                String alternateNumber = obtenerNumeroAlternoMexico(targetNumber);
+                                if (alternateNumber != null) {
+                                    System.out.println("[WhatsAppService] Reintento autocurativo: Intentando enviar con formato alterno de México: " + alternateNumber);
+                                    enviarMensajeTextoReal(alternateNumber, messageBody, businessPhoneId, tokenToUse, true);
+                                }
+                            }
                         }
                     })
                     .exceptionally(ex -> {
@@ -103,6 +116,18 @@ public class WhatsAppService {
             System.err.println("[WhatsAppService] Error al preparar la petición HTTP de WhatsApp: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static String obtenerNumeroAlternoMexico(String num) {
+        if (num == null) return null;
+        if (num.startsWith("521") && num.length() == 13) {
+            // Cambiar de 521XXXXXXXXXX (con 1) a 52XXXXXXXXXX (sin 1)
+            return "52" + num.substring(3);
+        } else if (num.startsWith("52") && num.length() == 12 && !num.startsWith("521")) {
+            // Cambiar de 52XXXXXXXXXX (sin 1) a 521XXXXXXXXXX (con 1)
+            return "521" + num.substring(2);
+        }
+        return null;
     }
 
     public boolean suscribirAppAWaba(String phoneId, String token) {
