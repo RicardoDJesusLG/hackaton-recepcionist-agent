@@ -14,4 +14,10 @@ docker-compose.override.yml
 # Bloquea las credenciales de Antigravity (GCP Service Account)
 #Omite subir al rapositorio la key manager de antigravity al repositorio
 *.json
+!frontend/angular.json
+!frontend/tsconfig.json
+!frontend/tsconfig.app.json
+!frontend/tsconfig.spec.json
+!frontend/package.json
+!frontend/package-lock.json
 antigravity-credentials.json
