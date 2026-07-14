@@ -1,10 +1,11 @@
 <div class="login-wrapper">
   <div class="glass-card">
     <div class="card-header">
-      <h2>Recepción Inteligente</h2>
-      <p>Panel Administrativo</p>
+      <!-- Nuevos textos de bienvenida -->
+      <h2>Bienvenidos a Whappify</h2>
+      <p>Para continuar Inicia Sesión</p>
     </div>
-
+    
     @if (errorMessage) {
       <div class="alert alert-error">
         {{ errorMessage }}
@@ -25,17 +26,23 @@
         />
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="position: relative;">
         <label for="password">Contraseña</label>
         <input 
-          type="password" 
+          [type]="passwordVisible ? 'text' : 'password'" 
           id="password" 
           name="password" 
           [(ngModel)]="password" 
           placeholder="••••••••" 
-          required 
-          autocomplete="current-password"
+          required
         />
+        <button 
+          type="button" 
+          (click)="togglePasswordVisibility()" 
+          style="position: absolute; right: 12px; top: 38px; background: none; border: none; cursor: pointer; color: var(--texto-acento);">
+          {{ passwordVisible ? '🙈' : '👁️' }}
+        </button>
+
         <div style="text-align: right; margin-top: 8px;">
           <a href="javascript:void(0)" (click)="abrirModalRecuperar()" style="font-size: 0.85rem; color: #a5b4fc; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#c7d2fe'" onmouseout="this.style.color='#a5b4fc'">¿Olvidaste tu contraseña?</a>
         </div>

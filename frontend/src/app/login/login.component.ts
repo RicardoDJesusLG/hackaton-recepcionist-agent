@@ -18,6 +18,12 @@ export class LoginComponent {
   password = '';
   errorMessage = '';
   isLoading = false;
+  passwordVisible = false;
+
+  // --- MÉTODOS PARA EL OJO ---
+  togglePasswordVisibility(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
 
   // Estado del modal de recuperación
   mostrarModalRecuperar = false;
