@@ -91,7 +91,6 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-
     this.email = this.authService.getEmail() || '';
     this.empresaId = this.authService.getEmpresaId() || '';
     
@@ -168,7 +167,6 @@ export class DashboardComponent implements OnInit {
     if (!confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
       return;
     }
-
     this.dashboardService.cancelarCita(idCita).subscribe({
       next: () => {
         this.cargarCitas();
@@ -222,7 +220,6 @@ export class DashboardComponent implements OnInit {
       this.errorReauth = '';
       return;
     }
-
     this.ejecutarGuardarEmpresa();
   }
 
@@ -230,10 +227,8 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
-
     const numLimpio = this.telefonoLocal.replace(/\D/g, '');
     this.empresa.telefonoContacto = numLimpio ? `+${this.prefijoTelefono}${numLimpio}` : '';
-
     this.dashboardService.updateEmpresa(this.empresa).subscribe({
       next: (data) => {
         this.empresa = data;
@@ -251,16 +246,14 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // --- RE-AUTENTICACIÓN MÉTODOS ---
+  // --- RE-AUTENTICACIÓN TODOS ---
   confirmarReauthYGuardar(): void {
     if (!this.reauthPassword.trim()) {
       this.errorReauth = 'La contraseña es requerida.';
       return;
     }
-
     this.isLoading = true;
     this.errorReauth = '';
-
     this.authService.verificarCredenciales(this.reauthEmail, this.reauthPassword).subscribe({
       next: () => {
         this.mostrarModalReauth = false;
@@ -327,7 +320,6 @@ export class DashboardComponent implements OnInit {
       alert('Por favor llena los campos obligatorios con valores correctos.');
       return;
     }
-
     this.isLoading = true;
     if (this.editandoServicio) {
       this.dashboardService.updateServicio(this.formServicio.id, this.formServicio).subscribe({
@@ -360,7 +352,6 @@ export class DashboardComponent implements OnInit {
     if (!confirm('¿Estás seguro de que deseas eliminar este servicio? Si tiene citas asociadas, se desactivará en su lugar.')) {
       return;
     }
-
     this.isLoading = true;
     this.dashboardService.eliminarServicio(id).subscribe({
       next: (res: any) => {
@@ -381,7 +372,6 @@ export class DashboardComponent implements OnInit {
   cargarHorariosAgenda(): void {
     this.dashboardService.getAgenda().subscribe({
       next: (data) => {
-        // Mapear respuesta del backend asegurando estructura para cada día (0 a 6)
         this.horarios = this.diasSemanaNombres.map((nombre, index) => {
           const config = data.find(c => c.diaSemana === index);
           if (config) {
@@ -413,15 +403,12 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
-
-    // Mapear los datos para el formato esperado por el backend
     const payload = this.horarios.map(h => ({
       diaSemana: h.diaSemana,
       horaInicio: h.cerrado ? null : h.horaInicio + ':00',
       horaFin: h.cerrado ? null : h.horaFin + ':00',
       cerrado: h.cerrado
     }));
-
     this.dashboardService.updateAgenda(payload).subscribe({
       next: () => {
         this.successMessage = 'Horarios de atención actualizados con éxito.';

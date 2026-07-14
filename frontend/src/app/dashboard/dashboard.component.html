@@ -1,612 +1,475 @@
-<div class="dashboard-wrapper">
-  <!-- Sidebar / Header Area -->
-  <header class="header">
-    <div class="header-logo">
-      <h1>Panel de Recepción</h1>
+<div class="app-layout">
+  
+  <!-- 🟢 SIDEBAR (Navegación Lateral Oscura) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="brand-title">Whappify</h1>
       <span class="badge-empresa">{{ empresa.nombre || 'Cargando negocio...' }}</span>
     </div>
-    
-    <!-- Tabs Navigation -->
-    <nav class="tab-nav">
-      <button 
-        (click)="setTab('citas')" 
-        class="tab-link" 
-        [class.active]="activeTab === 'citas'">
-        📅 Citas
+
+    <nav class="side-nav">
+      <button (click)="setTab('citas')" class="nav-item" [class.active]="activeTab === 'citas'">
+        Citas
       </button>
-      <button 
-        (click)="setTab('negocio')" 
-        class="tab-link" 
-        [class.active]="activeTab === 'negocio'">
-        🏢 Perfil del Negocio
+      <button (click)="setTab('negocio')" class="nav-item" [class.active]="activeTab === 'negocio'">
+        Perfil del Negocio
       </button>
-      <button 
-        (click)="setTab('horarios')" 
-        class="tab-link" 
-        [class.active]="activeTab === 'horarios'">
-        ⚙️ Horarios de Atención
+      <button (click)="setTab('horarios')" class="nav-item" [class.active]="activeTab === 'horarios'">
+        Horarios de Atención
       </button>
-      <button 
-        (click)="setTab('servicios')" 
-        class="tab-link" 
-        [class.active]="activeTab === 'servicios'">
-        🏷️ Servicios
+      <button (click)="setTab('servicios')" class="nav-item" [class.active]="activeTab === 'servicios'">
+        Servicios
       </button>
     </nav>
 
-    <div class="user-profile">
-      <span class="username">Administrador: <strong>{{ email }}</strong></span>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-role">Administrador</span>
+        <span class="user-email">{{ email }}</span>
+      </div>
       <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
     </div>
-  </header>
+  </aside>
 
-  <!-- Notification Banner -->
-  @if (errorMessage) {
-    <div class="alert alert-error">
-      {{ errorMessage }}
-    </div>
-  }
-  @if (successMessage) {
-    <div class="alert alert-success">
-      {{ successMessage }}
-    </div>
-  }
+  <!-- ⚪ CONTENIDO PRINCIPAL (Fondo Claro) -->
+  <main class="main-content">
+    
+    <!-- Alertas -->
+    @if (errorMessage) {
+      <div class="alert alert-error">{{ errorMessage }}</div>
+    }
+    @if (successMessage) {
+      <div class="alert alert-success">{{ successMessage }}</div>
+    }
 
-  <!-- TAB: CITAS -->
-  @if (activeTab === 'citas') {
-    <!-- Summary Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon icon-total">📅</div>
-        <div class="stat-content">
-          <h3>Total Reservas</h3>
-          <p class="stat-number">{{ totalCitas }}</p>
+    <!-- TAB: CITAS -->
+    @if (activeTab === 'citas') {
+      <div class="content-header">
+        <h2>Resumen de Citas</h2>
+        <p>Monitorea la actividad reciente de tu agente inteligente.</p>
+      </div>
+
+      <!-- Tarjetas de Estadísticas (Estilo Pastel Solid) -->
+      <div class="stats-grid">
+        <div class="stat-card stat-total">
+          <div class="stat-content">
+            <h3>Total Reservas</h3>
+            <p class="stat-number">{{ totalCitas }}</p>
+          </div>
         </div>
+        
+        <div class="stat-card stat-confirmed">
+          <div class="stat-content">
+            <h3>Confirmadas</h3>
+            <p class="stat-number">{{ citasConfirmadas }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card stat-cancelled">
+          <div class="stat-content">
+            <h3>Canceladas</h3>
+            <p class="stat-number">{{ citasCanceladas }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Principal Blanca -->
+      <div class="clean-card">
+        <div class="card-header-table">
+          <h3>Listado de Citas</h3>
+          <button (click)="cargarCitas()" class="btn-primary" [disabled]="isLoading">
+            @if (isLoading) {
+              <span>Actualizando...</span>
+            } @else {
+              <span>Refrescar Lista</span>
+            }
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th>Servicio</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (cita of citas; track cita.idCita) {
+                <tr class="fade-in-row">
+                  <td class="client-name">{{ cita.clienteNombre }}</td>
+                  <td>{{ cita.clienteTelefono }}</td>
+                  <td><span class="service-tag">{{ cita.servicioNombre }}</span></td>
+                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'medium' }}</td>
+                  <td class="date-cell">{{ cita.fechaHoraFin | date:'shortTime' }}</td>
+                  <td>
+                    <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
+                      {{ cita.estado }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (cita.estado === 'CONFIRMADA') {
+                      <button (click)="cancelarCita(cita.idCita)" class="btn-cancel">Cancelar</button>
+                    } @else {
+                      <span class="action-disabled">-</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="empty-state">
+                    <div class="empty-shape"></div>
+                    <p>No hay citas registradas todavía.</p>
+                    <small>Las citas agendadas por WhatsApp aparecerán aquí automáticamente.</small>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: PERFIL DEL NEGOCIO -->
+    @if (activeTab === 'negocio') {
+      <div class="content-header">
+        <h2>Perfil del Negocio</h2>
+        <p>Configura la identidad que tu agente usará con tus clientes.</p>
+      </div>
+
+      <div class="settings-grid">
+        <div class="clean-card">
+          <form (ngSubmit)="guardarDatosEmpresa()" class="light-form">
+            <div class="form-group">
+              <label for="nombre">Nombre de la Empresa</label>
+              <input type="text" id="nombre" name="nombre" [(ngModel)]="empresa.nombre" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+                <input type="text" id="whatsappPhoneId" name="whatsappPhoneId" [(ngModel)]="empresa.whatsappPhoneId" required />
+                <small class="help-text">ID de vinculación de Meta.</small>
+              </div>
+              <div class="form-group">
+                <label for="whatsappToken">WhatsApp Access Token</label>
+                <input type="password" id="whatsappToken" name="whatsappToken" [(ngModel)]="empresa.whatsappToken" />
+                <small class="help-text">Se muestra enmascarado.</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="telefonoContacto">Teléfono de Soporte o Local</label>
+              <div class="phone-input-group">
+                <select id="prefijoTelefono" name="prefijoTelefono" [(ngModel)]="prefijoTelefono">
+                  <option value="52">+52 (MX)</option>
+                  <option value="1">+1 (US/CA)</option>
+                  <option value="57">+57 (CO)</option>
+                  <option value="54">+54 (AR)</option>
+                  <option value="56">+56 (CL)</option>
+                  <option value="34">+34 (ES)</option>
+                </select>
+                <input type="text" id="telefonoLocal" name="telefonoLocal" [(ngModel)]="telefonoLocal" placeholder="Ej: 5522069771" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="direccion">Dirección Física</label>
+              <input type="text" id="direccion" name="direccion" [(ngModel)]="empresa.direccion" />
+            </div>
+
+            <div class="form-group">
+              <label for="mapsLink">Enlace de Google Maps 
+                @if (empresa.planSuscripcion === 'BASIC') {
+                  <span class="badge-lock">Plan Premium requerido</span>
+                }
+              </label>
+              <input type="text" id="mapsLink" name="mapsLink" [(ngModel)]="empresa.mapsLink" [disabled]="empresa.planSuscripcion === 'BASIC'" />
+            </div>
+
+            <div class="form-group">
+              <label for="descripcionNegocio">Instrucciones del Negocio (Prompt Especializado)</label>
+              <textarea id="descripcionNegocio" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="5"></textarea>
+            </div>
+
+            <button type="submit" [disabled]="isLoading" class="btn-primary">Guardar Configuración</button>
+          </form>
+        </div>
+
+        <!-- Tarjetas Laterales -->
+        <div class="side-layout">
+          <div class="clean-card subscription-box" [class.active]="subStats.suscripcionActiva">
+            <h3>Estado del Plan</h3>
+            <div class="plan-status-header">
+              <span class="plan-pill" [class]="subStats.planSuscripcion?.toLowerCase()">
+                PLAN {{ subStats.planSuscripcion || 'BÁSICO' }}
+              </span>
+              <span class="status-dot" [class.active]="subStats.suscripcionActiva"></span>
+            </div>
+
+            <div class="usage-stat">
+              <div class="usage-label"><span>Servicios</span><strong>{{ subStats.totalServicios }} / {{ subStats.limiteServicios === 2147483647 ? '∞' : subStats.limiteServicios }}</strong></div>
+              <div class="progress-bar-container"><div class="progress-bar bg-blue" [style.width.%]="subStats.limiteServicios === 2147483647 ? 100 : (subStats.totalServicios / subStats.limiteServicios * 100)"></div></div>
+            </div>
+
+            <div class="usage-stat">
+              <div class="usage-label"><span>Citas este mes</span><strong>{{ subStats.citasMesActual }} / {{ subStats.limiteCitas === 2147483647 ? '∞' : subStats.limiteCitas }}</strong></div>
+              <div class="progress-bar-container"><div class="progress-bar bg-green" [style.width.%]="subStats.limiteCitas === 2147483647 ? 100 : (subStats.citasMesActual / subStats.limiteCitas * 100)"></div></div>
+            </div>
+
+            <p class="sub-text" style="font-size: 13px; color: #64748b; line-height: 1.5;">
+              @if (subStats.suscripcionActiva) {
+                Tu bot de WhatsApp está respondiendo y recibiendo citas con normalidad.
+                @if (subStats.fechaFinSuscripcion) {
+                  <span class="vigencia-text">
+                    Vigencia hasta: <strong>{{ subStats.fechaFinSuscripcion | date:'dd/MM/yyyy' }}</strong>
+                  </span>
+                }
+              } @else {
+                El servicio del bot está suspendido. Contrata un plan para reactivarlo.
+              }
+            </p>
+
+            @if (subStats.suscripcionActiva) {
+              <button (click)="gestionarSuscripcion()" class="btn-portal-stripe" [disabled]="isLoading">
+                <span>Gestionar / Cancelar Suscripción</span>
+              </button>
+            }
+          </div>
+
+          <div class="clean-card plans-selector">
+            <h3>Mejorar Plan</h3>
+            
+            <div class="plan-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
+              <div class="plan-head"><h5>Básico</h5><span>$299<small>/mes</small></span></div>
+              <ul class="plan-features-list">
+                <li>Hasta 3 servicios activos</li>
+                <li>Hasta 60 citas/mes</li>
+                <li>Soporte en horario laboral</li>
+                <li>Sin Google Maps o Cobros</li>
+              </ul>
+              <button (click)="pagarSuscripcion('BASIC')" class="btn-outline" [disabled]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva || isLoading">
+                {{ subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Básico' }}
+              </button>
+            </div>
+
+            <div class="plan-card" [class.current]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva">
+              <div class="plan-head"><h5>Premium</h5><span>$499<small>/mes</small></span></div>
+              <ul class="plan-features-list">
+                <li>Servicios ilimitados</li>
+                <li>Citas ilimitadas</li>
+                <li>Con Google Maps</li>
+                <li>Soporte Prioritario 24/7</li>
+                <li>Cobro a clientes (Anticipos/Completo)</li>
+              </ul>
+              <button (click)="pagarSuscripcion('PREMIUM')" class="btn-outline" [disabled]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva || isLoading">
+                {{ subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Premium' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: HORARIOS DE ATENCIÓN -->
+    @if (activeTab === 'horarios') {
+      <div class="content-header">
+        <h2>Horarios de Trabajo</h2>
+        <p>Establece tu disponibilidad para el agente automatizado.</p>
+      </div>
+
+      <div class="clean-card">
+        <form (ngSubmit)="guardarHorariosAgenda()" class="schedule-form">
+          <div class="schedule-grid">
+            @for (h of horarios; track h.diaSemana) {
+              <div class="schedule-row" [class.closed-row]="h.cerrado">
+                <div class="day-cell"><strong>{{ h.nombreDia }}</strong></div>
+                
+                <div class="toggle-cell">
+                  <label class="switch-label">
+                    <input type="checkbox" name="cerrado-{{h.diaSemana}}" [(ngModel)]="h.cerrado">
+                    <span class="switch-text">{{ h.cerrado ? 'Cerrado' : 'Abierto' }}</span>
+                  </label>
+                </div>
+                
+                <div class="time-cell">
+                  <label>Apertura</label>
+                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" />
+                </div>
+                
+                <div class="time-cell">
+                  <label>Cierre</label>
+                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" />
+                </div>
+              </div>
+            }
+          </div>
+          <button type="submit" [disabled]="isLoading" class="btn-primary">Actualizar Horarios</button>
+        </form>
+      </div>
+    }
+
+    <!-- TAB: SERVICIOS -->
+    @if (activeTab === 'servicios') {
+      <div class="content-header">
+        <h2>Catálogo de Servicios</h2>
+        <p>Administra los servicios que los clientes pueden agendar.</p>
+      </div>
+
+      <div class="clean-card">
+        <div class="card-header-table">
+          <h3>Tus Servicios</h3>
+          <button (click)="abrirModalServicio()" class="btn-primary">Agregar Servicio</button>
+        </div>
+
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Duración</th>
+                <th>Precio</th>
+                <th>Estatus</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (srv of servicios; track srv.id) {
+                <tr class="fade-in-row">
+                  <td class="client-name">{{ srv.nombre }}</td>
+                  <td><span class="truncate-text">{{ srv.descripcion || 'Sin descripción' }}</span></td>
+                  <td>{{ srv.duracionMinutos }} min</td>
+                  <td class="price-cell">${{ srv.precio }}</td>
+                  <td>
+                    <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'">
+                      {{ srv.activo ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button (click)="abrirModalServicio(srv)" class="btn-small-edit">Editar</button>
+                      <button (click)="eliminarServicio(srv.id)" class="btn-small-delete">Eliminar</button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty-state">
+                    <div class="empty-shape"></div>
+                    <p>No hay servicios registrados.</p>
+                    <small>Comienza creando un nuevo servicio para tu catálogo.</small>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </main>
+</div>
+
+<!-- MODAL: CREAR/EDITAR SERVICIO -->
+@if (mostrarModalServicio) {
+  <div class="modal-overlay">
+    <div class="clean-modal">
+      <div class="modal-header">
+        <h2>{{ editandoServicio ? 'Editar Servicio' : 'Nuevo Servicio' }}</h2>
       </div>
       
-      <div class="stat-card">
-        <div class="stat-icon icon-confirmed">✅</div>
-        <div class="stat-content">
-          <h3>Confirmadas</h3>
-          <p class="stat-number">{{ citasConfirmadas }}</p>
+      <form (ngSubmit)="guardarServicio()" class="light-form">
+        <div class="form-group">
+          <label>Nombre del Servicio</label>
+          <input type="text" name="srvNombre" [(ngModel)]="formServicio.nombre" required>
         </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon icon-cancelled">❌</div>
-        <div class="stat-content">
-          <h3>Canceladas</h3>
-          <p class="stat-number">{{ citasCanceladas }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content Table -->
-    <div class="main-card">
-      <div class="card-header-table">
-        <h2>Listado de Citas (Agente de WhatsApp)</h2>
-        <button (click)="cargarCitas()" class="btn-refresh" [disabled]="isLoading">
-          @if (isLoading) {
-            <span>Actualizando...</span>
-          } @else {
-            <span>Refrescar Lista 🔄</span>
-          }
-        </button>
-      </div>
-
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Teléfono</th>
-              <th>Servicio</th>
-              <th>Inicio</th>
-              <th>Fin</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (cita of citas; track cita.idCita) {
-              <tr class="fade-in-row">
-                <td class="client-name">{{ cita.clienteNombre }}</td>
-                <td>{{ cita.clienteTelefono }}</td>
-                <td class="service-tag">{{ cita.servicioNombre }}</td>
-                <td>{{ cita.fechaHoraInicio | date:'medium' }}</td>
-                <td>{{ cita.fechaHoraFin | date:'shortTime' }}</td>
-                <td>
-                  <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
-                    {{ cita.estado }}
-                  </span>
-                </td>
-                <td>
-                  @if (cita.estado === 'CONFIRMADA') {
-                    <button (click)="cancelarCita(cita.idCita)" class="btn-cancel">Cancelar</button>
-                  } @else {
-                    <span class="action-disabled">-</span>
-                  }
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="empty-state">
-                  <div class="empty-icon">📂</div>
-                  <p>No hay citas registradas para este negocio todavía.</p>
-                  <small>Las citas agendadas por los clientes a través del bot de WhatsApp aparecerán aquí automáticamente.</small>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  }
-
-  <!-- TAB: PERFIL DEL NEGOCIO -->
-  @if (activeTab === 'negocio') {
-    <div class="settings-grid">
-      <!-- Formulario de Configuración -->
-      <div class="main-card form-card">
-        <h2>Información del Negocio</h2>
-        <p class="subtitle">Personaliza los datos con los que el agente inteligente interactúa</p>
         
-        <form (ngSubmit)="guardarDatosEmpresa()" class="settings-form">
-          <div class="form-group">
-            <label for="nombre">Nombre de la Empresa</label>
-            <input 
-              type="text" 
-              id="nombre" 
-              name="nombre" 
-              [(ngModel)]="empresa.nombre" 
-              required
-            />
-          </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea name="srvDescripcion" [(ngModel)]="formServicio.descripcion" rows="2"></textarea>
+        </div>
 
+        <div class="form-row">
           <div class="form-group">
-            <label for="whatsappPhoneId">WhatsApp Phone ID</label>
-            <input 
-              type="text" 
-              id="whatsappPhoneId" 
-              name="whatsappPhoneId" 
-              [(ngModel)]="empresa.whatsappPhoneId" 
-              required
-            />
-            <small class="help-text">El ID que vincula tu bot de WhatsApp desde Meta.</small>
+            <label>Duración (min)</label>
+            <input type="number" name="srvDuracion" [(ngModel)]="formServicio.duracionMinutos" required min="5">
           </div>
-
           <div class="form-group">
-            <label for="whatsappToken">WhatsApp Access Token</label>
-            <input 
-              type="password" 
-              id="whatsappToken" 
-              name="whatsappToken" 
-              [(ngModel)]="empresa.whatsappToken"
-            />
-            <small class="help-text">Token de Meta. Se muestra enmascarado por seguridad. Para cambiarlo, ingresa el nuevo valor y presiona Guardar.</small>
+            <label>Precio (MXN)</label>
+            <input type="number" name="srvPrecio" [(ngModel)]="formServicio.precio" required min="0">
           </div>
+        </div>
 
-          <div class="form-group">
-            <label for="telefonoContacto">Teléfono de Soporte o Local</label>
-            <div class="phone-input-group" style="display: flex; gap: 8px;">
-              <select 
-                id="prefijoTelefono" 
-                name="prefijoTelefono" 
-                [(ngModel)]="prefijoTelefono" 
-                style="width: 140px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none;"
-              >
-                <option value="52">+52 (MX)</option>
-                <option value="1">+1 (US/CA)</option>
-                <option value="57">+57 (CO)</option>
-                <option value="54">+54 (AR)</option>
-                <option value="56">+56 (CL)</option>
-                <option value="51">+51 (PE)</option>
-                <option value="34">+34 (ES)</option>
+        <div class="modal-section">
+          <h4>Configuración Adicional</h4>
+          <label class="switch-label mb-3">
+            <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
+            <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa' : 'Sin Promoción' }}</span>
+          </label>
+
+          @if (formServicio.promocionActiva) {
+            <div class="form-group">
+              <select name="srvTipoPromocion" [(ngModel)]="formServicio.tipoPromocion">
+                <option value="NINGUNA">Ninguna</option>
+                <option value="DESCUENTO_PORCENTAJE">Descuento (%)</option>
+                <option value="SERVICIO_GRATIS">Servicio Gratis</option>
+                <option value="DOS_POR_UNO">2x1</option>
+                <option value="PERSONALIZADA">Personalizada</option>
               </select>
-              <input 
-                type="text" 
-                id="telefonoLocal" 
-                name="telefonoLocal" 
-                [(ngModel)]="telefonoLocal" 
-                placeholder="Ej: 5522069771"
-                style="flex: 1;"
-              />
             </div>
-            <small class="help-text">El número de teléfono directo al que el bot enviará a los clientes si solicitan hablar con un humano.</small>
-          </div>
-
-          <div class="form-group">
-            <label for="direccion">Dirección Física del Local</label>
-            <input 
-              type="text" 
-              id="direccion" 
-              name="direccion" 
-              [(ngModel)]="empresa.direccion"
-              placeholder="Ej: Av. Juárez 456, Col. Centro"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="mapsLink">Enlace de Google Maps del Local 
-              @if (empresa.planSuscripcion === 'BASIC') {
-                <span class="badge-lock">🔒 Solo Pro/Premium</span>
-              }
-            </label>
-            <input 
-              type="text" 
-              id="mapsLink" 
-              name="mapsLink" 
-              [(ngModel)]="empresa.mapsLink"
-              [disabled]="empresa.planSuscripcion === 'BASIC'"
-              [placeholder]="empresa.planSuscripcion === 'BASIC' ? 'Límite del plan Básico (mejora tu plan para habilitar)' : 'Ej: https://maps.google.com/?q=...'"
-            />
-            <small class="help-text">El enlace del mapa (GPS) que el bot compartirá cuando el cliente le pida indicaciones para llegar o cómo llegar.</small>
-          </div>
-
-          <div class="form-group">
-            <label for="descripcionNegocio">Instrucciones del Negocio para el Bot (Prompt Especializado)</label>
-            <textarea 
-              id="descripcionNegocio" 
-              name="descripcionNegocio" 
-              [(ngModel)]="empresa.descripcionNegocio"
-              placeholder="Ej: Somos una barbería clásica. Ofrecemos bebidas de cortesía y atendemos únicamente con cita..."
-              rows="5"
-            ></textarea>
-            <small class="help-text">La descripción del negocio le sirve a la IA de WhatsApp para responder de forma personalizada sobre tus reglas o cultura.</small>
-          </div>
-
-          <button type="submit" [disabled]="isLoading" class="btn-submit">
-            <span>Guardar Configuración</span>
-          </button>
-        </form>
-      </div>
-
-      <!-- Estatus de Suscripción / Stripe -->
-      <div class="side-card">
-        <!-- Tarjeta de Suscripción Actual -->
-        <div class="subscription-box" [class.active]="subStats.suscripcionActiva">
-          <h3>Suscripción Actual</h3>
-          
-          <div class="plan-status-header">
-            <span class="plan-pill" [class]="subStats.planSuscripcion?.toLowerCase()">
-              PLAN {{ subStats.planSuscripcion || 'BÁSICO' }}
-            </span>
-            @if (subStats.suscripcionActiva) {
-              <div class="sub-badge active">Activo</div>
-            } @else {
-              <div class="sub-badge inactive">Suspendido</div>
+            @if (formServicio.tipoPromocion === 'DESCUENTO_PORCENTAJE') {
+              <div class="form-group"><input type="number" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" placeholder="Porcentaje %"></div>
+            } @else if (formServicio.tipoPromocion === 'PERSONALIZADA') {
+              <div class="form-group"><input type="text" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" placeholder="Detalle de la promo"></div>
             }
-          </div>
-
-          <!-- Uso de Servicios -->
-          <div class="usage-stat">
-            <div class="usage-label">
-              <span>Servicios Activos</span>
-              <strong>
-                {{ subStats.totalServicios }} / 
-                {{ subStats.limiteServicios === 2147483647 ? '∞' : subStats.limiteServicios }}
-              </strong>
-            </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar services-bar" 
-                   [style.width.%]="subStats.limiteServicios === 2147483647 ? 100 : (subStats.totalServicios / subStats.limiteServicios * 100)">
-              </div>
-            </div>
-          </div>
-
-          <!-- Uso de Citas -->
-          <div class="usage-stat">
-            <div class="usage-label">
-              <span>Citas este Mes</span>
-              <strong>
-                {{ subStats.citasMesActual }} / 
-                {{ subStats.limiteCitas === 2147483647 ? '∞' : subStats.limiteCitas }}
-              </strong>
-            </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar appointments-bar" 
-                   [style.width.%]="subStats.limiteCitas === 2147483647 ? 100 : (subStats.citasMesActual / subStats.limiteCitas * 100)">
-              </div>
-            </div>
-          </div>
-
-          <p class="sub-text">
-            @if (subStats.suscripcionActiva) {
-              Tu bot de WhatsApp está respondiendo y recibiendo citas con normalidad.
-              @if (subStats.fechaFinSuscripcion) {
-                <span class="vigencia-text">
-                  Vigencia hasta: <strong>{{ subStats.fechaFinSuscripcion | date:'dd/MM/yyyy' }}</strong>
-                </span>
-              }
-            } @else {
-              El servicio del bot está suspendido. Contrata un plan para reactivarlo.
-            }
-          </p>
-
-          @if (subStats.suscripcionActiva) {
-            <button 
-              (click)="gestionarSuscripcion()" 
-              class="btn-portal-stripe"
-              [disabled]="isLoading"
-            >
-              <span>Gestionar / Cancelar Suscripción</span>
-            </button>
           }
-        </div>
-
-        <!-- Selector de Planes de Suscripción -->
-        <div class="plans-selector-box">
-          <h4>Nuestros Planes</h4>
           
-          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
-            <div class="plan-card-header">
-              <h5>Básico</h5>
-              <span class="plan-price">$299<small>/mes</small></span>
-            </div>
-            <ul class="plan-features">
-              <li><span>✓</span> Hasta 3 servicios activos</li>
-              <li><span>✓</span> Hasta 60 citas/mes</li>
-              <li><span>✓</span> Soporte en horario laboral</li>
-              <li><span>❌</span> Sin Google Maps o Cobros</li>
-            </ul>
-            <button 
-              (click)="pagarSuscripcion('BASIC')" 
-              class="btn-select-plan basic-btn"
-              [disabled]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva || isLoading"
-            >
-              {{ subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Básico' }}
-            </button>
-          </div>
-
-          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva">
-            <div class="plan-card-header">
-              <h5>Premium</h5>
-              <span class="plan-price">$499<small>/mes</small></span>
-            </div>
-            <ul class="plan-features">
-              <li><span>✓</span> Servicios ilimitados</li>
-              <li><span>✓</span> Citas ilimitadas</li>
-              <li><span>✓</span> Con Google Maps</li>
-              <li><span>★</span> Soporte Prioritario 24/7</li>
-              <li><span>★</span> Cobro a clientes (Anticipos/Completo)</li>
-            </ul>
-            <button 
-              (click)="pagarSuscripcion('PREMIUM')" 
-              class="btn-select-plan premium-btn"
-              [disabled]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva || isLoading"
-            >
-              {{ subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Premium' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- TAB: HORARIOS DE ATENCIÓN -->
-  @if (activeTab === 'horarios') {
-    <div class="main-card">
-      <h2>Horarios de Trabajo Generales</h2>
-      <p class="subtitle">Define los rangos de horarios en que tu local se encuentra abierto. El agente validará las citas basándose en estos días y horas.</p>
-
-      <form (ngSubmit)="guardarHorariosAgenda()" class="schedule-form">
-        <div class="schedule-grid">
-          @for (h of horarios; track h.diaSemana) {
-            <div class="schedule-row" [class.closed-row]="h.cerrado">
-              <div class="day-cell">
-                <strong>{{ h.nombreDia }}</strong>
-              </div>
-              
-              <div class="toggle-cell">
-                <label class="switch-label">
-                  <input type="checkbox" name="cerrado-{{h.diaSemana}}" [(ngModel)]="h.cerrado">
-                  <span class="switch-text">{{ h.cerrado ? 'Cerrado 🛑' : 'Abierto 🟢' }}</span>
-                </label>
-              </div>
-
-              <div class="time-cell">
-                <label>Apertura</label>
-                <input 
-                  type="time" 
-                  name="inicio-{{h.diaSemana}}" 
-                  [(ngModel)]="h.horaInicio"
-                  [disabled]="h.cerrado"
-                />
-              </div>
-
-              <div class="time-cell">
-                <label>Cierre</label>
-                <input 
-                  type="time" 
-                  name="fin-{{h.diaSemana}}" 
-                  [(ngModel)]="h.horaFin"
-                  [disabled]="h.cerrado"
-                />
-              </div>
-            </div>
-          }
+          <label class="switch-label">
+            <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
+            <span class="switch-text">{{ formServicio.activo ? 'Servicio Visible' : 'Servicio Oculto' }}</span>
+          </label>
         </div>
 
-        <button type="submit" [disabled]="isLoading" class="btn-submit">
-          <span>Actualizar Horarios</span>
-        </button>
+        <div class="modal-actions">
+          <button type="button" (click)="cerrarModalServicio()" class="btn-outline">Cancelar</button>
+          <button type="submit" [disabled]="isLoading" class="btn-primary">Guardar</button>
+        </div>
       </form>
     </div>
-  }
+  </div>
+}
 
-  <!-- TAB: SERVICIOS -->
-  @if (activeTab === 'servicios') {
-    <div class="main-card">
-      <div class="card-header-table">
-        <h2>Catálogo de Servicios</h2>
-        <button (click)="abrirModalServicio()" class="btn-refresh">
-          <span>+ Agregar Servicio 🏷️</span>
-        </button>
+<!-- MODAL: RE-AUTENTICACIÓN -->
+@if (mostrarModalReauth) {
+  <div class="modal-overlay">
+    <div class="clean-modal border-danger">
+      <div class="modal-header">
+        <h2 class="text-danger">Confirmación Requerida</h2>
+        <p>Modificar el Prompt Especializado cambia el comportamiento de la IA de inmediato.</p>
       </div>
 
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Duración (min)</th>
-              <th>Precio (MXN)</th>
-              <th>Estatus</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (srv of servicios; track srv.id) {
-              <tr class="fade-in-row">
-                <td class="client-name">{{ srv.nombre }}</td>
-                <td>{{ srv.descripcion || 'Sin descripción' }}</td>
-                <td>{{ srv.duracionMinutos }} mins</td>
-                <td>${{ srv.precio }}</td>
-                <td>
-                  <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-pendiente'">
-                    {{ srv.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <div style="display: flex; gap: 8px;">
-                    <button (click)="abrirModalServicio(srv)" class="btn-renew" style="padding: 6px 12px; font-size: 12px; width: auto; height: auto;">Editar</button>
-                    <button (click)="eliminarServicio(srv.id)" class="btn-pay" style="padding: 6px 12px; font-size: 12px; width: auto; height: auto; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="empty-state">
-                  <div class="empty-icon">🏷️</div>
-                  <p>No hay servicios registrados para este negocio.</p>
-                  <small>Haz clic en "Agregar Servicio" para comenzar a poblar tu catálogo.</small>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-  }
+      @if (errorReauth) { <div class="alert alert-error">{{ errorReauth }}</div> }
 
-  <!-- MODAL: CREAR/EDITAR SERVICIO -->
-  @if (mostrarModalServicio) {
-    <div class="modal-overlay">
-      <div class="glass-card modal-card" style="max-width: 500px; width: 90%; margin: 40px auto; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 1001; position: relative;">
-        <div class="card-header" style="text-align: left; margin-bottom: 20px;">
-          <h2>{{ editandoServicio ? 'Editar Servicio' : 'Nuevo Servicio' }}</h2>
-          <p>Define los detalles del servicio ofrecido en tu local</p>
+      <form (ngSubmit)="confirmarReauthYGuardar()" class="light-form">
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" name="reauthEmail" [(ngModel)]="reauthEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" name="reauthPassword" [(ngModel)]="reauthPassword" required>
         </div>
 
-        <form (ngSubmit)="guardarServicio()">
-          <div class="form-group">
-            <label for="srvNombre">Nombre del Servicio</label>
-            <input type="text" id="srvNombre" name="srvNombre" [(ngModel)]="formServicio.nombre" required placeholder="Ej: Corte de Cabello Masculino">
-          </div>
-
-          <div class="form-group">
-            <label for="srvDescripcion">Descripción (Opcional)</label>
-            <textarea id="srvDescripcion" name="srvDescripcion" [(ngModel)]="formServicio.descripcion" rows="3" placeholder="Ej: Incluye lavado, corte con tijera/máquina y peinado..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;"></textarea>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div class="form-group">
-              <label for="srvDuracion">Duración (minutos)</label>
-              <input type="number" id="srvDuracion" name="srvDuracion" [(ngModel)]="formServicio.duracionMinutos" required min="5" placeholder="Ej: 30">
-            </div>
-
-            <div class="form-group">
-              <label for="srvPrecio">Precio ($ MXN)</label>
-              <input type="number" id="srvPrecio" name="srvPrecio" [(ngModel)]="formServicio.precio" required min="0" placeholder="Ej: 200">
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <h4 style="margin-bottom: 15px; color: #a78bfa;">Opciones de Promoción</h4>
-            
-            <label class="switch-label" style="margin-bottom: 15px;">
-              <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
-              <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa 🟢' : 'Promoción Inactiva 🛑' }}</span>
-            </label>
-
-            @if (formServicio.promocionActiva) {
-              <div class="form-group">
-                <label for="srvTipoPromocion">Tipo de Promoción</label>
-                <select id="srvTipoPromocion" name="srvTipoPromocion" [(ngModel)]="formServicio.tipoPromocion" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5); color: #fff; outline: none; margin-bottom: 15px;">
-                  <option value="NINGUNA">Ninguna</option>
-                  <option value="DESCUENTO_PORCENTAJE">Descuento (%)</option>
-                  <option value="SERVICIO_GRATIS">Servicio Gratis</option>
-                  <option value="DOS_POR_UNO">2x1</option>
-                  <option value="PERSONALIZADA">Personalizada</option>
-                </select>
-              </div>
-
-              @if (formServicio.tipoPromocion === 'DESCUENTO_PORCENTAJE') {
-                <div class="form-group">
-                  <label for="srvValorPromocionPorc">Porcentaje de Descuento (%)</label>
-                  <input type="number" id="srvValorPromocionPorc" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required min="1" max="100" placeholder="Ej: 15">
-                </div>
-              } @else if (formServicio.tipoPromocion === 'PERSONALIZADA') {
-                <div class="form-group">
-                  <label for="srvValorPromocionPers">Descripción de la Promoción</label>
-                  <input type="text" id="srvValorPromocionPers" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" required maxlength="60" placeholder="Ej: Gratis en la compra de un shampoo">
-                  <small class="help-text">Máximo 60 caracteres. No incluir directivas de IA.</small>
-                </div>
-              }
-            }
-          </div>
-
-          <div class="form-group" style="margin-top: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <label class="switch-label">
-              <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
-              <span class="switch-text">{{ formServicio.activo ? 'Servicio Activo 🟢' : 'Servicio Inactivo 🛑' }}</span>
-            </label>
-          </div>
-
-          <div style="display: flex; gap: 10px; margin-top: 25px;">
-            <button type="button" (click)="cerrarModalServicio()" class="btn-renew" style="flex: 1;">Cancelar</button>
-            <button type="submit" [disabled]="isLoading" class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px; height: auto;">{{ editandoServicio ? 'Guardar Cambios' : 'Crear Servicio' }}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  }
-
-  <!-- MODAL: RE-AUTENTICACIÓN PARA PROMPT ESPECIALIZADO -->
-  @if (mostrarModalReauth) {
-    <div class="modal-overlay">
-      <div class="glass-card modal-card" style="max-width: 450px; width: 90%; margin: 80px auto; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 1px solid rgba(239, 68, 68, 0.2); z-index: 1001; position: relative;">
-        <div class="card-header" style="text-align: left; margin-bottom: 20px;">
-          <h2 style="color: #f87171; display: flex; align-items: center; gap: 10px;">⚠️ Confirmación Crítica</h2>
-          <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.4; margin-top: 10px;">
-            Advertencia: Modificar el <strong>Prompt Especializado</strong> cambiará la información de la base de datos de manera permanente y modificará el comportamiento del agente de WhatsApp en tiempo real. Por favor, confirma tus credenciales para proceder.
-          </p>
+        <div class="modal-actions">
+          <button type="button" (click)="cancelarReauth()" class="btn-outline">Cancelar</button>
+          <button type="submit" [disabled]="isLoading" class="btn-danger">Autorizar</button>
         </div>
-
-        @if (errorReauth) {
-          <div class="alert alert-error" style="padding: 8px 12px; font-size: 13px; margin-bottom: 15px;">
-            {{ errorReauth }}
-          </div>
-        }
-
-        <form (ngSubmit)="confirmarReauthYGuardar()">
-          <div class="form-group">
-            <label for="reauthEmail">Correo Electrónico</label>
-            <input type="email" id="reauthEmail" name="reauthEmail" [(ngModel)]="reauthEmail" required autocomplete="email">
-          </div>
-
-          <div class="form-group">
-            <label for="reauthPassword">Contraseña</label>
-            <input type="password" id="reauthPassword" name="reauthPassword" [(ngModel)]="reauthPassword" required autocomplete="current-password">
-          </div>
-
-          <div style="display: flex; gap: 10px; margin-top: 25px;">
-            <button type="button" (click)="cancelarReauth()" class="btn-renew" style="flex: 1;">Cancelar</button>
-            <button type="submit" [disabled]="isLoading" class="btn-submit" style="flex: 1; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); height: auto;">Autorizar</button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
-  }
-</div>
+  </div>
+}

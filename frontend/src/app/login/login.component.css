@@ -1,196 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700;800&display=swap');
+
 .login-wrapper {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  /* 1. Movemos el contenido a la derecha */
-  justify-content: flex-end; 
-  /* 2. Añadimos un padding derecho del 10% para que respire y no pegue al borde */
-  padding: 20px 10%; 
-  background: var(--bg-primario); 
+  /* Fondo base adaptado a tu verde oscuro */
+  background-color: var(--color-verde-fuerte); 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   box-sizing: border-box;
 }
 
-.glass-card {
-  width: 100%;
-  max-width: 380px;
-  background-color: #0b1a2e; 
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 2px solid var(--color-azul-fuerte);
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  box-sizing: border-box;
-  animation: fadeIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.card-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.card-header h2 {
-  color: #ffffff;
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.card-header p {
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0;
-  font-size: 15px;
-}
-
-/* El alert de error lo mantenemos en rojo por convención de UX */
-.alert {
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  margin-bottom: 24px;
-  line-height: 1.5;
-  animation: slideDown 0.3s ease-out;
-}
-
-.alert-error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #f87171;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.form-group {
-  position: relative;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.form-group input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 14px;
-  padding-right: 45px; /* <--- IMPORTANTE: Deja espacio para que el icono no tape el texto */
-  color: #ffffff;
-  font-size: 15px;
-  outline: none;
-  transition: all 0.3s ease;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.form-group input:focus {
-  /* Inyectamos el celeste para el borde de los inputs al darles clic */
-  border-color: var(--color-celeste);
-  background: rgba(255, 255, 255, 0.08);
-  /* Sombra sutil alineada a nuestro esquema */
-  box-shadow: 0 0 0 4px var(--bg-secundario); 
-}
-
-.password-toggle-btn {
-  position: absolute; /* Posición absoluta dentro del .form-group */
-  right: 12px;        /* Pegado a la derecha */
-  top: 38px;          /* Ajusta esto para centrarlo verticalmente con tu input */
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  font-size: 1.2rem;
+/* SECCIÓN IZQUIERDA (Estilo Oscuro con tu Verde Fuerte) */
+.login-info-section {
+  flex: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
-  z-index: 10;        /* Asegura que esté por encima del input */
+  padding: 60px 8%;
+  /* Un degradado radial elegante usando tu verde fuerte y un tono ligeramente más claro */
+  background: radial-gradient(circle at top left, #123d09, var(--color-verde-fuerte));
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.password-toggle-btn:hover {
-  opacity: 0.8;
+.info-content {
+  width: 100%;
+  max-width: 520px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.logo-dot {
+  width: 16px;
+  height: 16px;
+  /* El punto brillante del logo ahora es tu verde claro */
+  background-color: var(--color-verde-claro);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--color-verde-claro);
+}
+
+.brand-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.brand-slogan {
+  font-size: 20px;
+  line-height: 1.5;
+  color: #94a3b8; /* Mantenemos este gris azulado porque contrasta hermoso con el verde */
+  margin: 0 0 40px 0;
+}
+
+/* Preview decorativo */
+.preview-mockup {
+  background: #0a1208; /* Verde ultra oscuro casi negro */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  height: 220px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.mockup-header {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.dot.red { background-color: #ef4444; }
+.dot.yellow { background-color: #f59e0b; }
+.dot.green { background-color: #10b981; }
+
+.mockup-text {
+  font-family: monospace;
+  /* Texto de la terminal en verde claro */
+  color: var(--color-verde-claro);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ⚪ SECCIÓN DERECHA (Fondo que complementa el verde) */
+.login-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 6%;
+  background-color: #050a04; /* Un tono casi negro con un toque ínfimo de verde */
+}
+
+.clean-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 45px 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.card-header { margin-bottom: 32px; }
+.card-header h2 { font-size: 26px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; }
+.card-header p { font-size: 14px; color: #64748b; margin: 0; }
+
+.alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
+.alert-error { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+.form-group { margin-bottom: 24px; display: flex; flex-direction: column; }
+.label-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.form-group label { font-size: 13px; font-weight: 600; color: #334155; }
+
+.password-toggle-link {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-link:hover {
+  /* Hover del botón mostrar en tu verde claro */
+  color: var(--color-verde-claro);
+}
+
+.form-group input {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #0f172a;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  /* Borde y sombra al escribir usando rgba del verde claro (#477922 = 71, 121, 34) */
+  border-color: var(--color-verde-claro);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(71, 121, 34, 0.15);
+}
+
+.forgot-password-container { text-align: right; margin-top: -12px; margin-bottom: 24px; }
+
+.forgot-link {
+  font-size: 13px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgot-link:hover {
+  /* Enlace de recuperar contraseña */
+  color: var(--color-verde-claro);
 }
 
 .btn-submit {
   width: 100%;
-  /* Color celeste base definido en tu paleta */
-  background-color: var(--color-celeste); 
+  /* Botón principal en tu verde fuerte */
+  background-color: var(--color-verde-fuerte);
   border: none;
-  border-radius: 10px;
-  padding: 15px;
+  border-radius: 8px;
+  padding: 14px;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
+  transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  /* Color azul cielo (más claro) para el efecto hover */
-  background-color: var(--color-azul-cielo); 
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+.btn-submit:hover {
+  /* Hover del botón principal en tu verde claro */
+  background-color: var(--color-verde-claro);
+  transform: translateY(-1px);
 }
 
-.btn-submit:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.card-footer {
-  text-align: center;
-  margin-top: 25px;
-  font-size: 14px;
-}
-
-.card-footer p {
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
-}
+.card-footer { text-align: center; margin-top: 32px; font-size: 14px; color: #64748b; }
 
 .card-footer a {
-  /* Enlaces con el color de acento */
-  color: var(--texto-acento);
+  /* Enlace de registro */
+  color: var(--color-verde-claro);
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-weight: 600;
+  transition: color 0.15s ease;
 }
 
 .card-footer a:hover {
-  /* Al pasar el mouse, el enlace brilla con el azul cielo */
-  color: var(--color-azul-cielo);
+  color: var(--color-verde-fuerte);
 }
 
-@media (max-width: 768px) {
-  .login-wrapper {
-    /* En tablets y celulares, la tarjeta vuelve al centro por falta de espacio horizontal */
-    justify-content: center;
-    padding: 20px;
-  }
+/* 📱 RESPONSIVE */
+@media (max-width: 900px) {
+  .login-wrapper { flex-direction: column; }
+  .login-info-section { display: none; }
+  .login-form-section { flex: 1; padding: 40px 20px; }
 }
