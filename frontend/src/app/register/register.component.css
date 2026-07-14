@@ -3,10 +3,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 10% 20%, rgb(4, 21, 45) 0%, rgb(16, 42, 66) 50.2%, rgb(29, 64, 94) 100%);
+  /* Cambio al fondo primario de la paleta */
+  background: var(--bg-primario);
   padding: 20px;
   box-sizing: border-box;
-  font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 .glass-card {
@@ -62,6 +62,7 @@
   animation: slideDown 0.3s ease-out;
 }
 
+/* Manteniendo semántica de colores para alertas */
 .alert-error {
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -111,9 +112,10 @@
 }
 
 .form-group input:focus {
-  border-color: #6366f1;
+  /* Enfoque con el color celeste de la paleta */
+  border-color: var(--color-celeste);
   background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 4px var(--bg-secundario);
 }
 
 .help-text {
@@ -124,7 +126,8 @@
 
 .btn-submit {
   width: 100%;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  /* Botón primario verde claro */
+  background: var(--boton-primario);
   border: none;
   border-radius: 10px;
   padding: 15px;
@@ -139,7 +142,9 @@
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  /* Hover con el azul fuerte */
+  background: var(--boton-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .btn-submit:active:not(:disabled) {
@@ -163,14 +168,15 @@
 }
 
 .card-footer a {
-  color: #818cf8;
+  /* Enlaces de acento */
+  color: var(--texto-acento);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .card-footer a:hover {
-  color: #a5b4fc;
+  color: var(--color-azul-cielo);
 }
 
 /* Nuevos Estilos del Toggle y Secciones */
@@ -198,13 +204,15 @@
 }
 
 .toggle-btn.active {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  /* Toggle activo con el color del botón primario */
+  background: var(--boton-primario);
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .section-title {
-  color: #818cf8;
+  /* Título de sección con color de acento */
+  color: var(--texto-acento);
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
@@ -213,4 +221,3 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 6px;
 }
-

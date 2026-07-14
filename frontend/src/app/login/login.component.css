@@ -3,10 +3,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 10% 20%, rgb(4, 21, 45) 0%, rgb(16, 42, 66) 50.2%, rgb(29, 64, 94) 100%);
+  /* Reemplazamos el gradiente por el color principal del proyecto */
+  background: var(--bg-primario); 
   padding: 20px;
   box-sizing: border-box;
-  font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 .glass-card {
@@ -53,6 +53,7 @@
   font-size: 15px;
 }
 
+/* El alert de error lo mantenemos en rojo por convención de UX */
 .alert {
   padding: 12px 16px;
   border-radius: 10px;
@@ -105,14 +106,17 @@
 }
 
 .form-group input:focus {
-  border-color: #6366f1;
+  /* Inyectamos el celeste para el borde de los inputs al darles clic */
+  border-color: var(--color-celeste);
   background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  /* Sombra sutil alineada a nuestro esquema */
+  box-shadow: 0 0 0 4px var(--bg-secundario); 
 }
 
 .btn-submit {
   width: 100%;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  /* Eliminamos el gradiente morado y aplicamos el verde claro */
+  background: var(--boton-primario);
   border: none;
   border-radius: 10px;
   padding: 15px;
@@ -127,7 +131,9 @@
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  /* Cambiamos el hover para que utilice nuestro azul fuerte */
+  background: var(--boton-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .btn-submit:active:not(:disabled) {
@@ -151,12 +157,14 @@
 }
 
 .card-footer a {
-  color: #818cf8;
+  /* Enlaces con el color de acento */
+  color: var(--texto-acento);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .card-footer a:hover {
-  color: #a5b4fc;
+  /* Al pasar el mouse, el enlace brilla con el azul cielo */
+  color: var(--color-azul-cielo);
 }
