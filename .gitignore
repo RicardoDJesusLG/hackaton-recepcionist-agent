@@ -21,3 +21,4 @@ docker-compose.override.yml
 !frontend/package.json
 !frontend/package-lock.json
 antigravity-credentials.json
+node_modules
