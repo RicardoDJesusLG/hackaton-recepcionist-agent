@@ -37,6 +37,66 @@ public class StripeController {
      * Endpoint para generar un link de pago seguro en Stripe.
      * POST /api/v1/stripe/checkout
      */
+    /**
+     * Endpoint para generar un link de acceso al portal de clientes (Billing Portal) de Stripe.
+     * POST /api/v1/stripe/portal
+     */
+    @PostMapping("/portal")
+    public ResponseEntity<?> crearPortalSession(@RequestBody Map<String, String> request) {
+        String idNegocioStr = request.get("idNegocio");
+
+        if (idNegocioStr == null || idNegocioStr.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "ID de negocio requerido"));
+        }
+
+        UUID idNegocio;
+        try {
+            idNegocio = UUID.fromString(idNegocioStr.trim());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "ID de negocio no válido"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(idNegocio);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        Empresa empresa = empresaOpt.get();
+
+        if (stripeApiKey == null || stripeApiKey.trim().isEmpty() || "CAMBIAR_POR_LLAVE_REAL".equals(stripeApiKey)) {
+            // Modo mock: Simular portal de Stripe y poner inactiva para probar el flujo localmente
+            System.out.println("[StripeController] [MOCK] Generando portal de gestión simulado para: " + idNegocio);
+            empresa.setSuscripcionActiva(false);
+            empresaRepository.save(empresa);
+
+            String mockUrl = "http://localhost:4200/dashboard?payment=cancel&mock=true&idNegocio=" + idNegocio;
+            return ResponseEntity.ok(Map.of("url", mockUrl));
+        }
+
+        try {
+            Stripe.apiKey = stripeApiKey;
+            if (empresa.getStripeCustomerId() == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El negocio no tiene un Customer ID de Stripe registrado"));
+            }
+
+            com.stripe.param.billingportal.SessionCreateParams portalParams = 
+                com.stripe.param.billingportal.SessionCreateParams.builder()
+                    .setCustomer(empresa.getStripeCustomerId())
+                    .setReturnUrl("http://localhost:4200/dashboard")
+                    .build();
+
+            com.stripe.model.billingportal.Session portalSession = 
+                    com.stripe.model.billingportal.Session.create(portalParams);
+
+            return ResponseEntity.ok(Map.of("url", portalSession.getUrl()));
+
+        } catch (Exception e) {
+            System.err.println("[StripeController] Error al crear sesión del portal de Stripe: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al conectar con Stripe: " + e.getMessage()));
+        }
+    }
+
     @PostMapping("/checkout")
     public ResponseEntity<?> crearCheckoutSession(@RequestBody Map<String, String> request) {
         String idNegocioStr = request.get("idNegocio");
@@ -59,24 +119,20 @@ public class StripeController {
         }
 
         if (plan == null || plan.trim().isEmpty()) {
-            plan = "PRO";
+            plan = "BASIC";
         }
         plan = plan.trim().toUpperCase();
 
-        long unitAmount = 59900L;
-        String productName = "Membresía Recepción Profesional";
-        String productDesc = "Suscripción mensual al bot WhatsApp con límite de 150 citas/mes y 10 servicios.";
+        long unitAmount = 29900L; // $299.00 MXN
+        String productName = "Membresía Recepción Básica";
+        String productDesc = "Suscripción mensual al bot WhatsApp con límite de 60 citas/mes y soporte en horario laboral.";
 
-        if ("BASIC".equals(plan)) {
-            unitAmount = 19900L;
-            productName = "Membresía Recepción Básica";
-            productDesc = "Suscripción mensual al bot WhatsApp con límite de 30 citas/mes y 3 servicios.";
-        } else if ("PREMIUM".equals(plan)) {
-            unitAmount = 99900L;
+        if ("PREMIUM".equals(plan)) {
+            unitAmount = 49900L; // $499.00 MXN
             productName = "Membresía Recepción Premium";
-            productDesc = "Suscripción mensual al bot WhatsApp ilimitada con soporte prioritario.";
+            productDesc = "Suscripción mensual al bot WhatsApp ilimitada con soporte prioritario 24/7 y cobro a clientes.";
         } else {
-            plan = "PRO";
+            plan = "BASIC";
         }
 
         // Modo MOCK si no hay llave de Stripe configurada
@@ -87,6 +143,8 @@ public class StripeController {
             Empresa empresa = empresaOpt.get();
             empresa.setSuscripcionActiva(true);
             empresa.setPlanSuscripcion(plan);
+            empresa.setFechaInicioSuscripcion(java.time.LocalDateTime.now());
+            empresa.setFechaFinSuscripcion(java.time.LocalDateTime.now().plusDays(30));
             empresaRepository.save(empresa);
             System.out.println("[StripeController] [MOCK] Suscripción activada exitosamente en BD para " + empresa.getNombre() + " en plan: " + plan);
 
@@ -171,7 +229,9 @@ public class StripeController {
 
         System.out.println("[StripeWebhook] Evento recibido: " + event.getType());
 
-        if ("checkout.session.completed".equals(event.getType())) {
+        String eventType = event.getType();
+
+        if ("checkout.session.completed".equals(eventType)) {
             EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
             Optional<Session> sessionOpt = deserializer.getObject().map(obj -> (Session) obj);
 
@@ -181,7 +241,7 @@ public class StripeController {
                 String planStr = session.getMetadata().get("plan");
 
                 if (planStr == null) {
-                    planStr = "PRO";
+                    planStr = "BASIC";
                 }
 
                 if (idNegocioStr != null) {
@@ -193,6 +253,39 @@ public class StripeController {
                             Empresa empresa = empresaOpt.get();
                             empresa.setSuscripcionActiva(true);
                             empresa.setPlanSuscripcion(planStr.toUpperCase());
+                            
+                            // Guardar datos de Stripe
+                            empresa.setStripeCustomerId(session.getCustomer());
+                            empresa.setStripeSubscriptionId(session.getSubscription());
+
+                            // Intentar recuperar fechas de la suscripción real
+                            String subscriptionId = session.getSubscription();
+                            if (subscriptionId != null && !subscriptionId.isEmpty()) {
+                                try {
+                                    com.stripe.model.Subscription subscription = com.stripe.model.Subscription.retrieve(subscriptionId);
+                                    if (subscription != null) {
+                                        if (subscription.getCurrentPeriodStart() != null) {
+                                            empresa.setFechaInicioSuscripcion(
+                                                java.time.LocalDateTime.ofInstant(
+                                                    java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodStart()), 
+                                                    java.time.ZoneId.systemDefault()
+                                                )
+                                            );
+                                        }
+                                        if (subscription.getCurrentPeriodEnd() != null) {
+                                            empresa.setFechaFinSuscripcion(
+                                                java.time.LocalDateTime.ofInstant(
+                                                    java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodEnd()), 
+                                                    java.time.ZoneId.systemDefault()
+                                                )
+                                            );
+                                        }
+                                    }
+                                } catch (Exception ex) {
+                                    System.err.println("[StripeWebhook] Error al obtener detalles de la suscripción de Stripe: " + ex.getMessage());
+                                }
+                            }
+
                             empresaRepository.save(empresa);
                             System.out.println("[StripeWebhook] ¡Suscripción activada con éxito para la empresa: " 
                                     + empresa.getNombre() + " en plan: " + planStr + "!");
@@ -204,6 +297,51 @@ public class StripeController {
                     }
                 } else {
                     System.err.println("[StripeWebhook] Sesión completada no tiene metadata de 'idNegocio'.");
+                }
+            }
+        } else if ("customer.subscription.deleted".equals(eventType)) {
+            EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+            Optional<com.stripe.model.Subscription> subOpt = deserializer.getObject().map(obj -> (com.stripe.model.Subscription) obj);
+            if (subOpt.isPresent()) {
+                com.stripe.model.Subscription subscription = subOpt.get();
+                String subscriptionId = subscription.getId();
+                Optional<Empresa> empresaOpt = empresaRepository.findByStripeSubscriptionId(subscriptionId);
+                if (empresaOpt.isPresent()) {
+                    Empresa empresa = empresaOpt.get();
+                    empresa.setSuscripcionActiva(false);
+                    empresaRepository.save(empresa);
+                    System.out.println("[StripeWebhook] Suscripción cancelada para la empresa: " + empresa.getNombre());
+                }
+            }
+        } else if ("customer.subscription.updated".equals(eventType)) {
+            EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+            Optional<com.stripe.model.Subscription> subOpt = deserializer.getObject().map(obj -> (com.stripe.model.Subscription) obj);
+            if (subOpt.isPresent()) {
+                com.stripe.model.Subscription subscription = subOpt.get();
+                String subscriptionId = subscription.getId();
+                Optional<Empresa> empresaOpt = empresaRepository.findByStripeSubscriptionId(subscriptionId);
+                if (empresaOpt.isPresent()) {
+                    Empresa empresa = empresaOpt.get();
+                    boolean active = "active".equals(subscription.getStatus());
+                    empresa.setSuscripcionActiva(active);
+                    if (subscription.getCurrentPeriodStart() != null) {
+                        empresa.setFechaInicioSuscripcion(
+                            java.time.LocalDateTime.ofInstant(
+                                java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodStart()), 
+                                java.time.ZoneId.systemDefault()
+                            )
+                        );
+                    }
+                    if (subscription.getCurrentPeriodEnd() != null) {
+                        empresa.setFechaFinSuscripcion(
+                            java.time.LocalDateTime.ofInstant(
+                                java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodEnd()), 
+                                java.time.ZoneId.systemDefault()
+                            )
+                        );
+                    }
+                    empresaRepository.save(empresa);
+                    System.out.println("[StripeWebhook] Suscripción actualizada para la empresa: " + empresa.getNombre() + " (Activa: " + active + ")");
                 }
             }
         }

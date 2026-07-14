@@ -725,3 +725,46 @@ td {
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: #34d399;
 }
+
+/* Estilos para el botón de Stripe Billing Portal y fecha de vigencia */
+.vigencia-text {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.vigencia-text strong {
+  color: #38bdf8;
+}
+
+.btn-portal-stripe {
+  width: 100%;
+  padding: 10px;
+  margin-top: 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #818cf8;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-portal-stripe:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-portal-stripe:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}

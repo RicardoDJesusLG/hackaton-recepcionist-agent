@@ -386,19 +386,19 @@ public class DashboardController {
 
         if ("BASIC".equalsIgnoreCase(plan)) {
             limiteServicios = 3;
-            limiteCitas = 30;
-        } else if ("PRO".equalsIgnoreCase(plan)) {
-            limiteServicios = 10;
-            limiteCitas = 150;
+            limiteCitas = 60;
         }
 
-        return ResponseEntity.ok(Map.of(
-                "planSuscripcion", plan,
-                "suscripcionActiva", activa,
-                "totalServicios", totalServicios,
-                "limiteServicios", limiteServicios,
-                "citasMesActual", citasMesActual,
-                "limiteCitas", limiteCitas
-        ));
+        java.util.Map<String, Object> responseData = new java.util.HashMap<>();
+        responseData.put("planSuscripcion", plan);
+        responseData.put("suscripcionActiva", activa);
+        responseData.put("totalServicios", totalServicios);
+        responseData.put("limiteServicios", limiteServicios);
+        responseData.put("citasMesActual", citasMesActual);
+        responseData.put("limiteCitas", limiteCitas);
+        responseData.put("fechaInicioSuscripcion", empresa.getFechaInicioSuscripcion());
+        responseData.put("fechaFinSuscripcion", empresa.getFechaFinSuscripcion());
+
+        return ResponseEntity.ok(responseData);
     }
 }

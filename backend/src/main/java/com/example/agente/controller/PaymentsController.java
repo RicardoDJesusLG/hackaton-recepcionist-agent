@@ -198,6 +198,31 @@ public class PaymentsController {
                 if (empresaOpt.isPresent()) {
                     Empresa empresa = empresaOpt.get();
                     empresa.setSuscripcionActiva(true);
+                    
+                    try {
+                        Subscription subscription = Subscription.retrieve(subscriptionId);
+                        if (subscription != null) {
+                            if (subscription.getCurrentPeriodStart() != null) {
+                                empresa.setFechaInicioSuscripcion(
+                                    java.time.LocalDateTime.ofInstant(
+                                        java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodStart()), 
+                                        java.time.ZoneId.systemDefault()
+                                    )
+                                );
+                            }
+                            if (subscription.getCurrentPeriodEnd() != null) {
+                                empresa.setFechaFinSuscripcion(
+                                    java.time.LocalDateTime.ofInstant(
+                                        java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodEnd()), 
+                                        java.time.ZoneId.systemDefault()
+                                    )
+                                );
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("[PaymentsWebhook] Error al obtener detalles de la suscripción tras renovación: " + ex.getMessage());
+                    }
+
                     empresaRepository.save(empresa);
                     System.out.println("[PaymentsWebhook] Renovación de suscripción exitosa para: " + empresa.getNombre());
                 }
@@ -232,6 +257,34 @@ public class PaymentsController {
                 empresa.setSuscripcionActiva(activo);
                 empresa.setStripeCustomerId(customerId);
                 empresa.setStripeSubscriptionId(subscriptionId);
+
+                // Intentar recuperar fechas de la suscripción real
+                if (subscriptionId != null && !subscriptionId.isEmpty()) {
+                    try {
+                        Subscription subscription = Subscription.retrieve(subscriptionId);
+                        if (subscription != null) {
+                            if (subscription.getCurrentPeriodStart() != null) {
+                                empresa.setFechaInicioSuscripcion(
+                                    java.time.LocalDateTime.ofInstant(
+                                        java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodStart()), 
+                                        java.time.ZoneId.systemDefault()
+                                    )
+                                );
+                            }
+                            if (subscription.getCurrentPeriodEnd() != null) {
+                                empresa.setFechaFinSuscripcion(
+                                    java.time.LocalDateTime.ofInstant(
+                                        java.time.Instant.ofEpochSecond(subscription.getCurrentPeriodEnd()), 
+                                        java.time.ZoneId.systemDefault()
+                                    )
+                                );
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("[PaymentsWebhook] Error al obtener detalles de la suscripción de Stripe: " + ex.getMessage());
+                    }
+                }
+
                 empresaRepository.save(empresa);
                 System.out.println("[PaymentsWebhook] Estado de suscripción actualizado a " + activo + " para: " + empresa.getNombre());
             }

@@ -120,9 +120,7 @@ public class CitaService {
             String plan = empresa.getPlanSuscripcion();
             int maxCitasMes = Integer.MAX_VALUE;
             if ("BASIC".equalsIgnoreCase(plan)) {
-                maxCitasMes = 30;
-            } else if ("PRO".equalsIgnoreCase(plan)) {
-                maxCitasMes = 150;
+                maxCitasMes = 60;
             }
 
             if (maxCitasMes < Integer.MAX_VALUE) {
