@@ -6,7 +6,10 @@ import { AuthService } from '../auth.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [
+    FormsModule,
+    RouterLink
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -20,20 +23,9 @@ export class LoginComponent {
   isLoading = false;
   passwordVisible = false;
 
-  // --- MÉTODOS PARA EL OJO ---
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;
   }
-
-  // Estado del modal de recuperación
-  mostrarModalRecuperar = false;
-  recuperarPaso: 'solicitar' | 'restablecer' = 'solicitar';
-  recuperarEmail = '';
-  recuperarCodigo = '';
-  recuperarNuevaPass = '';
-  mensajeRecuperar = '';
-  errorRecuperar = '';
-  cargandoRecuperar = false;
 
   onSubmit(): void {
     if (!this.email.trim() || !this.password.trim()) {
@@ -59,7 +51,16 @@ export class LoginComponent {
     });
   }
 
-  // --- MÉTODOS DE RECUPERACIÓN ---
+  // --- MÉTODOS DE RECUPERACIÓN DE CONTRASEÑA ---
+  mostrarModalRecuperar = false;
+  recuperarPaso: 'solicitar' | 'restablecer' = 'solicitar';
+  recuperarEmail = '';
+  recuperarCodigo = '';
+  recuperarNuevaPass = '';
+  mensajeRecuperar = '';
+  errorRecuperar = '';
+  cargandoRecuperar = false;
+
   abrirModalRecuperar(): void {
     this.mostrarModalRecuperar = true;
     this.recuperarPaso = 'solicitar';
@@ -115,7 +116,7 @@ export class LoginComponent {
     };
 
     this.authService.restablecerContrasena(payload).subscribe({
-      next: (res) => {
+      next: () => {
         this.cargandoRecuperar = false;
         this.mensajeRecuperar = 'Contraseña restablecida con éxito. Redirigiendo...';
         setTimeout(() => {
