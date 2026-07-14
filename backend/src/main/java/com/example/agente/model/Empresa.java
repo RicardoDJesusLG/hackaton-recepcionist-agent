@@ -56,6 +56,12 @@ public class Empresa {
     @Column(name = "stripe_subscription_id", length = 255)
     private String stripeSubscriptionId;
 
+    @Column(name = "fecha_inicio_suscripcion")
+    private LocalDateTime fechaInicioSuscripcion;
+
+    @Column(name = "fecha_fin_suscripcion")
+    private LocalDateTime fechaFinSuscripcion;
+
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 }

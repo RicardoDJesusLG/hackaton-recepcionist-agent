@@ -54,7 +54,7 @@ export class DashboardComponent implements OnInit {
     totalServicios: 0,
     limiteServicios: 3,
     citasMesActual: 0,
-    limiteCitas: 30
+    limiteCitas: 60
   };
 
   // Catálogo de Servicios
@@ -446,6 +446,25 @@ export class DashboardComponent implements OnInit {
         } else {
           this.isLoading = false;
           alert('Error al iniciar pasarela de pagos.');
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        alert('Error al conectar con Stripe.');
+        console.error(err);
+      }
+    });
+  }
+
+  gestionarSuscripcion(): void {
+    this.isLoading = true;
+    this.dashboardService.crearPortalSession(this.empresaId).subscribe({
+      next: (res) => {
+        if (res && res.url) {
+          window.location.href = res.url;
+        } else {
+          this.isLoading = false;
+          alert('Error al redirigir al portal de facturación.');
         }
       },
       error: (err) => {

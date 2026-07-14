@@ -313,10 +313,25 @@
           <p class="sub-text">
             @if (subStats.suscripcionActiva) {
               Tu bot de WhatsApp está respondiendo y recibiendo citas con normalidad.
+              @if (subStats.fechaFinSuscripcion) {
+                <span class="vigencia-text">
+                  Vigencia hasta: <strong>{{ subStats.fechaFinSuscripcion | date:'dd/MM/yyyy' }}</strong>
+                </span>
+              }
             } @else {
               El servicio del bot está suspendido. Contrata un plan para reactivarlo.
             }
           </p>
+
+          @if (subStats.suscripcionActiva) {
+            <button 
+              (click)="gestionarSuscripcion()" 
+              class="btn-portal-stripe"
+              [disabled]="isLoading"
+            >
+              <span>Gestionar / Cancelar Suscripción</span>
+            </button>
+          }
         </div>
 
         <!-- Selector de Planes de Suscripción -->
@@ -326,12 +341,13 @@
           <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
             <div class="plan-card-header">
               <h5>Básico</h5>
-              <span class="plan-price">$199<small>/mes</small></span>
+              <span class="plan-price">$299<small>/mes</small></span>
             </div>
             <ul class="plan-features">
               <li><span>✓</span> Hasta 3 servicios activos</li>
-              <li><span>✓</span> Hasta 30 citas/mes</li>
-              <li><span>❌</span> Sin Google Maps</li>
+              <li><span>✓</span> Hasta 60 citas/mes</li>
+              <li><span>✓</span> Soporte en horario laboral</li>
+              <li><span>❌</span> Sin Google Maps o Cobros</li>
             </ul>
             <button 
               (click)="pagarSuscripcion('BASIC')" 
@@ -342,35 +358,17 @@
             </button>
           </div>
 
-          <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva">
-            <div class="plan-card-header">
-              <h5>Profesional</h5>
-              <span class="plan-price">$599<small>/mes</small></span>
-            </div>
-            <ul class="plan-features">
-              <li><span>✓</span> Hasta 10 servicios activos</li>
-              <li><span>✓</span> Hasta 150 citas/mes</li>
-              <li><span>✓</span> Con Google Maps</li>
-            </ul>
-            <button 
-              (click)="pagarSuscripcion('PRO')" 
-              class="btn-select-plan pro-btn"
-              [disabled]="subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva || isLoading"
-            >
-              {{ subStats.planSuscripcion === 'PRO' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Pro' }}
-            </button>
-          </div>
-
           <div class="plan-option-card" [class.current]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva">
             <div class="plan-card-header">
               <h5>Premium</h5>
-              <span class="plan-price">$999<small>/mes</small></span>
+              <span class="plan-price">$499<small>/mes</small></span>
             </div>
             <ul class="plan-features">
               <li><span>✓</span> Servicios ilimitados</li>
               <li><span>✓</span> Citas ilimitadas</li>
               <li><span>✓</span> Con Google Maps</li>
-              <li><span>★</span> Soporte Prioritario</li>
+              <li><span>★</span> Soporte Prioritario 24/7</li>
+              <li><span>★</span> Cobro a clientes (Anticipos/Completo)</li>
             </ul>
             <button 
               (click)="pagarSuscripcion('PREMIUM')" 

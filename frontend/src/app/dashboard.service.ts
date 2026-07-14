@@ -40,6 +40,10 @@ export class DashboardService {
     return this.http.post<any>(`${this.stripeUrl}/checkout`, { idNegocio, plan });
   }
 
+  crearPortalSession(idNegocio: string): Observable<any> {
+    return this.http.post<any>(`${this.stripeUrl}/portal`, { idNegocio });
+  }
+
   getSubscriptionStats(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/suscripcion/stats`);
   }
