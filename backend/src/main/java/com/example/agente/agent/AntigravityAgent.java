@@ -254,7 +254,7 @@ public class AntigravityAgent {
      */
     public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, String customerPhone) {
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' yyyy, HH:mm:ss", new java.util.Locale("es", "MX"));
-        String fechaHoraActual = java.time.LocalDateTime.now().format(formatter);
+        String fechaHoraActual = java.time.ZonedDateTime.now(java.time.ZoneId.of("America/Mexico_City")).format(formatter);
         
         String contextMessage = String.format(
                 "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s]\n" +
