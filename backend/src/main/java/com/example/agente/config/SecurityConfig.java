@@ -47,7 +47,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4201,https://frontend-agente-63842513261.us-central1.run.app}")
+    @org.springframework.beans.factory.annotation.Value("${ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4201,https://frontend-agente-63842513261.us-central1.run.app,https://whappify.com.mx}")
     private String allowedOriginsEnv;
 
     @Bean

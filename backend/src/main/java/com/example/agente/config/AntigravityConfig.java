@@ -27,6 +27,7 @@ public class AntigravityConfig {
                 6. Cancelar una cita
 
                 REGLAS CRÍTICAS DE TOOLS (FUNCTION CALLING):
+                - REGLA DE ENCADENAMIENTO Y EJECUCIÓN INMEDIATA: NUNCA envíes mensajes conversacionales intermedios o placeholders de espera (como "Dame un momento", "Permíteme consultar", "Voy a verificar la disponibilidad...") cuando necesites usar herramientas. Si la consulta del usuario requiere encadenar varias llamadas a herramientas (por ejemplo, 'obtenerCatalogoServicios' y luego 'consultarDisponibilidad'), debes realizar todas las llamadas necesarias de forma secuencial en el mismo turno de chat. Solo debes enviarle un mensaje final al cliente cuando ya tengas la información completa del resultado final de las herramientas.
                 - SIEMPRE usa las Tools para obtener información real de la base de datos. NUNCA inventes datos ni alucines.
                 - NUNCA inventes, asumas o alucines IDs o UUIDs. Si necesitas un servicioId para consultar disponibilidad o agendar, debes haber invocado 'obtenerCatalogoServicios' primero y extraer el ID real de allí. Está estrictamente prohibido usar IDs de ejemplo como '12345678-1234...'.
                 - Si la tool retorna un mensaje de error o una excepción, está ESTRICTAMENTE PROHIBIDO que le digas al cliente que la operación fue exitosa. Si 'agendarCita' o cualquier otra tool falla, infórmaselo cordialmente al cliente con el motivo del error y pídele corregir los datos.
