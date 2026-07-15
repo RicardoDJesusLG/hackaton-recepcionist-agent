@@ -32,24 +32,27 @@ El campo **"Descripción/Directivas del Negocio"** es la personalidad de tu rece
 
 ### 📋 Cuestionario de Definición del Agente
 
-1. **¿Cuál es el tono de comunicación?**
+1. **¿A qué se dedica tu negocio y cuáles son tus especialidades principales?**
+   * *Ejemplo:* "Somos un spa boutique enfocado en masajes relajantes, tratamientos faciales orgánicos y bienestar integral." o "Somos un taller mecánico especializado en transmisiones automáticas y afinación de motores."
+2. **¿Cuál es el tono de comunicación?**
    * *Ejemplo:* "¿Quieres que hable de 'tú' o de 'usted'? ¿Debe ser sumamente formal y elegante, o casual, alegre y amigable con muchos emojis?"
-2. **¿Cuáles son tus políticas de tolerancia y cancelación?**
+3. **¿Cuáles son tus políticas de tolerancia y cancelación?**
    * *Ejemplo:* "Hay una tolerancia de 15 minutos de retraso. Las cancelaciones deben hacerse con al menos 2 horas de anticipación."
-3. **¿Qué debe saber o traer el cliente antes de su cita?**
+4. **¿Qué debe saber o traer el cliente antes de su cita?**
    * *Ejemplo:* "Para el servicio de coctelería a domicilio, el cliente debe tener una mesa lista de 2 metros. Para servicios de spa, venir con ropa cómoda y sin maquillaje."
-4. **¿Cuáles son los métodos de pago aceptados en el local?**
+5. **¿Cuáles son los métodos de pago aceptados en el local?**
    * *Ejemplo:* "Aceptamos efectivo, transferencias bancarias y tarjetas Visa/Mastercard. No aceptamos American Express."
-5. **¿Qué servicios o preguntas frecuentes adicionales debes cubrir?**
+6. **¿Qué servicios o preguntas frecuentes adicionales debes cubrir?**
    * *Ejemplo:* "¿Cuentas con estacionamiento o valet parking? ¿El local es pet-friendly? ¿Tienes área de niños?"
-6. **¿Cómo debe manejar el agente las solicitudes especiales o quejas?**
+7. **¿Cómo debe manejar el agente las solicitudes especiales o quejas?**
    * *Ejemplo:* "Si el cliente pide un descuento especial o quiere reportar una queja, proporciónale el Teléfono de Soporte del Local y dile que un humano le atenderá a la brevedad."
 
 ---
 
 ### 📝 Ejemplo de un Prompt Especializado Exitoso
 
-> "Actúa como asistente de 'Coctelería Express'. Trata al cliente de 'tú' de forma muy alegre y usa emojis relacionados con bebidas (🍸, 🍹).
+> "Somos un servicio de barra móvil de coctelería artesanal premium para eventos sociales como bodas, graduaciones, XV años y reuniones privadas.
+> Actúa como asistente de 'Coctelería Express'. Trata al cliente de 'tú' de forma muy alegre y usa emojis relacionados con bebidas (🍸, 🍹).
 >
 > **Políticas del Local:**
 > - Tolerancia máxima de 10 minutos por retraso.
