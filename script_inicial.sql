@@ -13,7 +13,7 @@ CREATE TABLE empresas (
     direccion TEXT,                                 -- ¡Para que la IA sepa dónde están!
     descripcion_negocio TEXT,                       -- Ej: "Barbería premium estilo clásico"
     suscripcion_activa BOOLEAN NOT NULL DEFAULT TRUE,
-    plan_suscripcion VARCHAR(50) NOT NULL DEFAULT 'BASIC',
+    plan_suscripcion VARCHAR(50) NOT NULL DEFAULT 'BASIC', -- BASIC, PREMIUM
     telefono_contacto VARCHAR(20),
     maps_link TEXT,
     stripe_customer_id VARCHAR(255),
@@ -46,7 +46,7 @@ CREATE TABLE servicios (
     duracion_minutos INT NOT NULL DEFAULT 30,
     precio NUMERIC(10, 2) NOT NULL,
     activo BOOLEAN DEFAULT TRUE,
-    tipo_promocion VARCHAR(50),
+    tipo_promocion VARCHAR(50),                      -- NINGUNA, PREDEFINIDA, DESCUENTO_PORCENTAJE, PERSONALIZADA, SERVICIO_GRATIS, DOS_POR_UNO
     valor_promocion VARCHAR(100),
     promocion_activa BOOLEAN,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
