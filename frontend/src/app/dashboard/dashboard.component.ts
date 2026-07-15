@@ -320,6 +320,18 @@ export class DashboardComponent implements OnInit {
       alert('Por favor llena los campos obligatorios con valores correctos.');
       return;
     }
+
+    if (this.formServicio.promocionActiva && this.formServicio.tipoPromocion === 'PERSONALIZADA') {
+      const confirmacion = confirm(
+        '⚠️ Estás activando una promoción personalizada.\n\n' +
+        'Por favor, asegúrate de verificar que el texto (prompt) de la promoción sea correcto, profesional y no altere de forma negativa el comportamiento del agente.\n\n' +
+        '¿Deseas continuar?'
+      );
+      if (!confirmacion) {
+        return;
+      }
+    }
+
     this.isLoading = true;
     if (this.editandoServicio) {
       this.dashboardService.updateServicio(this.formServicio.id, this.formServicio).subscribe({

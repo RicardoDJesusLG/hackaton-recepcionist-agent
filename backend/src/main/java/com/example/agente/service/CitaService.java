@@ -170,18 +170,22 @@ public class CitaService {
                     return usuarioRepository.save(nuevo);
                 });
 
-        // 2.5 Validar límite de citas pendientes (anti-spam)
+        // 2.5 Validar límite de citas pendientes (anti-spam) según el plan del negocio
+        String planSuscripcion = empresaOpt.map(Empresa::getPlanSuscripcion).orElse("BASIC");
+        int maxCitasFuturas = "BASIC".equalsIgnoreCase(planSuscripcion) ? 3 : 10;
+        int maxCitasMismoDia = "BASIC".equalsIgnoreCase(planSuscripcion) ? 3 : 10;
+
         List<Cita> citasFuturas = citaRepository.findByUsuarioIdAndEmpresaIdAndFechaHoraInicioAfterAndEstadoNotOrderByFechaHoraInicioAsc(
                 usuario.getId(), empresaId, LocalDateTime.now(), EstadoCita.CANCELADA
         );
-        if (citasFuturas.size() >= 3) {
-            throw new IllegalStateException("Has alcanzado el límite máximo de 3 citas programadas. Por favor asiste a tus citas pendientes o cancela alguna antes de agendar una nueva.");
+        if (citasFuturas.size() >= maxCitasFuturas) {
+            throw new IllegalStateException("Has alcanzado el límite máximo de " + maxCitasFuturas + " citas programadas. Por favor asiste a tus citas pendientes o cancela alguna antes de agendar una nueva.");
         }
         long citasMismoDia = citasFuturas.stream()
                 .filter(c -> c.getFechaHoraInicio().toLocalDate().equals(startDateTime.toLocalDate()))
                 .count();
-        if (citasMismoDia >= 3) {
-            throw new IllegalStateException("Has alcanzado el límite de 3 citas programadas para el día " + startDateTime.toLocalDate() + ". Por favor elige otra fecha.");
+        if (citasMismoDia >= maxCitasMismoDia) {
+            throw new IllegalStateException("Has alcanzado el límite de " + maxCitasMismoDia + " citas programadas para el día " + startDateTime.toLocalDate() + ". Por favor elige otra fecha.");
         }
 
         // 3. Validar solapamiento con citas existentes

@@ -225,7 +225,9 @@ public class ServicioController {
     private ResponseEntity<?> validarYAsignarPromocion(Map<String, Object> body, Servicio servicio) {
         Boolean promocionActiva = (Boolean) body.get("promocionActiva");
         String tipoPromocionStr = (String) body.get("tipoPromocion");
-        String valorPromocion = (String) body.get("valorPromocion");
+        
+        Object valorPromocionObj = body.get("valorPromocion");
+        String valorPromocion = (valorPromocionObj != null) ? valorPromocionObj.toString().trim() : null;
 
         if (promocionActiva != null) servicio.setPromocionActiva(promocionActiva);
 
@@ -238,11 +240,14 @@ public class ServicioController {
             }
         }
 
-        if (servicio.getTipoPromocion() != null && servicio.getTipoPromocion() != TipoPromocion.NINGUNA) {
-            if (valorPromocion == null || valorPromocion.trim().isEmpty()) {
+        if (servicio.getTipoPromocion() != null 
+                && servicio.getTipoPromocion() != TipoPromocion.NINGUNA
+                && servicio.getTipoPromocion() != TipoPromocion.SERVICIO_GRATIS
+                && servicio.getTipoPromocion() != TipoPromocion.DOS_POR_UNO) {
+            
+            if (valorPromocion == null || valorPromocion.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "El valor de la promoción es requerido."));
             }
-            valorPromocion = valorPromocion.trim();
             
             if (servicio.getTipoPromocion() == TipoPromocion.DESCUENTO_PORCENTAJE) {
                 try {
@@ -267,7 +272,13 @@ public class ServicioController {
             }
             servicio.setValorPromocion(valorPromocion);
         } else {
-            servicio.setValorPromocion(null);
+            if (servicio.getTipoPromocion() == TipoPromocion.SERVICIO_GRATIS) {
+                servicio.setValorPromocion("Gratis");
+            } else if (servicio.getTipoPromocion() == TipoPromocion.DOS_POR_UNO) {
+                servicio.setValorPromocion("2x1");
+            } else {
+                servicio.setValorPromocion(null);
+            }
         }
         return null;
     }
