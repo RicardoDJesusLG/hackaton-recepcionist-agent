@@ -4,5 +4,7 @@ public enum TipoPromocion {
     NINGUNA,
     PREDEFINIDA,
     DESCUENTO_PORCENTAJE,
-    PERSONALIZADA
+    PERSONALIZADA,
+    SERVICIO_GRATIS,
+    DOS_POR_UNO
 }
