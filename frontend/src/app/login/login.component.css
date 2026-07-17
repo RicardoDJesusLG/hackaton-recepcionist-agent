@@ -144,7 +144,9 @@ input, button { font-family: inherit; }
   font-size: 13px;
   line-height: 1.4;
   position: relative;
-  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); /* Sombra sutil de la burbuja */
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  opacity: 0; 
+  animation: messageAppear 0.5s ease-out forwards;
 }
 
 .wa-message p {
@@ -160,15 +162,17 @@ input, button { font-family: inherit; }
 }
 
 .client-msg {
-  background: #ffffff; /* Burbuja blanca para mensajes recibidos */
+  background: #ffffff;
   align-self: flex-start;
-  border-top-left-radius: 0px; /* Remate recto característico del globo de chat */
+  border-top-left-radius: 0px;
+  animation-delay: 0.8s; 
 }
 
 .agent-msg {
-  background: #d9fdd3; /* Burbuja verde claro para mensajes enviados */
+  background: #d9fdd3;
   align-self: flex-end;
   border-top-right-radius: 0px;
+  animation-delay: 2.3s; 
 }
 
 .wa-footer {
@@ -216,7 +220,7 @@ input, button { font-family: inherit; }
   font-family: 'Montserrat', sans-serif;
   font-size: 26px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; 
 }
-.card-header p { font-size: 14px; color: #64748b; margin: 0; }
+.card-header p { font-size: 16px; color: #64748b; margin: 0; }
 
 .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
 .alert-error { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
@@ -353,6 +357,18 @@ input, button { font-family: inherit; }
 .rm-alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
 .rm-alert-error { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
 .rm-alert-success { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+/* --- ANIMACIÓN DE MENSAJES DE WHATSAPP --- */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @media (max-width: 900px) {
   .login-wrapper { 
