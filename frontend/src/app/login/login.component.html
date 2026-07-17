@@ -113,5 +113,74 @@
   </div>
 </div>
 
+<!-- Modal de Recuperación de Contraseña (Rediseño) -->
 @if (mostrarModalRecuperar) {
-  }
+  <div class="recovery-overlay">
+    <div class="recovery-modal">
+      
+      <div class="rm-header">
+        <h3>Restablecer Contraseña</h3>
+        <button type="button" class="rm-close-btn" (click)="cerrarModalRecuperar()">&times;</button>
+      </div>
+
+      @if (errorRecuperar) {
+        <div class="rm-alert rm-alert-error">{{ errorRecuperar }}</div>
+      }
+
+      @if (mensajeRecuperar) {
+        <div class="rm-alert rm-alert-success">{{ mensajeRecuperar }}</div>
+      }
+
+      @if (recuperarPaso === 'solicitar') {
+        <p class="rm-text">Ingresa tu correo electrónico registrado. Te enviaremos un código de seguridad de 6 dígitos.</p>
+        <form (ngSubmit)="enviarCodigo()">
+          <div class="rm-form-group">
+            <label>Correo Electrónico</label>
+            <input 
+              type="email" 
+              name="recuperarEmail" 
+              [(ngModel)]="recuperarEmail" 
+              placeholder="tucorreo@ejemplo.com"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <button type="submit" [disabled]="cargandoRecuperar" class="btn-recovery">
+            {{ cargandoRecuperar ? 'Enviando...' : 'Enviar código de verificación' }}
+          </button>
+        </form>
+      }
+
+      @if (recuperarPaso === 'restablecer') {
+        <p class="rm-text">Ingresa el código que enviamos a tu correo y tu nueva contraseña.</p>
+        <form (ngSubmit)="confirmarRestablecimiento()">
+          <div class="rm-form-group">
+            <label>Código de Verificación</label>
+            <input 
+              type="text" 
+              name="recuperarCodigo" 
+              [(ngModel)]="recuperarCodigo" 
+              placeholder="Ingresa el código de 6 dígitos"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <div class="rm-form-group">
+            <label>Nueva Contraseña</label>
+            <input 
+              type="password" 
+              name="recuperarNuevaPass" 
+              [(ngModel)]="recuperarNuevaPass" 
+              placeholder="Ingresa tu nueva contraseña"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <button type="submit" [disabled]="cargandoRecuperar" class="btn-recovery">
+            {{ cargandoRecuperar ? 'Restableciendo...' : 'Restablecer contraseña' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+}
