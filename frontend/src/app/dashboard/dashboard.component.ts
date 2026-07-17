@@ -19,8 +19,14 @@ export class DashboardComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   // Navegación
-  activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' = 'citas';
-
+  activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' | 'agente' = 'citas';
+  
+  camposRequeridos = {
+    nombre: true,
+    numero: true,
+    correo: false
+  };
+  
   // Datos del Propietario
   email = '';
   empresaId = '';
@@ -129,7 +135,7 @@ export class DashboardComponent implements OnInit {
   }
 
   // --- NAVEGACIÓN ---
-  setTab(tab: 'citas' | 'negocio' | 'horarios' | 'servicios'): void {
+  setTab(tab: 'citas' | 'negocio' | 'horarios' | 'servicios' | 'agente'): void {
     this.activeTab = tab;
     this.errorMessage = '';
     this.successMessage = '';
