@@ -1,22 +1,44 @@
 <div class="login-wrapper">
   
   <div class="login-info-section">
+    <canvas #particleCanvas class="network-canvas"></canvas>
+    
+    <div class="ambient-glow"></div>
+
     <div class="info-content">
       <div class="logo-area">
         <span class="logo-dot"></span>
-        <h1 class="brand-title" style="color: #ffffff; font-size: 32px;">Whappify</h1>
+        <h1 class="brand-title">Whappify</h1>
       </div>
-      <p class="brand-slogan" style="color: #ffffff; font-size: 20px;">Automatización inteligente para la comunicación de tu negocio.</p>
+      <p class="brand-slogan">Automatización inteligente para la comunicación de tu negocio.</p>
       
-      <div class="preview-mockup">
-        <div class="mockup-header">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
+      <div class="whatsapp-mockup">
+        
+        <div class="wa-header">
+          <div class="wa-profile">
+            <div class="wa-avatar">W</div>
+            <div class="wa-info">
+              <span class="wa-name">Whappify</span>
+              <span class="wa-status">En línea</span>
+            </div>
+          </div>
         </div>
-        <div class="mockup-body">
-          <p class="mockup-text" style="color: #ffffff; font-size: 16px;"> Whappify, soy tu agente virtual...</p>
+
+        <div class="wa-body">
+          <div class="wa-message client-msg">
+            <p>Hola, busco agendar una cita para hoy.</p>
+            <span class="wa-time">10:14 AM</span>
+          </div>
+          <div class="wa-message agent-msg">
+            <p>Hola. Soy Whappify, tu asistente virtual... Tengo disponibilidad a las 4:00 PM y 6:00 PM. ¿Cuál horario prefieres?</p>
+            <span class="wa-time">10:15 AM</span>
+          </div>
         </div>
+
+        <div class="wa-footer">
+          <div class="wa-input">Escribe un mensaje...</div>
+        </div>
+        
       </div>
     </div>
   </div>
@@ -24,7 +46,7 @@
   <div class="login-form-section">
     <div class="clean-card">
       <div class="card-header">
-        <h2>Iniciar Sesión</h2>
+        <h2>Bienvenidos</h2>
         <p>Introduce tus credenciales para acceder a tu panel.</p>
       </div>
       
@@ -91,5 +113,74 @@
   </div>
 </div>
 
+<!-- Modal de Recuperación de Contraseña (Rediseño) -->
 @if (mostrarModalRecuperar) {
-  }
+  <div class="recovery-overlay">
+    <div class="recovery-modal">
+      
+      <div class="rm-header">
+        <h3>Restablecer Contraseña</h3>
+        <button type="button" class="rm-close-btn" (click)="cerrarModalRecuperar()">&times;</button>
+      </div>
+
+      @if (errorRecuperar) {
+        <div class="rm-alert rm-alert-error">{{ errorRecuperar }}</div>
+      }
+
+      @if (mensajeRecuperar) {
+        <div class="rm-alert rm-alert-success">{{ mensajeRecuperar }}</div>
+      }
+
+      @if (recuperarPaso === 'solicitar') {
+        <p class="rm-text">Ingresa tu correo electrónico registrado. Te enviaremos un código de seguridad de 6 dígitos.</p>
+        <form (ngSubmit)="enviarCodigo()">
+          <div class="rm-form-group">
+            <label>Correo Electrónico</label>
+            <input 
+              type="email" 
+              name="recuperarEmail" 
+              [(ngModel)]="recuperarEmail" 
+              placeholder="tucorreo@ejemplo.com"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <button type="submit" [disabled]="cargandoRecuperar" class="btn-recovery">
+            {{ cargandoRecuperar ? 'Enviando...' : 'Enviar código de verificación' }}
+          </button>
+        </form>
+      }
+
+      @if (recuperarPaso === 'restablecer') {
+        <p class="rm-text">Ingresa el código que enviamos a tu correo y tu nueva contraseña.</p>
+        <form (ngSubmit)="confirmarRestablecimiento()">
+          <div class="rm-form-group">
+            <label>Código de Verificación</label>
+            <input 
+              type="text" 
+              name="recuperarCodigo" 
+              [(ngModel)]="recuperarCodigo" 
+              placeholder="Ingresa el código de 6 dígitos"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <div class="rm-form-group">
+            <label>Nueva Contraseña</label>
+            <input 
+              type="password" 
+              name="recuperarNuevaPass" 
+              [(ngModel)]="recuperarNuevaPass" 
+              placeholder="Ingresa tu nueva contraseña"
+              required 
+              class="rm-input"
+            />
+          </div>
+          <button type="submit" [disabled]="cargandoRecuperar" class="btn-recovery">
+            {{ cargandoRecuperar ? 'Restableciendo...' : 'Restablecer contraseña' }}
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+}

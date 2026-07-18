@@ -4,7 +4,6 @@
   <aside class="sidebar">
     <div class="sidebar-header">
       <h1 class="brand-title">Whappify</h1>
-      <span class="badge-empresa">{{ empresa.nombre || 'Cargando negocio...' }}</span>
     </div>
 
     <nav class="side-nav">
@@ -20,12 +19,15 @@
       <button (click)="setTab('servicios')" class="nav-item" [class.active]="activeTab === 'servicios'">
         Servicios
       </button>
+      <button (click)="setTab('agente')" class="nav-item" [class.active]="activeTab === 'agente'">
+        Agente
+      </button>
     </nav>
 
     <div class="sidebar-footer">
       <div class="user-info">
-        <span class="user-role">Administrador</span>
-        <span class="user-email">{{ email }}</span>
+        <span class="user-role" style="text-transform: uppercase;">Administrador</span>
+        <span class="user-role">{{ empresa.nombre || 'Administrador' }}</span>
       </div>
       <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
     </div>
@@ -186,17 +188,11 @@
             <div class="form-group">
               <label for="mapsLink">Enlace de Google Maps 
                 @if (empresa.planSuscripcion === 'BASIC') {
-                  <span class="badge-lock">Plan Premium requerido</span>
+                  <span class="badge-lock">(Plan Premium requerido)</span>
                 }
               </label>
               <input type="text" id="mapsLink" name="mapsLink" [(ngModel)]="empresa.mapsLink" [disabled]="empresa.planSuscripcion === 'BASIC'" />
             </div>
-
-            <div class="form-group">
-              <label for="descripcionNegocio">Instrucciones del Negocio (Prompt Especializado)</label>
-              <textarea id="descripcionNegocio" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="5"></textarea>
-            </div>
-
             <button type="submit" [disabled]="isLoading" class="btn-primary">Guardar Configuración</button>
           </form>
         </div>
@@ -323,7 +319,7 @@
 
       <div class="clean-card">
         <div class="card-header-table">
-          <h3>Tus Servicios</h3>
+          <h3>Servicios</h3>
           <button (click)="abrirModalServicio()" class="btn-primary">Agregar Servicio</button>
         </div>
 
@@ -370,6 +366,55 @@
             </tbody>
           </table>
         </div>
+      </div>
+    }
+
+    <!-- TAB: AGENTE -->
+    @if (activeTab === 'agente') {
+      <div class="content-header">
+        <h2>Configuración del Agente</h2>
+        <p>Define el comportamiento de tu Agente Virtual y los datos requeridos para agendar.</p>
+      </div>
+
+      <div class="clean-card">
+        <form (ngSubmit)="guardarDatosEmpresa()" class="light-form">
+          
+          <div class="form-group">
+            <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
+            <textarea id="descripcionAgente" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="8"></textarea>
+            <small class="help-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</small>
+          </div>
+
+          <div class="modal-section" style="border-top: none; padding-top: 10px; margin-top: 30px;">
+            <h4 style="font-size: 14px; color: #0f172a; margin: 0 0 15px 0; font-weight: 600; border-bottom: 1px solid #dbeafe; padding-bottom: 10px;">
+              Datos requeridos al cliente para agendar
+            </h4>
+            
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <label class="switch-label">
+                <input type="checkbox" name="reqNombre" [(ngModel)]="camposRequeridos.nombre">
+                <span class="switch-text">{{ camposRequeridos.nombre ? '✓ Solicitar Nombre' : 'Sin Nombre' }}</span>
+              </label>
+              
+              <label class="switch-label">
+                <input type="checkbox" name="reqNumero" [(ngModel)]="camposRequeridos.numero">
+                <span class="switch-text">{{ camposRequeridos.numero ? '✓ Solicitar Número' : 'Sin Número' }}</span>
+              </label>
+              
+              <label class="switch-label">
+                <input type="checkbox" name="reqCorreo" [(ngModel)]="camposRequeridos.correo">
+                <span class="switch-text">{{ camposRequeridos.correo ? '✓ Solicitar Correo' : 'Sin Correo' }}</span>
+              </label>
+            </div>
+            <small class="help-text" style="margin-top: 15px;">El agente virtual se asegurará de recolectar estos datos antes de confirmar cualquier cita.</small>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <button type="submit" [disabled]="isLoading" class="btn-primary">
+              Guardar Configuración
+            </button>
+          </div>
+        </form>
       </div>
     }
   </main>

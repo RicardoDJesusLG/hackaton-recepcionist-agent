@@ -3,101 +3,201 @@
 .login-wrapper {
   min-height: 100vh;
   display: flex;
-  /* Fondo base adaptado a tu verde oscuro */
   background-color: var(--color-verde-fuerte); 
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   box-sizing: border-box;
 }
 
-/* SECCIÓN IZQUIERDA (Estilo Oscuro con tu Verde Fuerte) */
+input, button { font-family: inherit; }
+
+/* SECCIÓN IZQUIERDA */
 .login-info-section {
   flex: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px 8%;
-  /* Un degradado radial elegante usando tu verde fuerte y un tono ligeramente más claro */
   background: radial-gradient(circle at top left, #123d09, var(--color-verde-fuerte));
   border-right: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Capas del Canvas Dinámico */
+.network-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ambient-glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(71, 121, 34, 0.15) 0%, transparent 70%);
+  top: 20%;
+  left: 10%;
+  z-index: 1;
+  filter: blur(40px);
 }
 
 .info-content {
   width: 100%;
   max-width: 520px;
+  position: relative; 
+  z-index: 2; /* El texto flota arriba del canvas */
 }
 
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
+.logo-area { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .logo-dot {
   width: 16px;
   height: 16px;
-  /* El punto brillante del logo ahora es tu verde claro */
   background-color: var(--color-verde-claro);
   border-radius: 50%;
   box-shadow: 0 0 12px var(--color-verde-claro);
 }
 
 .brand-title {
+  font-family: 'Montserrat', sans-serif;
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 800;
   color: #ffffff;
   margin: 0;
   letter-spacing: -1px;
 }
 
-.brand-slogan {
-  font-size: 20px;
-  line-height: 1.5;
-  color: #94a3b8; /* Mantenemos este gris azulado porque contrasta hermoso con el verde */
-  margin: 0 0 40px 0;
-}
+.brand-slogan { font-size: 20px; line-height: 1.5; color: #ffffff; margin: 0 0 40px 0; }
 
-/* Preview decorativo */
-.preview-mockup {
-  background: #0a1208; /* Verde ultra oscuro casi negro */
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* --- WHATSAPP CHAT MOCKUP (LIGHT MODE) --- */
+.whatsapp-mockup {
+  background: #efeae2; /* Fondo claro característico de los chats */
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  height: 220px;
-  padding: 16px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
-
-.mockup-header {
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
   display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
+  flex-direction: column;
 }
 
-.dot {
-  width: 10px;
-  height: 10px;
+.wa-header {
+  background: #f0f2f5; /* Gris muy claro para la cabecera */
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.wa-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-avatar {
+  width: 36px;
+  height: 36px;
+  background: #25D366; /* Verde icónico de la marca para el avatar */
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: 'Montserrat', sans-serif;
 }
-.dot.red { background-color: #ef4444; }
-.dot.yellow { background-color: #f59e0b; }
-.dot.green { background-color: #10b981; }
 
-.mockup-text {
-  font-family: monospace;
-  /* Texto de la terminal en verde claro */
-  color: var(--color-verde-claro);
+.wa-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-name {
+  color: #111b21; /* Texto oscuro principal */
   font-size: 14px;
-  margin: 0;
+  font-weight: 600;
 }
 
-/* ⚪ SECCIÓN DERECHA (Fondo que complementa el verde) */
+.wa-status {
+  color: #667781; /* Texto secundario */
+  font-size: 12px;
+}
+
+.wa-body {
+  background: #efeae2;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wa-message {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  opacity: 0; 
+  animation: messageAppear 0.5s ease-out forwards;
+}
+
+.wa-message p {
+  margin: 0 0 4px 0;
+  color: #111b21;
+}
+
+.wa-time {
+  font-size: 10px;
+  color: #667781;
+  display: block;
+  text-align: right;
+}
+
+.client-msg {
+  background: #ffffff;
+  align-self: flex-start;
+  border-top-left-radius: 0px;
+  animation-delay: 0.8s; 
+}
+
+.agent-msg {
+  background: #d9fdd3;
+  align-self: flex-end;
+  border-top-right-radius: 0px;
+  animation-delay: 2.3s; 
+}
+
+.wa-footer {
+  background: #f0f2f5;
+  padding: 10px 16px;
+}
+
+.wa-input {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 10px 16px;
+  color: #8696a0;
+  font-size: 13px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* SECCIÓN DERECHA (Con el resplandor azul ambiental solicitado) */
 .login-form-section {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 6%;
-  background-color: #050a04; /* Un tono casi negro con un toque ínfimo de verde */
+  background: radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.15), #050a04 60%);
+  position: relative;
 }
 
 .clean-card {
@@ -106,13 +206,21 @@
   background-color: #ffffff;
   border-radius: 16px;
   padding: 45px 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 80px rgba(14, 165, 233, 0.12);
   box-sizing: border-box;
+  position: relative;
+  z-index: 2;
 }
 
-.card-header { margin-bottom: 32px; }
-.card-header h2 { font-size: 26px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; }
-.card-header p { font-size: 14px; color: #64748b; margin: 0; }
+.card-header { 
+  margin-bottom: 32px;
+  text-align: center;
+}
+.card-header h2 { 
+  font-family: 'Montserrat', sans-serif;
+  font-size: 26px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; 
+}
+.card-header p { font-size: 16px; color: #64748b; margin: 0; }
 
 .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
 .alert-error { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
@@ -122,57 +230,108 @@
 .form-group label { font-size: 13px; font-weight: 600; color: #334155; }
 
 .password-toggle-link {
-  background: none;
-  border: none;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
+  background: none; border: none; color: #64748b; font-size: 12px; font-weight: 500; cursor: pointer; padding: 0; transition: color 0.15s ease;
 }
-
-.password-toggle-link:hover {
-  /* Hover del botón mostrar en tu verde claro */
-  color: var(--color-verde-claro);
-}
+.password-toggle-link:hover { color: var(--color-verde-claro); }
 
 .form-group input {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 14px 16px;
-  color: #0f172a;
-  font-size: 15px;
-  outline: none;
-  transition: all 0.2s ease;
+  background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;
+  color: #0f172a; font-size: 15px; outline: none; transition: all 0.2s ease; box-sizing: border-box;
+}
+.form-group input:focus {
+  border-color: var(--color-verde-claro); background-color: #ffffff; box-shadow: 0 0 0 3px rgba(71, 121, 34, 0.15);
+}
+
+.forgot-password-container { text-align: right; margin-top: -12px; margin-bottom: 24px; }
+.forgot-link { font-size: 13px; color: #64748b; text-decoration: none; transition: color 0.15s ease; }
+.forgot-link:hover { color: var(--color-verde-claro); }
+
+.btn-submit {
+  width: 100%; background-color: var(--color-verde-fuerte); border: none; border-radius: 8px; padding: 14px;
+  color: #ffffff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box;
+}
+.btn-submit:hover { background-color: var(--color-verde-claro); transform: translateY(-1px); }
+
+.card-footer { text-align: center; margin-top: 32px; font-size: 14px; color: #64748b; }
+.card-footer a { color: var(--color-verde-claro); text-decoration: none; font-weight: 600; transition: color 0.15s ease; }
+.card-footer a:hover { color: var(--color-verde-fuerte); }
+
+/* --- MODAL DE RECUPERACIÓN (Homologado con Whappify) --- */
+.recovery-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+
+.recovery-modal {
+  background: #ffffff; /* Fondo blanco idéntico al clean-card */
+  border-radius: 16px;
+  padding: 40px;
+  width: 440px;
+  max-width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', sans-serif;
   box-sizing: border-box;
 }
 
-.form-group input:focus {
-  /* Borde y sombra al escribir usando rgba del verde claro (#477922 = 71, 121, 34) */
+.rm-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+
+.rm-header h3 {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a; /* Mismo color de los títulos de tu tarjeta */
+  letter-spacing: -0.5px;
+}
+
+.rm-close-btn {
+  background: none; border: none; color: #94a3b8; font-size: 24px;
+  cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1;
+}
+
+.rm-close-btn:hover { 
+  color: var(--color-verde-fuerte); 
+}
+
+.rm-text {
+  font-size: 14px; color: #64748b; line-height: 1.5; margin: 0 0 24px 0;
+}
+
+.rm-form-group { margin-bottom: 24px; }
+
+.rm-form-group label {
+  display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;
+}
+
+/* Inputs idénticos a los del login */
+.rm-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 15px;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.rm-input:focus {
   border-color: var(--color-verde-claro);
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(71, 121, 34, 0.15);
 }
 
-.forgot-password-container { text-align: right; margin-top: -12px; margin-bottom: 24px; }
-
-.forgot-link {
-  font-size: 13px;
-  color: #64748b;
-  text-decoration: none;
-  transition: color 0.15s ease;
-}
-
-.forgot-link:hover {
-  /* Enlace de recuperar contraseña */
-  color: var(--color-verde-claro);
-}
-
-.btn-submit {
+/* Botón principal usando tus variables verdes */
+.btn-recovery {
   width: 100%;
-  /* Botón principal en tu verde fuerte */
   background-color: var(--color-verde-fuerte);
   border: none;
   border-radius: 8px;
@@ -185,29 +344,68 @@
   box-sizing: border-box;
 }
 
-.btn-submit:hover {
-  /* Hover del botón principal en tu verde claro */
+.btn-recovery:hover:not(:disabled) {
   background-color: var(--color-verde-claro);
   transform: translateY(-1px);
 }
 
-.card-footer { text-align: center; margin-top: 32px; font-size: 14px; color: #64748b; }
-
-.card-footer a {
-  /* Enlace de registro */
-  color: var(--color-verde-claro);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.15s ease;
+.btn-recovery:disabled { 
+  opacity: 0.6; cursor: not-allowed; 
 }
 
-.card-footer a:hover {
-  color: var(--color-verde-fuerte);
+/* Alertas de error/éxito homologadas */
+.rm-alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
+.rm-alert-error { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.rm-alert-success { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+/* --- ANIMACIÓN DE MENSAJES DE WHATSAPP --- */
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* 📱 RESPONSIVE */
 @media (max-width: 900px) {
-  .login-wrapper { flex-direction: column; }
-  .login-info-section { display: none; }
-  .login-form-section { flex: 1; padding: 40px 20px; }
+  .login-wrapper { 
+    /* Cambiamos flex por block para permitir el comportamiento de scroll nativo */
+    display: block; 
+  }
+  
+  /* 1. SECCIÓN VERDE (Se queda pegada al fondo) */
+  .login-info-section { 
+    display: flex; 
+    position: sticky;
+    top: 0;
+    height: 100vh; /* Ocupa toda la pantalla inicialmente */
+    z-index: 1; /* Se queda en el fondo */
+    padding: 40px 5% 80px 5%;
+    border-right: none;
+  }
+  
+  .info-content {
+    margin-top: 0;
+  }
+
+  /* 2. SECCIÓN DEL FORMULARIO (Se desliza por encima de la verde) */
+.login-form-section { 
+    display: flex;
+    position: relative;
+    z-index: 2; /* Pasa por encima de la sección verde */
+    min-height: 100vh; /* Asegura que cubra toda la pantalla al subir */
+    background: radial-gradient(circle at bottom right, #092537, #050a04 70%);
+    padding: 50px 20px;
+    border-top-left-radius: 35px;
+    border-top-right-radius: 35px;
+    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6), 0 0 80px rgba(14, 165, 233, 0.12);
+  }
+  .clean-card {
+    /* Como el fondo de la sección ahora funciona como contenedor, podemos quitarle la sombra a la tarjeta interna para un look más limpio */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 40px;
+  }
 }
