@@ -63,4 +63,16 @@ export class DashboardService {
   eliminarServicio(id: string): Observable<any> {
     return this.http.delete<any>(`${this.serviciosUrl}/${id}`);
   }
+
+  getGoogleCalendarStatus(empresaId: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/google-calendar/status?empresaId=${empresaId}`);
+  }
+
+  getGoogleCalendarAuthUrl(empresaId: string): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/google-calendar/auth-url?empresaId=${empresaId}`);
+  }
+
+  desvincularGoogleCalendar(empresaId: string): Observable<any> {
+    return this.http.delete<any>(`${environment.apiUrl}/google-calendar?empresaId=${empresaId}`);
+  }
 }

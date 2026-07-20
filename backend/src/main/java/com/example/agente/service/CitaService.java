@@ -23,17 +23,20 @@ public class CitaService {
     private final UsuarioRepository usuarioRepository;
     private final AgendaConfigRepository agendaConfigRepository;
     private final EmpresaRepository empresaRepository;
+    private final GoogleCalendarService googleCalendarService;
 
     public CitaService(CitaRepository citaRepository,
                        ServicioRepository servicioRepository,
                        UsuarioRepository usuarioRepository,
                        AgendaConfigRepository agendaConfigRepository,
-                       EmpresaRepository empresaRepository) {
+                       EmpresaRepository empresaRepository,
+                       GoogleCalendarService googleCalendarService) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
         this.agendaConfigRepository = agendaConfigRepository;
         this.empresaRepository = empresaRepository;
+        this.googleCalendarService = googleCalendarService;
     }
 
     public AgendaConfigRepository getAgendaConfigRepository() {
@@ -213,6 +216,9 @@ public class CitaService {
 
         nuevaCita = citaRepository.save(nuevaCita);
 
+        // Sincronizar con Google Calendar (asíncrono, no bloquea la respuesta)
+        googleCalendarService.crearEventoEnCalendar(nuevaCita);
+
         // 5. Retornar DTO de confirmación plano
         return new CitaResponseDTO(
                 nuevaCita.getId(),
@@ -245,6 +251,10 @@ public class CitaService {
 
         cita.setEstado(EstadoCita.CANCELADA);
         citaRepository.save(cita);
+
+        // Eliminar evento de Google Calendar (asíncrono)
+        googleCalendarService.eliminarEventoDeCalendar(cita);
+
         System.out.println("[CitaService] Cita cancelada exitosamente: " + idCita);
     }
 

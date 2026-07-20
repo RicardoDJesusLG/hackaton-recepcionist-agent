@@ -34,9 +34,11 @@ public class SecurityConfig {
                 // Endpoints públicos para Vertex AI (catálogos y disponibilidad)
                 .requestMatchers(HttpMethod.GET, "/api/v1/servicios").permitAll()
                 .requestMatchers("/api/v1/disponibilidad/**").permitAll()
-                .requestMatchers("/api/v1/citas/**").permitAll()
+                .requestMatchers("/api/v1/citas", "/api/v1/citas/**").permitAll()
                 // Endpoints públicos de pagos (Stripe Checkout y Webhooks)
                 .requestMatchers("/api/v1/payments/**").permitAll()
+                // Endpoints de Google Calendar públicos para desarrollo y pruebas locales
+                .requestMatchers("/api/v1/google-calendar/**").permitAll()
                 // Permitir OPTIONS pre-flight requests para CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Todo lo demás (Dashboard) protegido

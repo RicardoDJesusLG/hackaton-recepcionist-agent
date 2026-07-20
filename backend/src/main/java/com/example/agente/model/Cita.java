@@ -43,6 +43,9 @@ public class Cita {
     @Column(name = "detalles_adicionales", columnDefinition = "TEXT")
     private String detallesAdicionales;
 
+    @Column(name = "google_event_id", length = 255)
+    private String googleEventId;
+
     @Column(name = "fecha_actualizacion", insertable = false)
     private LocalDateTime fechaActualizacion;
 

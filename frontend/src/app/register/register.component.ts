@@ -14,15 +14,11 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Datos de usuario
+  // Datos Originales Conservados
   email = '';
   password = '';
-
-  // Configuración de empresa
   crearNuevaEmpresa = true;
   empresaId = '';
-  
-  // Datos de nueva empresa
   nombreEmpresa = '';
   whatsappPhoneId = '';
   whatsappToken = '';
@@ -31,18 +27,38 @@ export class RegisterComponent {
   telefonoContacto = '';
   prefijoTelefono = '52';
   mapsLink = '';
-
   errorMessage = '';
   successMessage = '';
   isLoading = false;
+
+  // Control de pasos
+  pasoRegistro: 1 | 2 = 1;
+
+  avanzarAlPaso2(): void {
+    if (!this.email.trim() || !this.password.trim()) {
+      this.errorMessage = 'El correo electrónico y contraseña son obligatorios.';
+      return;
+    }
+    if (!this.email.includes('@') || !this.email.includes('.')) {
+      this.errorMessage = 'Por favor ingresa un correo electrónico válido.';
+      return;
+    }
+    
+    // Si todo está bien, limpiamos errores y avanzamos
+    this.errorMessage = '';
+    this.pasoRegistro = 2;
+  }
+
+  regresarAlPaso1(): void {
+    this.pasoRegistro = 1;
+    this.errorMessage = '';
+  }
 
   onSubmit(): void {
     if (!this.email.trim() || !this.password.trim()) {
       this.errorMessage = 'El correo electrónico y contraseña son obligatorios.';
       return;
     }
-
-    // Validación básica de formato de correo
     if (!this.email.includes('@') || !this.email.includes('.')) {
       this.errorMessage = 'Por favor ingresa un correo electrónico válido.';
       return;

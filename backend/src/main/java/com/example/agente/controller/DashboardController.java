@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.example.agente.service.WhatsAppService;
+import com.example.agente.service.CitaService;
 
 @RestController
 @RequestMapping("/api/v1/dashboard")
@@ -35,19 +36,22 @@ public class DashboardController {
     private final EmpresaRepository empresaRepository;
     private final AgendaConfigRepository agendaConfigRepository;
     private final WhatsAppService whatsAppService;
+    private final CitaService citaService;
 
     public DashboardController(CitaRepository citaRepository,
                                ServicioRepository servicioRepository,
                                UsuarioRepository usuarioRepository,
                                EmpresaRepository empresaRepository,
                                AgendaConfigRepository agendaConfigRepository,
-                               WhatsAppService whatsAppService) {
+                               WhatsAppService whatsAppService,
+                               CitaService citaService) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
         this.agendaConfigRepository = agendaConfigRepository;
         this.whatsAppService = whatsAppService;
+        this.citaService = citaService;
     }
 
     /**
@@ -141,8 +145,7 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "No tienes permisos para modificar esta cita"));
         }
 
-        cita.setEstado(EstadoCita.CANCELADA);
-        citaRepository.save(cita);
+        citaService.cancelarCita(idCita, empresaId);
 
         return ResponseEntity.ok(Map.of("message", "Cita cancelada con éxito", "idCita", cita.getId().toString()));
     }

@@ -21,4 +21,7 @@ docker-compose.override.yml
 !frontend/package.json
 !frontend/package-lock.json
 antigravity-credentials.json
+google-calendar-credentials.json
 node_modules
+*secret.properties
+
