@@ -105,11 +105,10 @@
               @for (cita of citas; track cita.idCita) {
                 <tr class="fade-in-row">
                   <td class="client-name">{{ cita.clienteNombre }}</td>
-                  <td>{{ cita.clienteTelefono }}</td>
+                  <td>{{ cita.clienteTelefono | phoneFormat }}</td>
                   <td><span class="service-tag">{{ cita.servicioNombre }}</span></td>
-                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'medium' }}</td>
-                  <td class="date-cell">{{ cita.fechaHoraFin | date:'shortTime' }}</td>
-                  <td>
+                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'HH:mm' }}</td>
+                  <td class="date-cell">{{ cita.fechaHoraFin | date:'HH:mm' }}</td>                  <td>
                     <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
                       {{ cita.estado }}
                     </span>
@@ -332,12 +331,14 @@
                 
                 <div class="time-cell">
                   <label>Apertura</label>
-                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" step="60" />
                 </div>
-                
+
                 <div class="time-cell">
                   <label>Cierre</label>
-                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" step="60" />
                 </div>
               </div>
             }

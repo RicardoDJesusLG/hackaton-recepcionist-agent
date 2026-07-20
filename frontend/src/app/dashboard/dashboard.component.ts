@@ -4,11 +4,12 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../dashboard.service';
 import { AuthService } from '../auth.service';
+import { PhoneFormatPipe } from '../pipes/phone-format.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, PhoneFormatPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })

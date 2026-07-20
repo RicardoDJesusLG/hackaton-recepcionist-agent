@@ -167,7 +167,7 @@ td {
 
 .client-name { font-weight: 600; color: #0f172a; }
 .service-tag { background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
-.date-cell { font-size: 13px; color: #64748b; }
+.date-cell { font-size: 13px; color: #64748b; white-space: nowrap }
 .price-cell { font-weight: 600; }
 
 .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
@@ -184,18 +184,15 @@ td {
 .light-form .form-group { margin-bottom: 20px; }
 .light-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .light-form label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px; }
-.light-form input, .light-form select, .light-form textarea {
-  width: 100%;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #0f172a;
-  outline: none;
-  font-family: inherit;
-  transition: all 0.2s;
-  box-sizing: border-box;
+.light-form input[type="time"] {
+  border: 1px solid #cbd5e1; /* Borde gris azulado claro, adiós al negro rígido */
+  border-radius: 10px;       /* Bordes redondeados consistentes */
+  background-color: #f8fafc;
+  color: #334155;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  -webkit-appearance: none;  /* Remueve estilos heredados en algunos navegadores */
+  appearance: none;
 }
 .light-form input:focus, .light-form textarea:focus, .light-form select:focus {
   background: #ffffff;
@@ -214,13 +211,34 @@ td {
   background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px;
   color: #64748b; transition: all 0.2s ease;
 }
-.switch-label input:checked + .switch-text { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+.switch-label input:checked + .switch-text { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
 
 /* Horarios Grid */
 .schedule-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 .schedule-row {
   display: grid; grid-template-columns: 1.5fr 1fr 2fr 2fr; align-items: center;
   padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; gap: 15px;
+}
+.schedule-form input[type="time"] {
+  width: 100%;
+  border: 1px solid #cbd5e1; /* Adiós línea negra, bienvenido gris azulado claro */
+  border-radius: 10px;       /* Bordes redondeados y armoniosos */
+  background-color: #f8fafc;
+  color: #334155;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Efecto Focus cuando el usuario va a cambiar la hora */
+.schedule-form input[type="time"]:focus {
+  background: #ffffff;
+  border-color: var(--color-verde-claro, #477922);
+  box-shadow: 0 0 0 3px rgba(71, 121, 34, 0.1);
 }
 .closed-row { opacity: 0.6; background: #f1f5f9; }
 .time-cell label { font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display: block; }
