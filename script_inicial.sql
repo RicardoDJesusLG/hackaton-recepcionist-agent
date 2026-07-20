@@ -72,11 +72,26 @@ CREATE TABLE citas (
     fecha_hora_fin TIMESTAMP NOT NULL,
     estado estado_cita DEFAULT 'PENDIENTE',
     detalles_adicionales TEXT,                      -- Ej: "Cancelado por el usuario vía WhatsApp"
+    google_event_id VARCHAR(255),                   -- ID del evento sincronizado en Google Calendar
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Para saber cuándo se reprogramó/canceló
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Índices óptimos
+-- 8. Tabla de Configuración de Google Calendar OAuth (tokens por empresa)
+CREATE TABLE google_calendar_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    empresa_id UUID NOT NULL REFERENCES empresas(id) ON DELETE CASCADE UNIQUE,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    expires_at TIMESTAMP,
+    token_type VARCHAR(50),
+    scope TEXT,
+    calendar_id VARCHAR(255) DEFAULT 'primary',
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Índices óptimos
 CREATE INDEX idx_citas_empresa_fecha ON citas(empresa_id, fecha_hora_inicio);
 CREATE INDEX idx_usuarios_whatsapp ON usuarios(telefono_whatsapp);
 CREATE INDEX idx_servicios_empresa ON servicios(empresa_id);

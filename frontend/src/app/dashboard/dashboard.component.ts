@@ -33,6 +33,7 @@ export class DashboardComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   isLoading = false;
+  googleCalendarVinculado = false;
 
   // Citas y Estadísticas
   citas: any[] = [];
@@ -105,6 +106,7 @@ export class DashboardComponent implements OnInit {
     this.cargarHorariosAgenda();
     this.cargarServicios();
     this.cargarEstadisticasSuscripcion();
+    this.cargarEstadoGoogleCalendar();
 
     // Escuchar parámetros de pago de Stripe
     this.route.queryParams.subscribe(params => {
@@ -128,6 +130,31 @@ export class DashboardComponent implements OnInit {
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: { payment: null, mock: null, idNegocio: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+
+      // Escuchar parámetros de vinculación de Google Calendar
+      if (params['googleCalendar'] === 'success') {
+        this.activeTab = 'negocio';
+        this.successMessage = '¡Google Calendar vinculado exitosamente!';
+        this.cargarEstadoGoogleCalendar();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { googleCalendar: null },
+          queryParamsHandling: 'merge'
+        });
+      } else if (params['googleCalendar'] === 'error') {
+        this.activeTab = 'negocio';
+        this.errorMessage = 'Hubo un error al vincular tu cuenta de Google Calendar. Inténtalo de nuevo.';
+        this.cargarEstadoGoogleCalendar();
+        
+        // Limpiar parámetros de la URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { googleCalendar: null },
           queryParamsHandling: 'merge'
         });
       }
@@ -194,6 +221,58 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar datos de empresa:', err);
+      }
+    });
+  }
+
+  cargarEstadoGoogleCalendar(): void {
+    if (!this.empresaId) return;
+    this.dashboardService.getGoogleCalendarStatus(this.empresaId).subscribe({
+      next: (res) => {
+        this.googleCalendarVinculado = res.googleCalendarVinculado;
+      },
+      error: (err) => {
+        console.error('Error al cargar estado de Google Calendar:', err);
+      }
+    });
+  }
+
+  vincularGoogleCalendar(): void {
+    if (!this.empresaId) return;
+    this.isLoading = true;
+    this.dashboardService.getGoogleCalendarAuthUrl(this.empresaId).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        if (res.url) {
+          window.location.href = res.url;
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = 'Error al obtener la URL de vinculación de Google Calendar.';
+        console.error(err);
+      }
+    });
+  }
+
+  desvincularGoogleCalendar(): void {
+    if (!this.empresaId) return;
+    if (!confirm('¿Estás seguro de que deseas desvincular tu cuenta de Google Calendar? Tus citas ya no se sincronizarán.')) {
+      return;
+    }
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.dashboardService.desvincularGoogleCalendar(this.empresaId).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.googleCalendarVinculado = false;
+        this.successMessage = 'Google Calendar desvinculado exitosamente.';
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = 'Error al desvincular Google Calendar.';
+        console.error(err);
       }
     });
   }
