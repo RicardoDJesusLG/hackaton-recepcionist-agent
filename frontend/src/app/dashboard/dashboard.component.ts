@@ -466,6 +466,25 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  toggleEstadoServicio(servicio: any): void {
+    const estadoOriginal = servicio.activo;
+    
+    servicio.activo = !servicio.activo;
+    this.isLoading = true;
+
+    this.dashboardService.updateServicio(servicio.id, servicio).subscribe({
+      next: () => {
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        servicio.activo = estadoOriginal;
+        alert('Error al actualizar el estado del servicio. Inténtalo de nuevo.');
+        console.error(err);
+      }
+    });
+  }
+
   // --- GESTIÓN DE HORARIOS ---
   cargarHorariosAgenda(): void {
     this.dashboardService.getAgenda().subscribe({

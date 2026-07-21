@@ -381,9 +381,14 @@
                   <td>{{ srv.duracionMinutos }} min</td>
                   <td class="price-cell">${{ srv.precio }}</td>
                   <td>
-                    <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'">
+                    <button 
+                      type="button"
+                      class="badge-status badge-toggle" 
+                      [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'"
+                      (click)="toggleEstadoServicio(srv)"
+                      [disabled]="isLoading">
                       {{ srv.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
+                    </button>
                   </td>
                   <td>
                     <div class="action-buttons">
@@ -420,7 +425,7 @@
           <div class="form-group">
             <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
             <textarea id="descripcionAgente" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="8"></textarea>
-            <small class="help-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</small>
+            <small class="help-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir tu asistente al interactuar por WhatsApp.</small>
           </div>
 
           <div class="modal-section" style="border-top: none; padding-top: 10px; margin-top: 30px;">
@@ -429,17 +434,17 @@
             </h4>
             
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNombre" [(ngModel)]="camposRequeridos.nombre">
                 <span class="switch-text">{{ camposRequeridos.nombre ? '✓ Solicitar Nombre' : 'Sin Nombre' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNumero" [(ngModel)]="camposRequeridos.numero">
                 <span class="switch-text">{{ camposRequeridos.numero ? '✓ Solicitar Número' : 'Sin Número' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqCorreo" [(ngModel)]="camposRequeridos.correo">
                 <span class="switch-text">{{ camposRequeridos.correo ? '✓ Solicitar Correo' : 'Sin Correo' }}</span>
               </label>
@@ -490,7 +495,7 @@
 
         <div class="modal-section">
           <h4>Configuración Adicional</h4>
-          <label class="switch-label mb-3">
+          <label class="switch-label switch-success mb-3">
             <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
             <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa' : 'Sin Promoción' }}</span>
           </label>
@@ -511,11 +516,6 @@
               <div class="form-group"><input type="text" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" placeholder="Detalle de la promo"></div>
             }
           }
-          
-          <label class="switch-label">
-            <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
-            <span class="switch-text">{{ formServicio.activo ? 'Servicio Visible' : 'Servicio Oculto' }}</span>
-          </label>
         </div>
 
         <div class="modal-actions">
