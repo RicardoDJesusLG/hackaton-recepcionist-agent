@@ -184,7 +184,17 @@ td {
 .light-form .form-group { margin-bottom: 20px; }
 .light-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .light-form label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px; }
-.light-form input[type="time"] {
+/* 🌟 APLICAMOS EL ESTILO BONITO A TODOS LOS INPUTS, SELECTS Y TEXTAREAS */
+.light-form input[type="text"],
+.light-form input[type="number"],
+.light-form input[type="password"],
+.light-form input[type="email"],
+.light-form input[type="time"],
+.light-form textarea,
+.light-form select {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
   border: 1px solid #cbd5e1; /* Borde gris azulado claro, adiós al negro rígido */
   border-radius: 10px;       /* Bordes redondeados consistentes */
   background-color: #f8fafc;
