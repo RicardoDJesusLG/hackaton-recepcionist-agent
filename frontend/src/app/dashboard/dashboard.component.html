@@ -105,11 +105,10 @@
               @for (cita of citas; track cita.idCita) {
                 <tr class="fade-in-row">
                   <td class="client-name">{{ cita.clienteNombre }}</td>
-                  <td>{{ cita.clienteTelefono }}</td>
+                  <td>{{ cita.clienteTelefono | phoneFormat }}</td>
                   <td><span class="service-tag">{{ cita.servicioNombre }}</span></td>
-                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'medium' }}</td>
-                  <td class="date-cell">{{ cita.fechaHoraFin | date:'shortTime' }}</td>
-                  <td>
+                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'HH:mm' }}</td>
+                  <td class="date-cell">{{ cita.fechaHoraFin | date:'HH:mm' }}</td>                  <td>
                     <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
                       {{ cita.estado }}
                     </span>
@@ -155,14 +154,23 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+                  <div class="label-with-info">
+                    <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+                    <span class="tooltip-icon">?
+                      <span class="tooltip-text">ID de vinculación de Meta.</span>
+                    </span>
+                  </div>
                   <input type="text" id="whatsappPhoneId" name="whatsappPhoneId" [(ngModel)]="empresa.whatsappPhoneId" required />
-                  <small class="help-text">ID de vinculación de Meta.</small>
                 </div>
+
                 <div class="form-group">
-                  <label for="whatsappToken">WhatsApp Access Token</label>
+                  <div class="label-with-info">
+                    <label for="whatsappToken">WhatsApp Access Token</label>
+                    <span class="tooltip-icon">?
+                      <span class="tooltip-text">Se muestra enmascarado por seguridad.</span>
+                    </span>
+                  </div>
                   <input type="password" id="whatsappToken" name="whatsappToken" [(ngModel)]="empresa.whatsappToken" />
-                  <small class="help-text">Se muestra enmascarado.</small>
                 </div>
               </div>
 
@@ -332,12 +340,14 @@
                 
                 <div class="time-cell">
                   <label>Apertura</label>
-                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" step="60" />
                 </div>
-                
+
                 <div class="time-cell">
                   <label>Cierre</label>
-                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" step="60" />
                 </div>
               </div>
             }
@@ -380,9 +390,14 @@
                   <td>{{ srv.duracionMinutos }} min</td>
                   <td class="price-cell">${{ srv.precio }}</td>
                   <td>
-                    <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'">
+                    <button 
+                      type="button"
+                      class="badge-status badge-toggle" 
+                      [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'"
+                      (click)="toggleEstadoServicio(srv)"
+                      [disabled]="isLoading">
                       {{ srv.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
+                    </button>
                   </td>
                   <td>
                     <div class="action-buttons">
@@ -417,33 +432,41 @@
         <form (ngSubmit)="guardarDatosEmpresa()" class="light-form">
           
           <div class="form-group">
-            <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
+            <div class="label-with-info">
+              <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
+              <span class="tooltip-icon">?
+                <span class="tooltip-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</span>
+              </span>
+            </div>
             <textarea id="descripcionAgente" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="8"></textarea>
-            <small class="help-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</small>
           </div>
 
           <div class="modal-section" style="border-top: none; padding-top: 10px; margin-top: 30px;">
-            <h4 style="font-size: 14px; color: #0f172a; margin: 0 0 15px 0; font-weight: 600; border-bottom: 1px solid #dbeafe; padding-bottom: 10px;">
-              Datos requeridos al cliente para agendar
-            </h4>
+            <div class="label-with-info" style="border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 15px;">
+              <h4 style="font-size: 14px; color: #0f172a; font-weight: 600;">
+                Datos requeridos al cliente para agendar
+              </h4>
+              <span class="tooltip-icon">?
+                <span class="tooltip-text">El agente virtual se asegurará de recolectar estos datos antes de confirmar cualquier cita.</span>
+              </span>
+            </div>
             
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNombre" [(ngModel)]="camposRequeridos.nombre">
                 <span class="switch-text">{{ camposRequeridos.nombre ? '✓ Solicitar Nombre' : 'Sin Nombre' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNumero" [(ngModel)]="camposRequeridos.numero">
                 <span class="switch-text">{{ camposRequeridos.numero ? '✓ Solicitar Número' : 'Sin Número' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqCorreo" [(ngModel)]="camposRequeridos.correo">
                 <span class="switch-text">{{ camposRequeridos.correo ? '✓ Solicitar Correo' : 'Sin Correo' }}</span>
               </label>
             </div>
-            <small class="help-text" style="margin-top: 15px;">El agente virtual se asegurará de recolectar estos datos antes de confirmar cualquier cita.</small>
           </div>
 
           <div style="margin-top: 30px;">
@@ -489,7 +512,7 @@
 
         <div class="modal-section">
           <h4>Configuración Adicional</h4>
-          <label class="switch-label mb-3">
+          <label class="switch-label switch-success mb-3">
             <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
             <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa' : 'Sin Promoción' }}</span>
           </label>
@@ -510,11 +533,6 @@
               <div class="form-group"><input type="text" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" placeholder="Detalle de la promo"></div>
             }
           }
-          
-          <label class="switch-label">
-            <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
-            <span class="switch-text">{{ formServicio.activo ? 'Servicio Visible' : 'Servicio Oculto' }}</span>
-          </label>
         </div>
 
         <div class="modal-actions">

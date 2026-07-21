@@ -4,11 +4,12 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../dashboard.service';
 import { AuthService } from '../auth.service';
+import { PhoneFormatPipe } from '../pipes/phone-format.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, PhoneFormatPipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
@@ -460,6 +461,25 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         alert('Error al eliminar el servicio.');
+        console.error(err);
+      }
+    });
+  }
+
+  toggleEstadoServicio(servicio: any): void {
+    const estadoOriginal = servicio.activo;
+    
+    servicio.activo = !servicio.activo;
+    this.isLoading = true;
+
+    this.dashboardService.updateServicio(servicio.id, servicio).subscribe({
+      next: () => {
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        servicio.activo = estadoOriginal;
+        alert('Error al actualizar el estado del servicio. Inténtalo de nuevo.');
         console.error(err);
       }
     });
