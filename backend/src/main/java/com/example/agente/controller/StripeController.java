@@ -24,13 +24,16 @@ public class StripeController {
     private final EmpresaRepository empresaRepository;
     private final String stripeApiKey;
     private final String webhookSecret;
+    private final String frontendUrl;
 
     public StripeController(EmpresaRepository empresaRepository,
                             @Value("${stripe.api.key:}") String stripeApiKey,
-                            @Value("${stripe.webhook.secret:}") String webhookSecret) {
+                            @Value("${stripe.webhook.secret:}") String webhookSecret,
+                            @Value("${stripe.frontend-url:http://localhost:4200}") String frontendUrl) {
         this.empresaRepository = empresaRepository;
         this.stripeApiKey = stripeApiKey;
         this.webhookSecret = webhookSecret;
+        this.frontendUrl = frontendUrl;
     }
 
     /**
@@ -69,7 +72,7 @@ public class StripeController {
             empresa.setSuscripcionActiva(false);
             empresaRepository.save(empresa);
 
-            String mockUrl = "http://localhost:4200/dashboard?payment=cancel&mock=true&idNegocio=" + idNegocio;
+            String mockUrl = frontendUrl + "/dashboard?payment=cancel&mock=true&idNegocio=" + idNegocio;
             return ResponseEntity.ok(Map.of("url", mockUrl));
         }
 
@@ -82,7 +85,7 @@ public class StripeController {
             com.stripe.param.billingportal.SessionCreateParams portalParams = 
                 com.stripe.param.billingportal.SessionCreateParams.builder()
                     .setCustomer(empresa.getStripeCustomerId())
-                    .setReturnUrl("http://localhost:4200/dashboard")
+                    .setReturnUrl(frontendUrl + "/dashboard")
                     .build();
 
             com.stripe.model.billingportal.Session portalSession = 
@@ -148,7 +151,7 @@ public class StripeController {
             empresaRepository.save(empresa);
             System.out.println("[StripeController] [MOCK] Suscripción activada exitosamente en BD para " + empresa.getNombre() + " en plan: " + plan);
 
-            String mockUrl = "http://localhost:4200/dashboard?payment=success&mock=true&idNegocio=" + idNegocio + "&plan=" + plan;
+            String mockUrl = frontendUrl + "/dashboard?payment=success&mock=true&idNegocio=" + idNegocio + "&plan=" + plan;
             return ResponseEntity.ok(Map.of("url", mockUrl));
         }
 
@@ -156,8 +159,8 @@ public class StripeController {
         try {
             Stripe.apiKey = stripeApiKey;
 
-            String successUrl = "http://localhost:4200/dashboard?payment=success&idNegocio=" + idNegocio + "&plan=" + plan;
-            String cancelUrl = "http://localhost:4200/dashboard?payment=cancel";
+            String successUrl = frontendUrl + "/dashboard?payment=success&idNegocio=" + idNegocio + "&plan=" + plan;
+            String cancelUrl = frontendUrl + "/dashboard?payment=cancel";
 
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.SUBSCRIPTION)

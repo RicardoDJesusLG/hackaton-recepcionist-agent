@@ -25,11 +25,14 @@ public class PaymentsController {
 
     private final EmpresaRepository empresaRepository;
     private final String webhookSecret;
+    private final String frontendUrl;
 
     public PaymentsController(EmpresaRepository empresaRepository,
-                              @Value("${stripe.webhook.secret}") String webhookSecret) {
+                              @Value("${stripe.webhook.secret}") String webhookSecret,
+                              @Value("${stripe.frontend-url:http://localhost:4200}") String frontendUrl) {
         this.empresaRepository = empresaRepository;
         this.webhookSecret = webhookSecret;
+        this.frontendUrl = frontendUrl;
     }
 
     /**
@@ -65,7 +68,7 @@ public class PaymentsController {
                 com.stripe.param.billingportal.SessionCreateParams portalParams = 
                     com.stripe.param.billingportal.SessionCreateParams.builder()
                         .setCustomer(empresa.getStripeCustomerId())
-                        .setReturnUrl("http://localhost:4200/dashboard")
+                        .setReturnUrl(frontendUrl + "/dashboard")
                         .build();
 
                 com.stripe.model.billingportal.Session portalSession = 
@@ -75,8 +78,8 @@ public class PaymentsController {
             }
 
             // Crear sesión de Checkout
-            String successUrl = "http://localhost:4200/dashboard?payment=success&idNegocio=" + empresaId;
-            String cancelUrl = "http://localhost:4200/dashboard?payment=cancel";
+            String successUrl = frontendUrl + "/dashboard?payment=success&idNegocio=" + empresaId;
+            String cancelUrl = frontendUrl + "/dashboard?payment=cancel";
 
             SessionCreateParams.Builder builder = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.SUBSCRIPTION)

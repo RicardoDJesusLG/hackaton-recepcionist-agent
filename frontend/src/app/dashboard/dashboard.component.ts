@@ -61,7 +61,8 @@ export class DashboardComponent implements OnInit {
     totalServicios: 0,
     limiteServicios: 3,
     citasMesActual: 0,
-    limiteCitas: 60
+    limiteCitas: 60,
+    tieneStripeCustomer: false
   };
 
   // Catálogo de Servicios
@@ -534,7 +535,8 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        alert('Error al conectar con Stripe.');
+        const msg = err?.error?.error || 'Error al conectar con Stripe.';
+        alert(msg);
         console.error(err);
       }
     });
@@ -553,7 +555,8 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        alert('Error al conectar con Stripe.');
+        const msg = err?.error?.error || 'Error al conectar con Stripe.';
+        alert(msg);
         console.error(err);
       }
     });
