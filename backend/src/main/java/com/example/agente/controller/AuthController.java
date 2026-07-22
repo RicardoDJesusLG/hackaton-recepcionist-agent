@@ -121,7 +121,7 @@ public class AuthController {
                     .descripcionNegocio(descripcionNegocio != null ? descripcionNegocio.trim() : "")
                     .telefonoContacto(telefonoContacto != null ? telefonoContacto.trim() : "")
                     .mapsLink(mapsLink != null ? mapsLink.trim() : "")
-                    .suscripcionActiva(true)
+                    .suscripcionActiva(false)
                     .build();
 
             nuevaEmpresa = empresaRepository.save(nuevaEmpresa);

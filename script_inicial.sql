@@ -12,7 +12,7 @@ CREATE TABLE empresas (
     whatsapp_token TEXT,
     direccion TEXT,                                 -- ¡Para que la IA sepa dónde están!
     descripcion_negocio TEXT,                       -- Ej: "Barbería premium estilo clásico"
-    suscripcion_activa BOOLEAN NOT NULL DEFAULT TRUE,
+    suscripcion_activa BOOLEAN NOT NULL DEFAULT FALSE,
     plan_suscripcion VARCHAR(50) NOT NULL DEFAULT 'BASIC', -- BASIC, PREMIUM
     telefono_contacto VARCHAR(20),
     maps_link TEXT,

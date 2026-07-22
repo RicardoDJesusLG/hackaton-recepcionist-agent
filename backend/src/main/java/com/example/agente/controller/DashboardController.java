@@ -399,6 +399,7 @@ public class DashboardController {
         responseData.put("limiteServicios", limiteServicios);
         responseData.put("citasMesActual", citasMesActual);
         responseData.put("limiteCitas", limiteCitas);
+        responseData.put("tieneStripeCustomer", empresa.getStripeCustomerId() != null);
         responseData.put("fechaInicioSuscripcion", empresa.getFechaInicioSuscripcion());
         responseData.put("fechaFinSuscripcion", empresa.getFechaFinSuscripcion());
 

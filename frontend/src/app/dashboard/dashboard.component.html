@@ -276,7 +276,7 @@
               }
             </p>
 
-            @if (subStats.suscripcionActiva) {
+            @if (subStats.suscripcionActiva && subStats.tieneStripeCustomer) {
               <button (click)="gestionarSuscripcion()" class="btn-portal-stripe" [disabled]="isLoading">
                 <span>Gestionar / Cancelar Suscripción</span>
               </button>
