@@ -14,6 +14,7 @@ h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; }
 /* --- SIDEBAR --- */
 .sidebar {
   width: 260px;
+  box-sizing: border-box; 
   background-color: var(--color-verde-fuerte, #0a2305);
   color: #ffffff;
   display: flex;
@@ -21,7 +22,8 @@ h1, h2, h3, h4, h5 { font-family: 'Montserrat', sans-serif; }
   padding: 30px 20px;
   flex-shrink: 0;
   box-shadow: 4px 0 20px rgba(0,0,0,0.05);
-  z-index: 10;
+  z-index: 1100; 
+  transition: transform 0.3s ease-in-out; 
 }
 
 .sidebar-header { margin-bottom: 40px; padding-left: 10px; }
@@ -552,4 +554,290 @@ button.badge-toggle:disabled {
 .tooltip-icon:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
+}
+
+/* ===================================================
+   1. ESTRUCTURA Y LAYOUT BASE
+   =================================================== */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Botón Hamburguesa (Oculto en Desktop) */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1100;
+  background: var(--primary-color, #2b6cb0);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+/* ===================================================
+   2. GRIDS ADAPTABLES (Métricas y Acciones Rápidas)
+   =================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+/* Tablas con scroll horizontal en móviles */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===================================================
+   3. BREAKPOINTS Y MEDIA QUERIES
+   =================================================== */
+
+/* Tablets y Pantallas Medianas (<= 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+/* Móviles y Tablets Pequeñas (<= 768px) */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    position: fixed;
+    top: 15px;
+    right: 15px; /* Lo ponemos a la derecha para que no estorbe */
+    background: #0f172a; 
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 1040; /* Debajo del sidebar pero encima del contenido */
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6); /* Un overlay oscuro y elegante */
+    backdrop-filter: blur(3px); /* 🟢 Efecto difuminado moderno */
+    z-index: 1050; 
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 1100;
+    transform: translateX(-100%);
+    box-shadow: none !important;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important; 
+    gap: 8px !important; /* Espacio mínimo para aprovechar pantalla */
+  }
+
+  /* 2. Formato ultra-compacto de la tarjeta */
+  .stat-card {
+    padding: 10px 5px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    min-width: 0; /* Evita que el contenido flex empuje y rompa el grid */
+  }
+
+  .stat-content {
+    width: 100% !important;
+  }
+
+  /* 3. Tipografía miniatura ajustada */
+  .stat-content h3 {
+    font-size: 10px !important; 
+    line-height: 1.1 !important;
+    margin: 0 0 5px 0 !important;
+    white-space: normal !important; /* Permite que "Total Reservas" salte a dos líneas */
+  }
+
+  .stat-number {
+    font-size: 20px !important;
+    margin: 0 !important;
+  }
+
+  /* =========================================
+     PERFIL DEL NEGOCIO (TABLETS Y MÓVILES)
+     ========================================= */
+  
+  /* 1. Unificar TODAS las tarjetas y columnas para que midan exactamente lo mismo */
+  .settings-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .settings-main-column {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 15px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* CRUCIAL: Esto obliga a TODAS las tarjetas blancas a ser idénticas en tamaño */
+  .clean-card {
+    width: 100% !important;
+    box-sizing: border-box !important; 
+    padding: 20px !important;
+    margin-bottom: 0 !important; /* Ahora usamos 'gap' para separarlas */
+  }
+
+  /* 2. Ajuste de los formularios para que no se aplasten */
+  .light-form .form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  /* 3. Indicador animado de Swipe */
+  .swipe-indicator {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .swipe-indicator .arrow {
+    display: inline-block;
+    animation: swipe-bounce 1.5s infinite ease-in-out;
+  }
+
+  @keyframes swipe-bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+  }
+
+  /* 4. Carrusel Horizontal */
+  .side-layout {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    gap: 15px !important;
+    padding-bottom: 10px !important;
+    margin: 0 !important;
+    
+    /* Oculta la barra de scroll */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .side-layout::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* El carrusel respeta el 100% del tamaño unificado */
+  .side-layout > .clean-card {
+    flex: 0 0 100% !important;
+    scroll-snap-align: center !important;
+  }
+
+  /* =========================================
+     HORARIOS DE ATENCIÓN (TABLETS Y MÓVILES)
+     ========================================= */
+  
+  .schedule-grid {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .schedule-row {
+    /* Cambiamos Grid por Flexbox para controlar el salto de línea a la perfección */
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 15px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .day-cell {
+    width: auto !important;
+  }
+
+  .toggle-cell {
+    flex: 1 1 50% !important; 
+    display: flex !important;
+    justify-content: flex-start !important; 
+  }
+
+  .time-cell {
+    width: calc(50% - 7.5px) !important; 
+    box-sizing: border-box !important;
+  }
+}
+
+  .main-content {
+    width: 100%;
+    margin-left: 0 !important;
+    padding: 1.5rem 1rem;
+    padding-top: 5rem; /* 🟢 Da espacio superior para que el botón de menú no tape el contenido */
+  }
+
+  .swipe-indicator {
+  display: none;
 }

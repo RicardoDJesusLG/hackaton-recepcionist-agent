@@ -1,25 +1,32 @@
 <div class="app-layout">
+  <button class="mobile-menu-btn" (click)="toggleSidebar()">
+    ☰
+  </button>
+
+  @if (sidebarOpen) {
+    <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+  }
   
-  <!-- 🟢 SIDEBAR (Navegación Lateral Oscura) -->
-  <aside class="sidebar">
+  <!-- SIDEBAR (Navegación Lateral Oscura) -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
     <div class="sidebar-header">
       <h1 class="brand-title">Whappify</h1>
     </div>
 
     <nav class="side-nav">
-      <button (click)="setTab('citas')" class="nav-item" [class.active]="activeTab === 'citas'">
+      <button (click)="setTab('citas'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'citas'">
         Citas
       </button>
-      <button (click)="setTab('negocio')" class="nav-item" [class.active]="activeTab === 'negocio'">
+      <button (click)="setTab('negocio'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'negocio'">
         Perfil del Negocio
       </button>
-      <button (click)="setTab('horarios')" class="nav-item" [class.active]="activeTab === 'horarios'">
+      <button (click)="setTab('horarios'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'horarios'">
         Horarios de Atención
       </button>
-      <button (click)="setTab('servicios')" class="nav-item" [class.active]="activeTab === 'servicios'">
+      <button (click)="setTab('servicios'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'servicios'">
         Servicios
       </button>
-      <button (click)="setTab('agente')" class="nav-item" [class.active]="activeTab === 'agente'">
+      <button (click)="setTab('agente'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'agente'">
         Agente
       </button>
     </nav>
@@ -33,7 +40,7 @@
     </div>
   </aside>
 
-  <!-- ⚪ CONTENIDO PRINCIPAL (Fondo Claro) -->
+  <!-- CONTENIDO PRINCIPAL (Fondo Claro) -->
   <main class="main-content">
     
     <!-- Alertas -->
@@ -243,6 +250,9 @@
         </div>
 
         <!-- Tarjetas Laterales -->
+        <div class="swipe-indicator">
+          <span>Desliza para mejorar tu plan</span>
+        </div>
         <div class="side-layout">
           <div class="clean-card subscription-box" [class.active]="subStats.suscripcionActiva">
             <h3>Estado del Plan</h3>
