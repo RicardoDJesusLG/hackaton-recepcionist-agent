@@ -212,31 +212,24 @@ public class AuthController {
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "El correo electrónico es requerido."));
         }
-
+        
         email = email.trim().toLowerCase();
         Optional<Owner> ownerOpt = ownerRepository.findByEmail(email);
+        
         if (ownerOpt.isEmpty()) {
             // Retornamos 200 por seguridad para no revelar si el correo existe o no
             return ResponseEntity.ok(Map.of("message", "Si el correo está registrado, se ha enviado un código de verificación."));
         }
-
+        
         // Generar un código aleatorio de 6 dígitos
         String code = String.format("%06d", (int)(Math.random() * 1000000));
         
         // Guardar en la caché temporal (expira en 5 minutos)
         recoveryCache.put(email, new RecoveryData(code, LocalDateTime.now().plusMinutes(5)));
         
-        // Enviar correo
-        String subject = "Código de Recuperación - Recepción Inteligente";
-        String messageBody = "Hola,\n\n"
-                + "Has solicitado restablecer tu contraseña para el Panel Administrativo de Recepción Inteligente.\n\n"
-                + "Tu código de verificación es: " + code + "\n\n"
-                + "Este código es válido por 5 minutos.\n\n"
-                + "Si no solicitaste este cambio, puedes ignorar este correo de forma segura.\n\n"
-                + "Atentamente,\n"
-                + "Soporte de Recepción Inteligente";
-        
-        emailService.enviarCorreo(email, subject, messageBody);
+        // --- AQUÍ ESTÁ LA MAGIA DE RESEND ---
+        // Llamamos al método que creaste en EmailService pasándole el correo y el código
+        emailService.enviarCodigoRecuperacion(email, code);
 
         return ResponseEntity.ok(Map.of("message", "Se ha enviado un código de verificación a tu correo electrónico."));
     }
