@@ -19,6 +19,19 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  // ==========================================
+  // CONTROL DE LA BARRA LATERAL MÓVIL
+  // ==========================================
+  sidebarOpen: boolean = false;
+
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+  }
+
   // Navegación
   activeTab: 'citas' | 'negocio' | 'horarios' | 'servicios' | 'agente' = 'citas';
   

@@ -43,6 +43,13 @@ export class RegisterComponent {
       this.errorMessage = 'Por favor ingresa un correo electrónico válido.';
       return;
     }
+
+    // --- NUEVA VALIDACIÓN DE CONTRASEÑA ---
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(this.password)) {
+      this.errorMessage = 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.';
+      return;
+    }
     
     // Si todo está bien, limpiamos errores y avanzamos
     this.errorMessage = '';
@@ -61,6 +68,13 @@ export class RegisterComponent {
     }
     if (!this.email.includes('@') || !this.email.includes('.')) {
       this.errorMessage = 'Por favor ingresa un correo electrónico válido.';
+      return;
+    }
+
+    // --- VALIDACIÓN DE CONTRASEÑA (RE-COMPROBACIÓN EN SUBMIT) ---
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(this.password)) {
+      this.errorMessage = 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial.';
       return;
     }
 
