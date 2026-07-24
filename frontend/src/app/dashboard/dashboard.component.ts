@@ -224,10 +224,15 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.citas = data;
         this.calcularEstadisticas();
-        this.isLoading = false;
+        
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 600); 
       },
       error: (err) => {
-        this.isLoading = false;
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 600);
         this.errorMessage = 'No se pudieron cargar las citas. Verifica tu sesión.';
         console.error(err);
       }
