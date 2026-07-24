@@ -73,8 +73,7 @@ export class DashboardComponent implements OnInit {
     planSuscripcion: 'BASIC',
     suscripcionActiva: true,
     totalServicios: 0,
-    limiteServicios: 3,
-    citasMesActual: 0,
+    limiteServicios: 2147483647,
     limiteCitas: 60,
     tieneStripeCustomer: false
   };
