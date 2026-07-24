@@ -575,3 +575,39 @@
     </div>
   </div>
 }
+
+<!-- MODAL GENÉRICO: NOTIFICACIONES Y CONFIRMACIONES -->
+@if (modalNotificacion.visible) {
+  <div class="modal-overlay" style="z-index: 2000;">
+    <!-- Agregamos dialog-modal y cambiamos el manejo del color de error -->
+    <div class="clean-modal dialog-modal" [class.dialog-error]="modalNotificacion.tipo === 'error'">
+      
+      <div class="modal-header">
+        <h3 class="dialog-title" [class.text-error]="modalNotificacion.tipo === 'error'">
+          {{ modalNotificacion.titulo }}
+        </h3>
+      </div>
+      
+      <div class="dialog-body">
+        <p>{{ modalNotificacion.mensaje }}</p>
+      </div>
+      
+      <div class="dialog-actions">
+        @if (modalNotificacion.tipo === 'confirm') {
+          <button type="button" (click)="cerrarNotificacion()" class="btn-outline btn-sm">Cancelar</button>
+          <button 
+            type="button" 
+            (click)="aceptarNotificacion()" 
+            class="btn-primary btn-sm" 
+            [class.btn-danger]="modalNotificacion.titulo.includes('Eliminar') || modalNotificacion.titulo.includes('Cancelar') || modalNotificacion.titulo.includes('Desvincular')">
+            Confirmar
+          </button>
+        } @else {
+          <!-- Botón más discreto para el "Aceptar" genérico -->
+          <button type="button" (click)="cerrarNotificacion()" class="btn-outline btn-sm w-100">Entendido</button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
