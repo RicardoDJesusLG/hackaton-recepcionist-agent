@@ -1,25 +1,32 @@
 <div class="app-layout">
+  <button class="mobile-menu-btn" (click)="toggleSidebar()">
+    ☰
+  </button>
+
+  @if (sidebarOpen) {
+    <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+  }
   
-  <!-- 🟢 SIDEBAR (Navegación Lateral Oscura) -->
-  <aside class="sidebar">
+  <!-- SIDEBAR (Navegación Lateral Oscura) -->
+  <aside class="sidebar" [class.open]="sidebarOpen">
     <div class="sidebar-header">
       <h1 class="brand-title">Whappify</h1>
     </div>
 
     <nav class="side-nav">
-      <button (click)="setTab('citas')" class="nav-item" [class.active]="activeTab === 'citas'">
+      <button (click)="setTab('citas'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'citas'">
         Citas
       </button>
-      <button (click)="setTab('negocio')" class="nav-item" [class.active]="activeTab === 'negocio'">
+      <button (click)="setTab('negocio'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'negocio'">
         Perfil del Negocio
       </button>
-      <button (click)="setTab('horarios')" class="nav-item" [class.active]="activeTab === 'horarios'">
+      <button (click)="setTab('horarios'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'horarios'">
         Horarios de Atención
       </button>
-      <button (click)="setTab('servicios')" class="nav-item" [class.active]="activeTab === 'servicios'">
+      <button (click)="setTab('servicios'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'servicios'">
         Servicios
       </button>
-      <button (click)="setTab('agente')" class="nav-item" [class.active]="activeTab === 'agente'">
+      <button (click)="setTab('agente'); closeSidebar()" class="nav-item" [class.active]="activeTab === 'agente'">
         Agente
       </button>
     </nav>
@@ -33,7 +40,7 @@
     </div>
   </aside>
 
-  <!-- ⚪ CONTENIDO PRINCIPAL (Fondo Claro) -->
+  <!-- CONTENIDO PRINCIPAL (Fondo Claro) -->
   <main class="main-content">
     
     <!-- Alertas -->
@@ -105,11 +112,10 @@
               @for (cita of citas; track cita.idCita) {
                 <tr class="fade-in-row">
                   <td class="client-name">{{ cita.clienteNombre }}</td>
-                  <td>{{ cita.clienteTelefono }}</td>
+                  <td>{{ cita.clienteTelefono | phoneFormat }}</td>
                   <td><span class="service-tag">{{ cita.servicioNombre }}</span></td>
-                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'medium' }}</td>
-                  <td class="date-cell">{{ cita.fechaHoraFin | date:'shortTime' }}</td>
-                  <td>
+                  <td class="date-cell">{{ cita.fechaHoraInicio | date:'HH:mm' }}</td>
+                  <td class="date-cell">{{ cita.fechaHoraFin | date:'HH:mm' }}</td>                  <td>
                     <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
                       {{ cita.estado }}
                     </span>
@@ -155,14 +161,23 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+                  <div class="label-with-info">
+                    <label for="whatsappPhoneId">WhatsApp Phone ID</label>
+                    <span class="tooltip-icon">?
+                      <span class="tooltip-text">ID de vinculación de Meta.</span>
+                    </span>
+                  </div>
                   <input type="text" id="whatsappPhoneId" name="whatsappPhoneId" [(ngModel)]="empresa.whatsappPhoneId" required />
-                  <small class="help-text">ID de vinculación de Meta.</small>
                 </div>
+
                 <div class="form-group">
-                  <label for="whatsappToken">WhatsApp Access Token</label>
+                  <div class="label-with-info">
+                    <label for="whatsappToken">WhatsApp Access Token</label>
+                    <span class="tooltip-icon">?
+                      <span class="tooltip-text">Se muestra enmascarado por seguridad.</span>
+                    </span>
+                  </div>
                   <input type="password" id="whatsappToken" name="whatsappToken" [(ngModel)]="empresa.whatsappToken" />
-                  <small class="help-text">Se muestra enmascarado.</small>
                 </div>
               </div>
 
@@ -187,12 +202,8 @@
               </div>
 
               <div class="form-group">
-                <label for="mapsLink">Enlace de Google Maps 
-                  @if (empresa.planSuscripcion === 'BASIC') {
-                    <span class="badge-lock">(Plan Premium requerido)</span>
-                  }
-                </label>
-                <input type="text" id="mapsLink" name="mapsLink" [(ngModel)]="empresa.mapsLink" [disabled]="empresa.planSuscripcion === 'BASIC'" />
+                <label for="mapsLink">Enlace de Google Maps</label>
+                <input type="text" id="mapsLink" name="mapsLink" [(ngModel)]="empresa.mapsLink" placeholder="Ej: https://maps.app.goo.gl/..." />
               </div>
               <button type="submit" [disabled]="isLoading" class="btn-primary">Guardar Configuración</button>
             </form>
@@ -246,6 +257,9 @@
         </div>
 
         <!-- Tarjetas Laterales -->
+        <div class="swipe-indicator">
+          <span>Desliza para mejorar tu plan</span>
+        </div>
         <div class="side-layout">
           <div class="clean-card subscription-box" [class.active]="subStats.suscripcionActiva">
             <h3>Estado del Plan</h3>
@@ -254,11 +268,6 @@
                 PLAN {{ subStats.planSuscripcion || 'BÁSICO' }}
               </span>
               <span class="status-dot" [class.active]="subStats.suscripcionActiva"></span>
-            </div>
-
-            <div class="usage-stat">
-              <div class="usage-label"><span>Servicios</span><strong>{{ subStats.totalServicios }} / {{ subStats.limiteServicios === 2147483647 ? '∞' : subStats.limiteServicios }}</strong></div>
-              <div class="progress-bar-container"><div class="progress-bar bg-blue" [style.width.%]="subStats.limiteServicios === 2147483647 ? 100 : (subStats.totalServicios / subStats.limiteServicios * 100)"></div></div>
             </div>
 
             <div class="usage-stat">
@@ -292,10 +301,11 @@
             <div class="plan-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
               <div class="plan-head"><h5>Básico</h5><span>$299<small>/mes</small></span></div>
               <ul class="plan-features-list">
-                <li>Hasta 3 servicios activos</li>
+                <li>Servicios ilimitados</li>
                 <li>Hasta 60 citas/mes</li>
+                <li>Con Google Maps</li>
                 <li>Soporte en horario laboral</li>
-                <li>Sin Google Maps o Cobros</li>
+                <li>Sin funciones de cobro</li>
               </ul>
               <button (click)="pagarSuscripcion('BASIC')" class="btn-outline" [disabled]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva || isLoading">
                 {{ subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Básico' }}
@@ -343,12 +353,14 @@
                 
                 <div class="time-cell">
                   <label>Apertura</label>
-                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="inicio-{{h.diaSemana}}" [(ngModel)]="h.horaInicio" [disabled]="h.cerrado" step="60" />
                 </div>
-                
+
                 <div class="time-cell">
                   <label>Cierre</label>
-                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" />
+                  <!-- Añadido step="60" -->
+                  <input type="time" name="fin-{{h.diaSemana}}" [(ngModel)]="h.horaFin" [disabled]="h.cerrado" step="60" />
                 </div>
               </div>
             }
@@ -391,9 +403,14 @@
                   <td>{{ srv.duracionMinutos }} min</td>
                   <td class="price-cell">${{ srv.precio }}</td>
                   <td>
-                    <span class="badge-status" [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'">
+                    <button 
+                      type="button"
+                      class="badge-status badge-toggle" 
+                      [class]="srv.activo ? 'badge-confirmada' : 'badge-cancelada'"
+                      (click)="toggleEstadoServicio(srv)"
+                      [disabled]="isLoading">
                       {{ srv.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
+                    </button>
                   </td>
                   <td>
                     <div class="action-buttons">
@@ -428,33 +445,41 @@
         <form (ngSubmit)="guardarDatosEmpresa()" class="light-form">
           
           <div class="form-group">
-            <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
+            <div class="label-with-info">
+              <label for="descripcionAgente">Instrucciones del Negocio (Prompt Especializado)</label>
+              <span class="tooltip-icon">?
+                <span class="tooltip-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</span>
+              </span>
+            </div>
             <textarea id="descripcionAgente" name="descripcionNegocio" [(ngModel)]="empresa.descripcionNegocio" rows="8"></textarea>
-            <small class="help-text">Instrucciones detalladas sobre la personalidad y reglas que debe seguir Vertex AI al interactuar por WhatsApp.</small>
           </div>
 
           <div class="modal-section" style="border-top: none; padding-top: 10px; margin-top: 30px;">
-            <h4 style="font-size: 14px; color: #0f172a; margin: 0 0 15px 0; font-weight: 600; border-bottom: 1px solid #dbeafe; padding-bottom: 10px;">
-              Datos requeridos al cliente para agendar
-            </h4>
+            <div class="label-with-info" style="border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 15px;">
+              <h4 style="font-size: 14px; color: #0f172a; font-weight: 600;">
+                Datos requeridos al cliente para agendar
+              </h4>
+              <span class="tooltip-icon">?
+                <span class="tooltip-text">El agente virtual se asegurará de recolectar estos datos antes de confirmar cualquier cita.</span>
+              </span>
+            </div>
             
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNombre" [(ngModel)]="camposRequeridos.nombre">
                 <span class="switch-text">{{ camposRequeridos.nombre ? '✓ Solicitar Nombre' : 'Sin Nombre' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqNumero" [(ngModel)]="camposRequeridos.numero">
                 <span class="switch-text">{{ camposRequeridos.numero ? '✓ Solicitar Número' : 'Sin Número' }}</span>
               </label>
               
-              <label class="switch-label">
+              <label class="switch-label switch-success">
                 <input type="checkbox" name="reqCorreo" [(ngModel)]="camposRequeridos.correo">
                 <span class="switch-text">{{ camposRequeridos.correo ? '✓ Solicitar Correo' : 'Sin Correo' }}</span>
               </label>
             </div>
-            <small class="help-text" style="margin-top: 15px;">El agente virtual se asegurará de recolectar estos datos antes de confirmar cualquier cita.</small>
           </div>
 
           <div style="margin-top: 30px;">
@@ -500,7 +525,7 @@
 
         <div class="modal-section">
           <h4>Configuración Adicional</h4>
-          <label class="switch-label mb-3">
+          <label class="switch-label switch-success mb-3">
             <input type="checkbox" name="srvPromocionActiva" [(ngModel)]="formServicio.promocionActiva">
             <span class="switch-text">{{ formServicio.promocionActiva ? 'Promoción Activa' : 'Sin Promoción' }}</span>
           </label>
@@ -521,11 +546,6 @@
               <div class="form-group"><input type="text" name="srvValorPromocion" [(ngModel)]="formServicio.valorPromocion" placeholder="Detalle de la promo"></div>
             }
           }
-          
-          <label class="switch-label">
-            <input type="checkbox" name="srvActivo" [(ngModel)]="formServicio.activo">
-            <span class="switch-text">{{ formServicio.activo ? 'Servicio Visible' : 'Servicio Oculto' }}</span>
-          </label>
         </div>
 
         <div class="modal-actions">
@@ -597,6 +617,41 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- MODAL GENÉRICO: NOTIFICACIONES Y CONFIRMACIONES -->
+@if (modalNotificacion.visible) {
+  <div class="modal-overlay" style="z-index: 2000;">
+    <!-- Agregamos dialog-modal y cambiamos el manejo del color de error -->
+    <div class="clean-modal dialog-modal" [class.dialog-error]="modalNotificacion.tipo === 'error'">
+      
+      <div class="modal-header">
+        <h3 class="dialog-title" [class.text-error]="modalNotificacion.tipo === 'error'">
+          {{ modalNotificacion.titulo }}
+        </h3>
+      </div>
+      
+      <div class="dialog-body">
+        <p>{{ modalNotificacion.mensaje }}</p>
+      </div>
+      
+      <div class="dialog-actions">
+        @if (modalNotificacion.tipo === 'confirm') {
+          <button type="button" (click)="cerrarNotificacion()" class="btn-outline btn-sm">Cancelar</button>
+          <button 
+            type="button" 
+            (click)="aceptarNotificacion()" 
+            class="btn-primary btn-sm" 
+            [class.btn-danger]="modalNotificacion.titulo.includes('Eliminar') || modalNotificacion.titulo.includes('Cancelar') || modalNotificacion.titulo.includes('Desvincular')">
+            Confirmar
+          </button>
+        } @else {
+          <!-- Botón más discreto para el "Aceptar" genérico -->
+          <button type="button" (click)="cerrarNotificacion()" class="btn-outline btn-sm w-100">Entendido</button>
+        }
+      </div>
     </div>
   </div>
 }
