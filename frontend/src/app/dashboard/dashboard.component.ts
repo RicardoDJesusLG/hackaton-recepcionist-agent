@@ -73,8 +73,7 @@ export class DashboardComponent implements OnInit {
     planSuscripcion: 'BASIC',
     suscripcionActiva: true,
     totalServicios: 0,
-    limiteServicios: 3,
-    citasMesActual: 0,
+    limiteServicios: 2147483647,
     limiteCitas: 60,
     tieneStripeCustomer: false
   };
@@ -103,6 +102,36 @@ export class DashboardComponent implements OnInit {
   descripcionNegocioOriginal = '';
   prefijoTelefono = '52';
   telefonoLocal = '';
+
+  // ESTADO MODAL GLOBAL (Reemplazo Alert/Confirm)
+
+  modalNotificacion = {
+    visible: false,
+    titulo: '',
+    mensaje: '',
+    tipo: 'info', // 'info', 'error', 'confirm'
+    onConfirm: null as Function | null
+  };
+
+  mostrarAlerta(titulo: string, mensaje: string, tipo: 'info' | 'error' = 'info'): void {
+    this.modalNotificacion = { visible: true, titulo, mensaje, tipo, onConfirm: null };
+  }
+
+  mostrarConfirmacion(titulo: string, mensaje: string, onConfirm: Function): void {
+    this.modalNotificacion = { visible: true, titulo, mensaje, tipo: 'confirm', onConfirm };
+  }
+
+  cerrarNotificacion(): void {
+    this.modalNotificacion.visible = false;
+    this.modalNotificacion.onConfirm = null;
+  }
+
+  aceptarNotificacion(): void {
+    if (this.modalNotificacion.onConfirm) {
+      this.modalNotificacion.onConfirm();
+    }
+    this.cerrarNotificacion();
+  }
 
   // Horarios de Agenda
   horarios: any[] = [];
@@ -195,10 +224,15 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.citas = data;
         this.calcularEstadisticas();
-        this.isLoading = false;
+        
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 600); 
       },
       error: (err) => {
-        this.isLoading = false;
+        setTimeout(() => {
+          this.isLoading = false;
+        }, 600);
         this.errorMessage = 'No se pudieron cargar las citas. Verifica tu sesión.';
         console.error(err);
       }
@@ -212,18 +246,21 @@ export class DashboardComponent implements OnInit {
   }
 
   cancelarCita(idCita: string): void {
-    if (!confirm('¿Estás seguro de que deseas cancelar esta cita?')) {
-      return;
-    }
-    this.dashboardService.cancelarCita(idCita).subscribe({
-      next: () => {
-        this.cargarCitas();
-      },
-      error: (err) => {
-        alert('Error al cancelar la cita. Inténtalo de nuevo.');
-        console.error(err);
+    this.mostrarConfirmacion(
+      'Cancelar Cita',
+      '¿Estás seguro de que deseas cancelar esta cita?',
+      () => {
+        this.dashboardService.cancelarCita(idCita).subscribe({
+          next: () => {
+            this.cargarCitas();
+          },
+          error: (err) => {
+            this.mostrarAlerta('Error', 'Error al cancelar la cita. Inténtalo de nuevo.', 'error');
+            console.error(err);
+          }
+        });
       }
-    });
+    );
   }
 
   // --- GESTIÓN DE EMPRESA ---
@@ -272,24 +309,27 @@ export class DashboardComponent implements OnInit {
 
   desvincularGoogleCalendar(): void {
     if (!this.empresaId) return;
-    if (!confirm('¿Estás seguro de que deseas desvincular tu cuenta de Google Calendar? Tus citas ya no se sincronizarán.')) {
-      return;
-    }
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.dashboardService.desvincularGoogleCalendar(this.empresaId).subscribe({
-      next: (res) => {
-        this.isLoading = false;
-        this.googleCalendarVinculado = false;
-        this.successMessage = 'Google Calendar desvinculado exitosamente.';
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errorMessage = 'Error al desvincular Google Calendar.';
-        console.error(err);
+    this.mostrarConfirmacion(
+      'Desvincular Google Calendar',
+      '¿Estás seguro de que deseas desvincular tu cuenta de Google Calendar? Tus citas ya no se sincronizarán.',
+      () => {
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.dashboardService.desvincularGoogleCalendar(this.empresaId).subscribe({
+          next: (res) => {
+            this.isLoading = false;
+            this.googleCalendarVinculado = false;
+            this.successMessage = 'Google Calendar desvinculado exitosamente.';
+          },
+          error: (err) => {
+            this.isLoading = false;
+            this.errorMessage = 'Error al desvincular Google Calendar.';
+            console.error(err);
+          }
+        });
       }
-    });
+    );
   }
 
   extraerPrefijoYNumero(): void {
@@ -417,21 +457,26 @@ export class DashboardComponent implements OnInit {
 
   guardarServicio(): void {
     if (!this.formServicio.nombre.trim() || this.formServicio.precio < 0 || this.formServicio.duracionMinutos < 5) {
-      alert('Por favor llena los campos obligatorios con valores correctos.');
+      this.mostrarAlerta('Datos incompletos', 'Por favor llena los campos obligatorios con valores correctos.', 'error');
       return;
     }
 
     if (this.formServicio.promocionActiva && this.formServicio.tipoPromocion === 'PERSONALIZADA') {
-      const confirmacion = confirm(
-        '⚠️ Estás activando una promoción personalizada.\n\n' +
-        'Por favor, asegúrate de verificar que el texto (prompt) de la promoción sea correcto, profesional y no altere de forma negativa el comportamiento del agente.\n\n' +
-        '¿Deseas continuar?'
+      this.mostrarConfirmacion(
+        'Promoción Personalizada',
+        'Estás activando una promoción personalizada.\n\nPor favor, asegúrate de verificar que el texto (prompt) de la promoción sea correcto, profesional y no altere de forma negativa el comportamiento del agente.\n\n¿Deseas continuar?',
+        () => {
+          this.ejecutarGuardarServicio();
+        }
       );
-      if (!confirmacion) {
-        return;
-      }
+      return;
     }
+    
+    this.ejecutarGuardarServicio();
+  }
 
+  // Nueva subfunción complementaria:
+  ejecutarGuardarServicio(): void {
     this.isLoading = true;
     if (this.editandoServicio) {
       this.dashboardService.updateServicio(this.formServicio.id, this.formServicio).subscribe({
@@ -441,7 +486,7 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading = false;
-          alert('Error al actualizar el servicio.');
+          this.mostrarAlerta('Error', 'Error al actualizar el servicio.', 'error');
           console.error(err);
         }
       });
@@ -453,7 +498,7 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading = false;
-          alert('Error al crear el servicio.');
+          this.mostrarAlerta('Error', 'Error al crear el servicio.', 'error');
           console.error(err);
         }
       });
@@ -461,23 +506,26 @@ export class DashboardComponent implements OnInit {
   }
 
   eliminarServicio(id: string): void {
-    if (!confirm('¿Estás seguro de que deseas eliminar este servicio? Si tiene citas asociadas, se desactivará en su lugar.')) {
-      return;
-    }
-    this.isLoading = true;
-    this.dashboardService.eliminarServicio(id).subscribe({
-      next: (res: any) => {
-        if (res && res.softDeleted) {
-          alert('El servicio se desactivó porque tiene citas asociadas.');
-        }
-        this.cargarServicios();
-      },
-      error: (err) => {
-        this.isLoading = false;
-        alert('Error al eliminar el servicio.');
-        console.error(err);
+    this.mostrarConfirmacion(
+      'Eliminar Servicio',
+      '¿Estás seguro de que deseas eliminar este servicio? Si tiene citas asociadas, se desactivará en su lugar.',
+      () => {
+        this.isLoading = true;
+        this.dashboardService.eliminarServicio(id).subscribe({
+          next: (res: any) => {
+            if (res && res.softDeleted) {
+              this.mostrarAlerta('Aviso', 'El servicio se desactivó porque tiene citas asociadas.', 'info');
+            }
+            this.cargarServicios();
+          },
+          error: (err) => {
+            this.isLoading = false;
+            this.mostrarAlerta('Error', 'Error al eliminar el servicio.', 'error');
+            console.error(err);
+          }
+        });
       }
-    });
+    );
   }
 
   toggleEstadoServicio(servicio: any): void {
@@ -485,7 +533,6 @@ export class DashboardComponent implements OnInit {
     
     servicio.activo = !servicio.activo;
     this.isLoading = true;
-
     this.dashboardService.updateServicio(servicio.id, servicio).subscribe({
       next: () => {
         this.isLoading = false;
@@ -493,7 +540,7 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         servicio.activo = estadoOriginal;
-        alert('Error al actualizar el estado del servicio. Inténtalo de nuevo.');
+        this.mostrarAlerta('Error', 'Error al actualizar el estado del servicio. Inténtalo de nuevo.', 'error');
         console.error(err);
       }
     });
@@ -563,13 +610,13 @@ export class DashboardComponent implements OnInit {
           window.location.href = res.url;
         } else {
           this.isLoading = false;
-          alert('Error al iniciar pasarela de pagos.');
+          this.mostrarAlerta('Error', 'Error al iniciar pasarela de pagos.', 'error');
         }
       },
       error: (err) => {
         this.isLoading = false;
         const msg = err?.error?.error || 'Error al conectar con Stripe.';
-        alert(msg);
+        this.mostrarAlerta('Error de Facturación', msg, 'error');
         console.error(err);
       }
     });
@@ -583,13 +630,13 @@ export class DashboardComponent implements OnInit {
           window.location.href = res.url;
         } else {
           this.isLoading = false;
-          alert('Error al redirigir al portal de facturación.');
+          this.mostrarAlerta('Error', 'Error al redirigir al portal de facturación.', 'error');
         }
       },
       error: (err) => {
         this.isLoading = false;
         const msg = err?.error?.error || 'Error al conectar con Stripe.';
-        alert(msg);
+        this.mostrarAlerta('Error de Facturación', msg, 'error');
         console.error(err);
       }
     });

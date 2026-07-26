@@ -841,3 +841,61 @@ button.badge-toggle:disabled {
   .swipe-indicator {
   display: none;
 }
+
+/* =========================================
+   MODAL DE NOTIFICACIONES SUTIL (DIALOG)
+   ========================================= */
+.dialog-modal {
+  max-width: 380px; /* Mucho más angosto que el modal normal */
+  padding: 24px 30px; /* Menos espacio en blanco */
+  border-radius: 16px;
+  text-align: center;
+  border-top: none; 
+}
+
+/* Indicador de error sutil: una barra lateral izquierda en lugar del borde superior gigante */
+.dialog-modal.dialog-error {
+  border-left: 4px solid #ef4444;
+  padding-left: 26px; /* Ajuste visual por el borde */
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #0f172a;
+}
+
+/* Un rojo un poco más apagado para el texto */
+.dialog-title.text-error {
+  color: #dc2626; 
+}
+
+.dialog-body {
+  margin: 0 0 24px 0;
+}
+
+.dialog-body p {
+  white-space: pre-line; 
+  line-height: 1.5; 
+  color: #64748b; /* Gris más suave */
+  font-size: 14px; 
+  margin: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.dialog-actions button {
+  flex: 1;
+}
+
+/* Botones ligeramente más pequeños para no acaparar atención */
+.btn-sm {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+}
