@@ -90,6 +90,10 @@ export class DashboardComponent implements OnInit {
   prefijoTelefono = '52';
   telefonoLocal = '';
 
+  // Cancelación de cuenta
+  mostrarModalDeleteAccount = false;
+  confirmDeleteInput = '';
+
   // Horarios de Agenda
   horarios: any[] = [];
   diasSemanaNombres = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -571,6 +575,40 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar estadísticas de suscripción:', err);
+      }
+    });
+  }
+
+  abrirModalDeleteAccount(): void {
+    this.confirmDeleteInput = '';
+    this.mostrarModalDeleteAccount = true;
+  }
+
+  cerrarModalDeleteAccount(): void {
+    this.mostrarModalDeleteAccount = false;
+    this.confirmDeleteInput = '';
+  }
+
+  confirmarDeleteAccount(): void {
+    if (this.confirmDeleteInput !== 'ELIMINAR') return;
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.dashboardService.deleteAccount().subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.mostrarModalDeleteAccount = false;
+        // Cerrar sesión y redirigir
+        this.authService.logout();
+        alert('Tu cuenta ha sido eliminada permanentemente. Lamentamos verte partir.');
+        this.router.navigate(['/register']);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.mostrarModalDeleteAccount = false;
+        this.errorMessage = err?.error?.error || 'Ocurrió un error al intentar eliminar la cuenta.';
+        console.error('Error al eliminar cuenta:', err);
       }
     });
   }
