@@ -75,4 +75,8 @@ export class DashboardService {
   desvincularGoogleCalendar(empresaId: string): Observable<any> {
     return this.http.delete<any>(`${environment.apiUrl}/google-calendar?empresaId=${empresaId}`);
   }
+
+  deleteAccount(): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/delete-account`);
+  }
 }

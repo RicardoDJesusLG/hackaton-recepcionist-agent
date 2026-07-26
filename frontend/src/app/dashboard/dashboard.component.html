@@ -243,6 +243,17 @@
               </button>
             }
           </div>
+
+          <!-- Zona de Peligro: Cancelar Cuenta -->
+          <div class="clean-card" style="border-top: 4px solid #ef4444; margin-top: 24px;">
+            <h3 class="text-danger">Zona de Peligro</h3>
+            <p class="sub-text" style="font-size: 13px; color: #64748b; line-height: 1.5; margin-top: 12px; margin-bottom: 16px;">
+              Si eliminas tu cuenta, se borrarán todos tus datos de forma permanente de nuestra base de datos. Esta acción es definitiva y no se puede deshacer.
+            </p>
+            <button (click)="abrirModalDeleteAccount()" class="btn-danger w-100" [disabled]="isLoading">
+              Eliminar Cuenta Permanentemente
+            </button>
+          </div>
         </div>
 
         <!-- Tarjetas Laterales -->
@@ -576,6 +587,40 @@
   </div>
 }
 
+<!-- MODAL: CANCELACIÓN DE CUENTA -->
+@if (mostrarModalDeleteAccount) {
+  <div class="modal-overlay">
+    <div class="clean-modal border-danger">
+      <div class="modal-header">
+        <h2 class="text-danger">Confirmar Eliminación de Cuenta</h2>
+        <p>Esta acción es permanente y no se puede deshacer. Al proceder:</p>
+      </div>
+
+      <ul class="plan-features-list" style="margin-top: 15px; margin-bottom: 20px; padding-left: 20px;">
+        <li>Se eliminarán tus datos de negocio y tu cuenta de administrador.</li>
+        <li>Se borrará tu catálogo de servicios y configuración de horarios.</li>
+        <li>Se eliminará todo tu historial y registros de citas.</li>
+        <li>Se desvinculará Google Calendar si está enlazado.</li>
+        <li>Se cancelará cualquier suscripción de pago activa en Stripe.</li>
+      </ul>
+
+      <form (ngSubmit)="confirmarDeleteAccount()" class="light-form">
+        <div class="form-group">
+          <label>Escribe <strong class="text-danger">ELIMINAR</strong> para confirmar:</label>
+          <input type="text" name="confirmDeleteInput" [(ngModel)]="confirmDeleteInput" placeholder="ELIMINAR" required autocomplete="off">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" (click)="cerrarModalDeleteAccount()" class="btn-outline" [disabled]="isLoading">Cancelar</button>
+          <button type="submit" [disabled]="confirmDeleteInput !== 'ELIMINAR' || isLoading" class="btn-danger">
+            @if (isLoading) { Eliminando... } @else { Eliminar Cuenta }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
 <!-- MODAL GENÉRICO: NOTIFICACIONES Y CONFIRMACIONES -->
 @if (modalNotificacion.visible) {
   <div class="modal-overlay" style="z-index: 2000;">
@@ -607,7 +652,6 @@
           <button type="button" (click)="cerrarNotificacion()" class="btn-outline btn-sm w-100">Entendido</button>
         }
       </div>
-
     </div>
   </div>
 }

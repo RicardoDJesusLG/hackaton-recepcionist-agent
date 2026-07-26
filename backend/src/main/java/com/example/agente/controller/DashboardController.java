@@ -12,8 +12,10 @@ import com.example.agente.repository.UsuarioRepository;
 import com.example.agente.repository.EmpresaRepository;
 import com.example.agente.repository.AgendaConfigRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalTime;
@@ -37,6 +39,7 @@ public class DashboardController {
     private final AgendaConfigRepository agendaConfigRepository;
     private final WhatsAppService whatsAppService;
     private final CitaService citaService;
+    private final String stripeApiKey;
 
     public DashboardController(CitaRepository citaRepository,
                                ServicioRepository servicioRepository,
@@ -44,7 +47,8 @@ public class DashboardController {
                                EmpresaRepository empresaRepository,
                                AgendaConfigRepository agendaConfigRepository,
                                WhatsAppService whatsAppService,
-                               CitaService citaService) {
+                               CitaService citaService,
+                               @Value("${stripe.api.key:}") String stripeApiKey) {
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
@@ -52,6 +56,7 @@ public class DashboardController {
         this.agendaConfigRepository = agendaConfigRepository;
         this.whatsAppService = whatsAppService;
         this.citaService = citaService;
+        this.stripeApiKey = stripeApiKey;
     }
 
     /**
@@ -404,5 +409,51 @@ public class DashboardController {
         responseData.put("fechaFinSuscripcion", empresa.getFechaFinSuscripcion());
 
         return ResponseEntity.ok(responseData);
+    }
+
+    /**
+     * Endpoint para la cancelación definitiva de cuenta.
+     * Cancela la suscripción en Stripe y elimina permanentemente la empresa de la base de datos (con cascada).
+     */
+    @DeleteMapping("/delete-account")
+    @Transactional
+    public ResponseEntity<?> deleteAccount(HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        Empresa empresa = empresaOpt.get();
+
+        // 1. Intentar cancelar la suscripción activa en Stripe (si las credenciales son reales y válidas)
+        if (empresa.getStripeSubscriptionId() != null && !empresa.getStripeSubscriptionId().isEmpty()) {
+            try {
+                if (stripeApiKey != null && !stripeApiKey.trim().isEmpty() && !"CAMBIAR_POR_LLAVE_REAL".equals(stripeApiKey)) {
+                    com.stripe.Stripe.apiKey = stripeApiKey;
+                    com.stripe.model.Subscription subscription = com.stripe.model.Subscription.retrieve(empresa.getStripeSubscriptionId());
+                    if (subscription != null) {
+                        subscription.cancel();
+                        System.out.println("[DashboardController] Suscripción de Stripe cancelada con éxito: " + empresa.getStripeSubscriptionId());
+                    }
+                } else {
+                    System.out.println("[DashboardController] Modo MOCK o Llave de Stripe ausente. Omitiendo llamada real a Stripe para: " + empresa.getStripeSubscriptionId());
+                }
+            } catch (Exception e) {
+                System.err.println("[DashboardController] Error al cancelar suscripción en Stripe al eliminar cuenta: " + e.getMessage());
+                // No bloqueamos la eliminación en la base de datos para no dejar atrapado al usuario
+            }
+        }
+
+        // 2. Eliminar la empresa en cascada en la base de datos local
+        // (Esto elimina Owner, Servicios, AgendaConfig, Citas y GoogleCalendarConfig automáticamente)
+        empresaRepository.delete(empresa);
+        System.out.println("[DashboardController] Cuenta y datos de empresa eliminados de la BD para: " + empresa.getNombre() + " (" + empresaId + ")");
+
+        return ResponseEntity.ok(Map.of("message", "Cuenta eliminada exitosamente."));
     }
 }
