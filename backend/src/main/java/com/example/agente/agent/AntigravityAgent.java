@@ -140,6 +140,14 @@ public class AntigravityAgent {
                                     .setType(Type.STRING)
                                     .setDescription("El número de teléfono WhatsApp del cliente (proporcionado automáticamente por el contexto del sistema)")
                                     .build())
+                            .putProperties("nombreCliente", Schema.newBuilder()
+                                    .setType(Type.STRING)
+                                    .setDescription("El nombre completo del cliente. Obligatorio si el negocio lo requiere para agendar.")
+                                    .build())
+                            .putProperties("correoCliente", Schema.newBuilder()
+                                    .setType(Type.STRING)
+                                    .setDescription("El correo electrónico del cliente. Obligatorio si el negocio lo requiere para agendar.")
+                                    .build())
                             .addRequired("empresaId")
                             .addRequired("servicioId")
                             .addRequired("fechaHoraInicio")
@@ -248,24 +256,36 @@ public class AntigravityAgent {
         return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, null, customerPhone);
     }
 
-    /**
-     * Sobrecarga completa que inyecta el contexto de la empresa, descripción del negocio, promociones y teléfono del cliente,
-     * utilizando una sesión persistente para retener la memoria del chat.
-     */
     public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, String customerPhone) {
+        return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, descripcionNegocio, true, true, false, customerPhone);
+    }
+
+    /**
+     * Sobrecarga completa que inyecta el contexto de la empresa, descripción del negocio, promociones, teléfono del cliente
+     * y los datos requeridos para agendar, utilizando una sesión persistente para retener la memoria del chat.
+     */
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, Boolean requiereNombre, Boolean requiereTelefono, Boolean requiereCorreo, String customerPhone) {
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' yyyy, HH:mm:ss", new java.util.Locale("es", "MX"));
         String fechaHoraActual = java.time.ZonedDateTime.now(java.time.ZoneId.of("America/Mexico_City")).format(formatter);
         
         String contextMessage = String.format(
-                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s]\n" +
-                "Instrucción para el bot: Si en el catálogo de servicios algún servicio tiene promoción activa, aplícala y calcula de forma dinámica los costos con descuento cuando el cliente te pregunte por servicios o precios.\n" +
+                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s, Configuración de datos para agendar: NombreRequerido=%s, TeléfonoRequerido=%s, CorreoRequerido=%s]\n" +
+                "Instrucciones críticas para el bot:\n" +
+                "- Antes de llamar a 'agendarCita', es OBLIGATORIO que verifiques si el negocio requiere ciertos datos del cliente:\n" +
+                "  * Si NombreRequerido es verdadero, debes solicitar amablemente el nombre completo del cliente (si no lo tienes ya).\n" +
+                "  * Si TeléfonoRequerido es verdadero, debes asegurarte de tener el teléfono del cliente (este viene en Cliente Tel).\n" +
+                "  * Si CorreoRequerido es verdadero, debes solicitar amablemente el correo electrónico del cliente.\n" +
+                "- NO ejecutes 'agendarCita' bajo ninguna circunstancia si te falta alguno de los datos que están marcados como Requeridos (verdadero). Pídelos al cliente antes de agendar.\n" +
+                "- Cuando agendes a través de la herramienta 'agendarCita', pásale el 'nombreCliente' y/o 'correoCliente' recolectados en sus respectivos campos de la herramienta.\n" +
+                "- Una vez agendada la cita con éxito, debes confirmarle explícitamente al cliente los datos de contacto con los que quedó su cita (por ejemplo, confirmando su nombre y correo, si se le solicitaron).\n" +
+                "- Si en el catálogo de servicios algún servicio tiene promoción activa, aplícala y calcula de forma dinámica los costos con descuento cuando el cliente te pregunte por servicios o precios.\n" +
                 "Mensaje del cliente: %s",
                 fechaHoraActual, empresaNombre, empresaId, 
                 (telefonoContacto != null && !telefonoContacto.trim().isEmpty()) ? telefonoContacto : "No registrado", 
                 (direccion != null && !direccion.trim().isEmpty()) ? direccion : "No registrada", 
                 (mapsLink != null && !mapsLink.trim().isEmpty()) ? mapsLink : "No registrado",
                 (descripcionNegocio != null && !descripcionNegocio.trim().isEmpty()) ? descripcionNegocio : "No registrada",
-                customerPhone, userMessage
+                customerPhone, requiereNombre, requiereTelefono, requiereCorreo, userMessage
         );
         
         return chat(contextMessage, customerPhone);
@@ -425,14 +445,18 @@ public class AntigravityAgent {
         String servicioIdStr = call.getArgs().getFieldsOrThrow("servicioId").getStringValue();
         String fechaHoraInicio = call.getArgs().getFieldsOrThrow("fechaHoraInicio").getStringValue();
         String telefonoCliente = call.getArgs().getFieldsOrThrow("telefonoCliente").getStringValue();
+        
+        String nombreCliente = call.getArgs().containsFields("nombreCliente") ? call.getArgs().getFieldsOrThrow("nombreCliente").getStringValue() : null;
+        String correoCliente = call.getArgs().containsFields("correoCliente") ? call.getArgs().getFieldsOrThrow("correoCliente").getStringValue() : null;
 
         System.out.println("[AntigravityAgent] agendarCita: empresa=" + empresaIdStr
-                + ", servicio=" + servicioIdStr + ", inicio=" + fechaHoraInicio + ", tel=" + telefonoCliente);
+                + ", servicio=" + servicioIdStr + ", inicio=" + fechaHoraInicio + ", tel=" + telefonoCliente
+                + ", nombre=" + nombreCliente + ", correo=" + correoCliente);
 
         UUID empresaId = UUID.fromString(empresaIdStr.trim());
         UUID servicioId = UUID.fromString(servicioIdStr.trim());
 
-        CitaRequestDTO request = new CitaRequestDTO(empresaId, telefonoCliente.trim(), servicioId, fechaHoraInicio.trim());
+        CitaRequestDTO request = new CitaRequestDTO(empresaId, telefonoCliente.trim(), servicioId, fechaHoraInicio.trim(), nombreCliente, correoCliente);
 
         try {
             CitaResponseDTO response = citaService.agendarCita(request);

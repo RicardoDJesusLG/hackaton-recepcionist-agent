@@ -6,6 +6,7 @@ import com.example.agente.model.Servicio;
 import com.example.agente.repository.CitaRepository;
 import com.example.agente.repository.GoogleCalendarConfigRepository;
 import com.example.agente.repository.ServicioRepository;
+import com.example.agente.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,15 +49,18 @@ public class GoogleCalendarService {
     private final GoogleCalendarConfigRepository configRepository;
     private final CitaRepository citaRepository;
     private final ServicioRepository servicioRepository;
+    private final UsuarioRepository usuarioRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public GoogleCalendarService(GoogleCalendarConfigRepository configRepository,
                                   CitaRepository citaRepository,
-                                  ServicioRepository servicioRepository) {
+                                  ServicioRepository servicioRepository,
+                                  UsuarioRepository usuarioRepository) {
         this.configRepository = configRepository;
         this.citaRepository = citaRepository;
         this.servicioRepository = servicioRepository;
+        this.usuarioRepository = usuarioRepository;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
@@ -321,9 +325,27 @@ public class GoogleCalendarService {
      * Construye el objeto JSON del evento para la API de Google Calendar.
      */
     private Map<String, Object> construirEventoCalendar(String servicioNombre, Cita cita) {
+        String clienteNombre = "Desconocido";
+        String clienteTelefono = "";
+        String clienteCorreo = "";
+
+        if (usuarioRepository != null && cita.getUsuarioId() != null) {
+            Optional<com.example.agente.model.Usuario> usuarioOpt = usuarioRepository.findById(cita.getUsuarioId());
+            if (usuarioOpt.isPresent()) {
+                com.example.agente.model.Usuario u = usuarioOpt.get();
+                clienteNombre = u.getNombre() != null ? u.getNombre() : "Cliente WhatsApp";
+                clienteTelefono = u.getTelefonoWhatsapp();
+                clienteCorreo = u.getCorreo() != null ? u.getCorreo() : "No proporcionado";
+            }
+        }
+
         Map<String, Object> evento = new LinkedHashMap<>();
-        evento.put("summary", "📅 " + servicioNombre);
-        evento.put("description", "Cita agendada automáticamente por Recepcionista AI.\nID de cita: " + cita.getId());
+        evento.put("summary", "📅 " + servicioNombre + " - " + clienteNombre);
+        evento.put("description", "Cita agendada automáticamente por Recepcionista AI.\n"
+                + "Cliente: " + clienteNombre + "\n"
+                + "Teléfono: " + clienteTelefono + "\n"
+                + "Correo: " + clienteCorreo + "\n"
+                + "ID de cita: " + cita.getId());
 
         // Zona horaria de México Central (ajustar según sea necesario)
         String timeZone = "America/Mexico_City";

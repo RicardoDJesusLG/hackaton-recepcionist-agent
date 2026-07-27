@@ -50,6 +50,18 @@ public class Empresa {
     @Column(name = "maps_link", columnDefinition = "TEXT")
     private String mapsLink;
 
+    @Column(name = "requiere_nombre", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean requiereNombre = true;
+
+    @Column(name = "requiere_telefono", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean requiereTelefono = true;
+
+    @Column(name = "requiere_correo", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean requiereCorreo = false;
+
     @Column(name = "stripe_customer_id", length = 255)
     private String stripeCustomerId;
 

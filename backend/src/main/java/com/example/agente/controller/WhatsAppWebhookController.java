@@ -171,6 +171,9 @@ public class WhatsAppWebhookController {
                         empresa.getDireccion(), 
                         mapsLink, 
                         empresa.getDescripcionNegocio(),
+                        empresa.getRequiereNombre(),
+                        empresa.getRequiereTelefono(),
+                        empresa.getRequiereCorreo(),
                         finalCustomerPhone
                     );
                 } else {
