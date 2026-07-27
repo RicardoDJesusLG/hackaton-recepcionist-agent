@@ -18,6 +18,9 @@ CREATE TABLE empresas (
     maps_link TEXT,
     stripe_customer_id VARCHAR(255),
     stripe_subscription_id VARCHAR(255),
+    requiere_nombre BOOLEAN NOT NULL DEFAULT TRUE,
+    requiere_telefono BOOLEAN NOT NULL DEFAULT TRUE,
+    requiere_correo BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -34,6 +37,7 @@ CREATE TABLE usuarios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nombre VARCHAR(100),
     telefono_whatsapp VARCHAR(20) UNIQUE NOT NULL,
+    correo VARCHAR(150),
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -274,6 +274,10 @@ export class DashboardComponent implements OnInit {
         this.empresa = data;
         this.descripcionNegocioOriginal = data.descripcionNegocio || '';
         this.extraerPrefijoYNumero();
+        // Cargar campos requeridos del backend (con fallbacks si no existen)
+        this.camposRequeridos.nombre = data.requiereNombre !== undefined ? data.requiereNombre : true;
+        this.camposRequeridos.numero = data.requiereTelefono !== undefined ? data.requiereTelefono : true;
+        this.camposRequeridos.correo = data.requiereCorreo !== undefined ? data.requiereCorreo : false;
       },
       error: (err) => {
         console.error('Error al cargar datos de empresa:', err);
@@ -373,11 +377,23 @@ export class DashboardComponent implements OnInit {
     this.successMessage = '';
     const numLimpio = this.telefonoLocal.replace(/\D/g, '');
     this.empresa.telefonoContacto = numLimpio ? `+${this.prefijoTelefono}${numLimpio}` : '';
+    
+    // Inyectar campos requeridos en el payload enviado al backend
+    this.empresa.requiereNombre = this.camposRequeridos.nombre;
+    this.empresa.requiereTelefono = this.camposRequeridos.numero;
+    this.empresa.requiereCorreo = this.camposRequeridos.correo;
+
     this.dashboardService.updateEmpresa(this.empresa).subscribe({
       next: (data) => {
         this.empresa = data;
         this.descripcionNegocioOriginal = data.descripcionNegocio || '';
         this.extraerPrefijoYNumero();
+        
+        // Volver a cargar el estado mapeado
+        this.camposRequeridos.nombre = data.requiereNombre !== undefined ? data.requiereNombre : true;
+        this.camposRequeridos.numero = data.requiereTelefono !== undefined ? data.requiereTelefono : true;
+        this.camposRequeridos.correo = data.requiereCorreo !== undefined ? data.requiereCorreo : false;
+
         this.successMessage = 'Información de la empresa guardada correctamente.';
         this.isLoading = false;
         this.cargarEstadisticasSuscripcion();

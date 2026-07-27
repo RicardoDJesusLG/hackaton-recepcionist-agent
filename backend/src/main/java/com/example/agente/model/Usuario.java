@@ -25,6 +25,9 @@ public class Usuario {
     @Column(name = "telefono_whatsapp", unique = true, nullable = false, length = 20)
     private String telefonoWhatsapp;
 
+    @Column(name = "correo", length = 150)
+    private String correo;
+
     @Column(name = "fecha_registro", insertable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 }

@@ -6,5 +6,7 @@ public record CitaRequestDTO(
         UUID idNegocio,
         String telefonoCliente,
         UUID idServicio,
-        String fechaHoraInicio
+        String fechaHoraInicio,
+        String nombreCliente,
+        String correoCliente
 ) {}

@@ -191,7 +191,9 @@ public class DashboardController {
         response.put("suscripcionActiva", empresa.getSuscripcionActiva());
         response.put("telefonoContacto", empresa.getTelefonoContacto() != null ? empresa.getTelefonoContacto() : "");
         response.put("mapsLink", empresa.getMapsLink() != null ? empresa.getMapsLink() : "");
-
+        response.put("requiereNombre", empresa.getRequiereNombre());
+        response.put("requiereTelefono", empresa.getRequiereTelefono());
+        response.put("requiereCorreo", empresa.getRequiereCorreo());
 
         return ResponseEntity.ok(response);
     }
@@ -220,6 +222,9 @@ public class DashboardController {
         String whatsappToken = (String) requestBody.get("whatsappToken");
         String telefonoContacto = (String) requestBody.get("telefonoContacto");
         String mapsLink = (String) requestBody.get("mapsLink");
+        Boolean requiereNombre = (Boolean) requestBody.get("requiereNombre");
+        Boolean requiereTelefono = (Boolean) requestBody.get("requiereTelefono");
+        Boolean requiereCorreo = (Boolean) requestBody.get("requiereCorreo");
 
 
         if (esPromptSospechoso(descripcionNegocio)) {
@@ -244,6 +249,15 @@ public class DashboardController {
             empresa.setMapsLink(null);
         } else {
             empresa.setMapsLink(mapsLink);
+        }
+        if (requiereNombre != null) {
+            empresa.setRequiereNombre(requiereNombre);
+        }
+        if (requiereTelefono != null) {
+            empresa.setRequiereTelefono(requiereTelefono);
+        }
+        if (requiereCorreo != null) {
+            empresa.setRequiereCorreo(requiereCorreo);
         }
 
         empresaRepository.save(empresa);
@@ -274,6 +288,9 @@ public class DashboardController {
         response.put("suscripcionActiva", empresa.getSuscripcionActiva());
         response.put("telefonoContacto", empresa.getTelefonoContacto());
         response.put("mapsLink", empresa.getMapsLink());
+        response.put("requiereNombre", empresa.getRequiereNombre());
+        response.put("requiereTelefono", empresa.getRequiereTelefono());
+        response.put("requiereCorreo", empresa.getRequiereCorreo());
 
 
         return ResponseEntity.ok(response);

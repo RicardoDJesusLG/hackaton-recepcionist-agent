@@ -165,10 +165,20 @@ public class CitaService {
 
         // 2. Buscar o crear el cliente en la tabla usuarios
         Usuario usuario = usuarioRepository.findByTelefonoWhatsapp(telefono)
+                .map(u -> {
+                    if (request.nombreCliente() != null && !request.nombreCliente().trim().isEmpty()) {
+                        u.setNombre(request.nombreCliente().trim());
+                    }
+                    if (request.correoCliente() != null && !request.correoCliente().trim().isEmpty()) {
+                        u.setCorreo(request.correoCliente().trim());
+                    }
+                    return usuarioRepository.save(u);
+                })
                 .orElseGet(() -> {
                     Usuario nuevo = Usuario.builder()
                             .telefonoWhatsapp(telefono)
-                            .nombre("Cliente WhatsApp")
+                            .nombre(request.nombreCliente() != null && !request.nombreCliente().trim().isEmpty() ? request.nombreCliente().trim() : "Cliente WhatsApp")
+                            .correo(request.correoCliente() != null && !request.correoCliente().trim().isEmpty() ? request.correoCliente().trim() : null)
                             .build();
                     return usuarioRepository.save(nuevo);
                 });
