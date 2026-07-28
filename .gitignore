@@ -24,4 +24,6 @@ antigravity-credentials.json
 google-calendar-credentials.json
 node_modules
 *secret.properties
+backend/uploads/
+uploads/
 
