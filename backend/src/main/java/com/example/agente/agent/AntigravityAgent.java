@@ -257,19 +257,28 @@ public class AntigravityAgent {
     }
 
     public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, String customerPhone) {
-        return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, descripcionNegocio, true, true, false, customerPhone);
+        return chat(userMessage, empresaId, empresaNombre, telefonoContacto, direccion, mapsLink, descripcionNegocio, true, true, false, null, false, false, customerPhone);
     }
 
     /**
      * Sobrecarga completa que inyecta el contexto de la empresa, descripción del negocio, promociones, teléfono del cliente
      * y los datos requeridos para agendar, utilizando una sesión persistente para retener la memoria del chat.
      */
-    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, Boolean requiereNombre, Boolean requiereTelefono, Boolean requiereCorreo, String customerPhone) {
+    public String chat(String userMessage, String empresaId, String empresaNombre, String telefonoContacto, String direccion, String mapsLink, String descripcionNegocio, Boolean requiereNombre, Boolean requiereTelefono, Boolean requiereCorreo, String urlMenuImagen, Boolean activarEnvioMenu, Boolean envioMenuInmediato, String customerPhone) {
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' yyyy, HH:mm:ss", new java.util.Locale("es", "MX"));
         String fechaHoraActual = java.time.ZonedDateTime.now(java.time.ZoneId.of("America/Mexico_City")).format(formatter);
         
+        String infoMenu = "";
+        if (Boolean.TRUE.equals(activarEnvioMenu) && urlMenuImagen != null && !urlMenuImagen.trim().isEmpty()) {
+            if (Boolean.TRUE.equals(envioMenuInmediato)) {
+                infoMenu = String.format(" [INFORMACIÓN DEL MENÚ: El menú/catálogo digital del negocio está configurado para enviarse automáticamente en la bienvenida al cliente. URL: %s]", urlMenuImagen);
+            } else {
+                infoMenu = String.format(" [INFORMACIÓN DEL MENÚ: El negocio cuenta con un menú/catálogo o lista de precios digital en imagen. Si el cliente te pide expresamente ver el menú, la lista de precios, el catálogo o la opción de menú digital, debes informarle que le has adjuntado la imagen del menú. URL de la imagen: %s]", urlMenuImagen);
+            }
+        }
+
         String contextMessage = String.format(
-                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s, Configuración de datos para agendar: NombreRequerido=%s, TeléfonoRequerido=%s, CorreoRequerido=%s]\n" +
+                "[Contexto del sistema - Fecha y Hora actual: %s, Empresa: '%s' (ID: %s), Teléfono de Soporte del Local: %s, Dirección del Local: %s, Enlace de Google Maps del Local: %s, Descripción/Directivas del Negocio: %s, Cliente Tel: %s, Configuración de datos para agendar: NombreRequerido=%s, TeléfonoRequerido=%s, CorreoRequerido=%s%s]\n" +
                 "Instrucciones críticas para el bot:\n" +
                 "- Antes de llamar a 'agendarCita', es OBLIGATORIO que verifiques si el negocio requiere ciertos datos del cliente:\n" +
                 "  * Si NombreRequerido es verdadero, debes solicitar amablemente el nombre completo del cliente (si no lo tienes ya).\n" +
@@ -285,7 +294,7 @@ public class AntigravityAgent {
                 (direccion != null && !direccion.trim().isEmpty()) ? direccion : "No registrada", 
                 (mapsLink != null && !mapsLink.trim().isEmpty()) ? mapsLink : "No registrado",
                 (descripcionNegocio != null && !descripcionNegocio.trim().isEmpty()) ? descripcionNegocio : "No registrada",
-                customerPhone, requiereNombre, requiereTelefono, requiereCorreo, userMessage
+                customerPhone, requiereNombre, requiereTelefono, requiereCorreo, infoMenu, userMessage
         );
         
         return chat(contextMessage, customerPhone);

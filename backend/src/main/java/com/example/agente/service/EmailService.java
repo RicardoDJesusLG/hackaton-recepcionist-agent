@@ -12,10 +12,10 @@ public class EmailService {
 
     private final Resend resend;
 
-    @Value("${resend.email.from}")
+    @Value("${resend.email.from:soporte@whappify.com.mx}")
     private String fromEmail;
 
-    public EmailService(@Value("${resend.api.key}") String apiKey) {
+    public EmailService(@Value("${resend.api.key:re_mock_12345}") String apiKey) {
         this.resend = new Resend(apiKey);
     }
 

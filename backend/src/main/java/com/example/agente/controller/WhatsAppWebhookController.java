@@ -163,6 +163,29 @@ public class WhatsAppWebhookController {
                     if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
                         mapsLink = null;
                     }
+
+                    // Evaluar envío de menú por WhatsApp (soporta múltiples imágenes hasta 5)
+                    boolean menuEnviadoInmediato = false;
+                    if (Boolean.TRUE.equals(empresa.getActivarEnvioMenu()) && 
+                        empresa.getUrlMenuImagen() != null && !empresa.getUrlMenuImagen().trim().isEmpty()) {
+                        
+                        if (Boolean.TRUE.equals(empresa.getEnvioMenuInmediato())) {
+                            String[] imagenes = empresa.getUrlMenuImagen().split(",");
+                            int idx = 1;
+                            for (String imgUrl : imagenes) {
+                                String cleanUrl = imgUrl.trim();
+                                if (!cleanUrl.isEmpty()) {
+                                    String caption = (imagenes.length > 1) 
+                                            ? String.format("Menú / Catálogo de %s (%d/%d)", empresa.getNombre(), idx, imagenes.length)
+                                            : "Menú / Catálogo de " + empresa.getNombre();
+                                    whatsAppService.enviarMensajeImagen(originalCustomerPhone, cleanUrl, caption, finalBusinessPhoneId, finalCustomToken);
+                                    idx++;
+                                }
+                            }
+                            menuEnviadoInmediato = true;
+                        }
+                    }
+
                     agentResponse = antigravityAgent.chat(
                         finalUserMessage, 
                         empresa.getId().toString(), 
@@ -174,14 +197,25 @@ public class WhatsAppWebhookController {
                         empresa.getRequiereNombre(),
                         empresa.getRequiereTelefono(),
                         empresa.getRequiereCorreo(),
+                        empresa.getUrlMenuImagen(),
+                        empresa.getActivarEnvioMenu(),
+                        empresa.getEnvioMenuInmediato(),
                         finalCustomerPhone
                     );
+
+                    // Si el menú estaba a solicitud y el usuario pidió menú en el mensaje (o la IA lo detectó), o si no fue inmediato
+                    if (!menuEnviadoInmediato && Boolean.TRUE.equals(empresa.getActivarEnvioMenu()) && empresa.getUrlMenuImagen() != null && !empresa.getUrlMenuImagen().trim().isEmpty()) {
+                        String msgLower = finalUserMessage.toLowerCase();
+                        if (msgLower.contains("menu") || msgLower.contains("menú") || msgLower.contains("catalogo") || msgLower.contains("catálogo") || msgLower.contains("precios") || msgLower.contains("opcion 1") || msgLower.contains("opción 1")) {
+                            whatsAppService.enviarMensajeImagen(originalCustomerPhone, empresa.getUrlMenuImagen(), "Menú / Catálogo de " + empresa.getNombre(), finalBusinessPhoneId, finalCustomToken);
+                        }
+                    }
                 } else {
                     agentResponse = antigravityAgent.chat(finalUserMessage);
                 }
                 System.out.println("[WhatsAppWebhookController] Respuesta del agente Antigravity: " + agentResponse);
 
-                // Enviar mensaje de vuelta usando el servicio al número original (con el '1' si venía así de Meta)
+                // Enviar mensaje de texto de vuelta usando el servicio
                 whatsAppService.enviarMensajeTexto(originalCustomerPhone, agentResponse, finalBusinessPhoneId, finalCustomToken);
             } catch (Exception ex) {
                 System.err.println("[WhatsAppWebhookController] Error al procesar mensaje de forma síncrona: " + ex.getMessage());

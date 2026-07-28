@@ -82,17 +82,43 @@
         </div>
       </div>
 
-      <!-- Tabla Principal Blanca -->
+      <!-- Tabla Principal Blanca con Filtros -->
       <div class="clean-card">
-        <div class="card-header-table">
-          <h3>Listado de Citas</h3>
-          <button (click)="cargarCitas()" class="btn-primary" [disabled]="isLoading">
-            @if (isLoading) {
-              <span>Actualizando...</span>
-            } @else {
-              <span>Refrescar Lista</span>
+        <div class="card-header-table" style="flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h3 style="margin-bottom: 4px;">Listado de Citas</h3>
+            <small style="color: #64748b;">Mostrando {{ citasFiltradas.length }} de {{ totalCitas }} citas</small>
+          </div>
+
+          <!-- Barra de Filtros -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <!-- Filtro de Estado -->
+            <select name="filtroEstado" [(ngModel)]="filtroEstado" (change)="aplicarFiltrosCitas()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;">
+              <option value="TODOS">Todos los Estados</option>
+              <option value="CONFIRMADA">Confirmadas</option>
+              <option value="CANCELADA">Canceladas</option>
+            </select>
+
+            <!-- Filtro de Rango de Fecha -->
+            <select name="filtroFechaTipo" [(ngModel)]="filtroFechaTipo" (change)="aplicarFiltrosCitas()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;">
+              <option value="HOY_Y_MANANA">Hoy y Mañana (Predeterminado)</option>
+              <option value="ESPECIFICO">Seleccionar un día específico</option>
+              <option value="TODAS">Ver Histórico Completo</option>
+            </select>
+
+            <!-- Input de Fecha Específica -->
+            @if (filtroFechaTipo === 'ESPECIFICO') {
+              <input type="date" name="fechaSeleccionada" [(ngModel)]="fechaSeleccionada" (change)="aplicarFiltrosCitas()" style="padding: 5px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" />
             }
-          </button>
+
+            <button (click)="cargarCitas()" class="btn-primary" [disabled]="isLoading">
+              @if (isLoading) {
+                <span>Actualizando...</span>
+              } @else {
+                <span>Refrescar</span>
+              }
+            </button>
+          </div>
         </div>
 
         <div class="table-responsive">
@@ -102,6 +128,7 @@
                 <th>Cliente</th>
                 <th>Teléfono</th>
                 <th>Servicio</th>
+                <th>Fecha</th>
                 <th>Inicio</th>
                 <th>Fin</th>
                 <th>Estado</th>
@@ -109,13 +136,15 @@
               </tr>
             </thead>
             <tbody>
-              @for (cita of citas; track cita.idCita) {
+              @for (cita of citasFiltradas; track cita.idCita) {
                 <tr class="fade-in-row">
                   <td class="client-name">{{ cita.clienteNombre }}</td>
                   <td>{{ cita.clienteTelefono | phoneFormat }}</td>
                   <td><span class="service-tag">{{ cita.servicioNombre }}</span></td>
+                  <td class="date-cell" style="font-weight: 600; color: #0f172a;">{{ cita.fechaHoraInicio | date:'dd/MM/yyyy' }}</td>
                   <td class="date-cell">{{ cita.fechaHoraInicio | date:'HH:mm' }}</td>
-                  <td class="date-cell">{{ cita.fechaHoraFin | date:'HH:mm' }}</td>                  <td>
+                  <td class="date-cell">{{ cita.fechaHoraFin | date:'HH:mm' }}</td>
+                  <td>
                     <span class="badge-status" [class]="'badge-' + cita.estado.toLowerCase()">
                       {{ cita.estado }}
                     </span>
@@ -130,10 +159,10 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="empty-state">
+                  <td colspan="8" class="empty-state">
                     <div class="empty-shape"></div>
-                    <p>No hay citas registradas todavía.</p>
-                    <small>Las citas agendadas por WhatsApp aparecerán aquí automáticamente.</small>
+                    <p>No hay citas registradas para este filtro.</p>
+                    <small>Intenta cambiar el rango de fecha o estado en la barra de filtros.</small>
                   </td>
                 </tr>
               }
@@ -296,33 +325,20 @@
           </div>
 
           <div class="clean-card plans-selector">
-            <h3>Mejorar Plan</h3>
+            <h3>Suscripción Mensual</h3>
             
-            <div class="plan-card" [class.current]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva">
-              <div class="plan-head"><h5>Básico</h5><span>$299<small>/mes</small></span></div>
+            <div class="plan-card" [class.current]="subStats.suscripcionActiva">
+              <div class="plan-head"><h5>Plan Pro / Único</h5><span>$399<small>/mes</small></span></div>
               <ul class="plan-features-list">
-                <li>Servicios ilimitados</li>
-                <li>Hasta 60 citas/mes</li>
-                <li>Con Google Maps</li>
-                <li>Soporte en horario laboral</li>
-                <li>Sin funciones de cobro</li>
-              </ul>
-              <button (click)="pagarSuscripcion('BASIC')" class="btn-outline" [disabled]="subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva || isLoading">
-                {{ subStats.planSuscripcion === 'BASIC' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Básico' }}
-              </button>
-            </div>
-
-            <div class="plan-card" [class.current]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva">
-              <div class="plan-head"><h5>Premium</h5><span>$499<small>/mes</small></span></div>
-              <ul class="plan-features-list">
-                <li>Servicios ilimitados</li>
-                <li>Citas ilimitadas</li>
-                <li>Con Google Maps</li>
+                <li>Hasta 1,000 conversaciones/mes (Meta Free Tier)</li>
+                <li>Citas y servicios ilimitados</li>
+                <li>Menú / Catálogo multimedia por WhatsApp</li>
+                <li>Integración con Google Calendar</li>
+                <li>Google Maps y ubicación</li>
                 <li>Soporte Prioritario 24/7</li>
-                <li>Cobro a clientes (Anticipos/Completo)</li>
               </ul>
-              <button (click)="pagarSuscripcion('PREMIUM')" class="btn-outline" [disabled]="subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva || isLoading">
-                {{ subStats.planSuscripcion === 'PREMIUM' && subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Premium' }}
+              <button (click)="pagarSuscripcion('PRO')" class="btn-outline" [disabled]="subStats.suscripcionActiva || isLoading">
+                {{ subStats.suscripcionActiva ? 'Plan Activo' : 'Adquirir Plan Pro ($399/mes)' }}
               </button>
             </div>
           </div>
@@ -482,9 +498,107 @@
             </div>
           </div>
 
+          <div class="modal-section" style="border-top: 1px solid #e2e8f0; padding-top: 25px; margin-top: 30px;">
+            <div class="label-with-info" style="border-bottom: 1px solid #dbeafe; padding-bottom: 10px; margin-bottom: 15px;">
+              <h4 style="font-size: 15px; color: #0f172a; font-weight: 600;">
+                📸 Recursos Multimedia y Menú / Catálogo Digital
+              </h4>
+              <span class="tooltip-icon">?
+                <span class="tooltip-text">Sube una imagen de tu menú o catálogo de productos para enviarla automáticamente por WhatsApp a tus clientes.</span>
+              </span>
+            </div>
+
+            <!-- Switch de Activación Principal -->
+            <div style="margin-bottom: 20px;">
+              <label class="switch-label switch-success">
+                <input type="checkbox" name="activarEnvioMenu" [(ngModel)]="empresa.activarEnvioMenu">
+                <span class="switch-text">{{ empresa.activarEnvioMenu ? '✓ Enviar Menú / Catálogo por WhatsApp' : 'Desactivado' }}</span>
+              </label>
+            </div>
+
+            @if (empresa.activarEnvioMenu) {
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                
+                <!-- Área de Carga y Previsualización de Galería de Imágenes (Hasta 5) -->
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="font-weight: 600; font-size: 13px; color: #334155;">
+                      Imágenes del Menú o Catálogo ({{ obtenerListaImagenesMenu().length }}/5)
+                    </label>
+                  </div>
+                  
+                  @if (isUploadingMenu) {
+                    <div style="border: 2px dashed #3b82f6; border-radius: 8px; padding: 20px; text-align: center; background: #eff6ff; margin-bottom: 12px;">
+                      <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1d4ed8;">Subiendo imagen al servidor, por favor espera...</p>
+                    </div>
+                  }
+
+                  <!-- Lista de Imágenes Cargadas -->
+                  @if (obtenerListaImagenesMenu().length > 0) {
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                      @for (imgUrl of obtenerListaImagenesMenu(); track $index) {
+                        <div style="display: flex; align-items: center; gap: 15px; background: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                          <span style="font-size: 12px; font-weight: 700; color: #64748b; width: 24px;">#{{ $index + 1 }}</span>
+                          <img [src]="imgUrl" alt="Imagen {{ $index + 1 }}" style="max-height: 60px; max-width: 80px; border-radius: 6px; object-fit: contain; border: 1px solid #e2e8f0;" />
+                          <div style="flex: 1;">
+                            <span style="display: block; font-size: 13px; font-weight: 600; color: #1e293b;">Página / Imagen {{ $index + 1 }}</span>
+                            <a [href]="imgUrl" target="_blank" style="font-size: 12px; color: #2563eb; text-decoration: underline;">Ver imagen completa ↗</a>
+                          </div>
+                          <button type="button" (click)="eliminarImagenMenuEspecifica($index)" class="btn-small-delete" style="padding: 6px 12px;">Remover</button>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- Caja para Agregar Más Imagenes (si es menor a 5) -->
+                  @if (obtenerListaImagenesMenu().length < 5) {
+                    <div style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; background: #ffffff; cursor: pointer;" (click)="fileInput.click()">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 6px;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                      </svg>
+                      <p style="margin: 0; font-size: 13px; font-weight: 600; color: #475569;">
+                        {{ obtenerListaImagenesMenu().length > 0 ? '+ Agregar otra imagen al menú (Máximo 5)' : 'Haz clic aquí para seleccionar la primera imagen de tu menú' }}
+                      </p>
+                      <small style="color: #94a3b8; font-size: 12px;">Formatos soportados: PNG, JPG, WEBP (Máx 5MB por imagen)</small>
+                    </div>
+                  }
+                  <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;" />
+                </div>
+
+                <!-- Selector de Modo de Envío -->
+                <div style="border-top: 1px dashed #cbd5e1; padding-top: 15px;">
+                  <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 13px; color: #334155;">
+                    ¿Cuándo deseas que se envíe esta imagen al cliente?
+                  </label>
+                  
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; background: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                      <input type="radio" name="envioMenuInmediato" [value]="true" [(ngModel)]="empresa.envioMenuInmediato" style="margin-top: 3px;" />
+                      <div>
+                        <strong style="font-size: 13px; color: #0f172a;">⚡ Envío Inmediato de Bienvenida (Recomendado para Restaurantes)</strong>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Se adjunta la imagen automáticamente en el primer saludo que envíe el cliente por WhatsApp.</p>
+                      </div>
+                    </label>
+
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; background: #ffffff; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                      <input type="radio" name="envioMenuInmediato" [value]="false" [(ngModel)]="empresa.envioMenuInmediato" style="margin-top: 3px;" />
+                      <div>
+                        <strong style="font-size: 13px; color: #0f172a;">💬 A Solicitud / Opciones (Recomendado para Servicios y Productos)</strong>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Se envía solo cuando el cliente escriba palabras clave (ej: <em>"menú"</em>, <em>"catálogo"</em>, <em>"precios"</em>) o lo seleccione en la conversación.</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+            }
+          </div>
+
           <div style="margin-top: 30px;">
-            <button type="submit" [disabled]="isLoading" class="btn-primary">
-              Guardar Configuración
+            <button type="submit" [disabled]="isLoading || !hayCambiosEnAgente()" class="btn-primary" [style.opacity]="(isLoading || !hayCambiosEnAgente()) ? '0.5' : '1'" [style.cursor]="(isLoading || !hayCambiosEnAgente()) ? 'not-allowed' : 'pointer'">
+              {{ isLoading ? 'Guardando...' : 'Guardar Configuración' }}
             </button>
           </div>
         </form>

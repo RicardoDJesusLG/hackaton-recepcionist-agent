@@ -62,6 +62,17 @@ public class Empresa {
     @Builder.Default
     private Boolean requiereCorreo = false;
 
+    @Column(name = "url_menu_imagen", columnDefinition = "TEXT")
+    private String urlMenuImagen;
+
+    @Column(name = "activar_envio_menu", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean activarEnvioMenu = false;
+
+    @Column(name = "envio_menu_inmediato", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private Boolean envioMenuInmediato = false;
+
     @Column(name = "stripe_customer_id", length = 255)
     private String stripeCustomerId;
 

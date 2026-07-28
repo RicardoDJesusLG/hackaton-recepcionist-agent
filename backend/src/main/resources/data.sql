@@ -33,3 +33,18 @@ BEGIN
 END
 $$;
 
+-- Migración automática: Agregar columnas de Menú Multimedia en tabla empresas
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'url_menu_imagen') THEN
+        ALTER TABLE empresas ADD COLUMN url_menu_imagen TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'activar_envio_menu') THEN
+        ALTER TABLE empresas ADD COLUMN activar_envio_menu BOOLEAN NOT NULL DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'envio_menu_inmediato') THEN
+        ALTER TABLE empresas ADD COLUMN envio_menu_inmediato BOOLEAN NOT NULL DEFAULT FALSE;
+    END IF;
+END
+$$;
+
