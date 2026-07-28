@@ -126,17 +126,10 @@ public class StripeController {
         }
         plan = plan.trim().toUpperCase();
 
-        long unitAmount = 29900L; // $299.00 MXN
-        String productName = "Membresía Recepción Básica";
-        String productDesc = "Suscripción mensual al bot WhatsApp con límite de 60 citas/mes y soporte en horario laboral.";
-
-        if ("PREMIUM".equals(plan)) {
-            unitAmount = 49900L; // $499.00 MXN
-            productName = "Membresía Recepción Premium";
-            productDesc = "Suscripción mensual al bot WhatsApp ilimitada con soporte prioritario 24/7 y cobro a clientes.";
-        } else {
-            plan = "BASIC";
-        }
+        long unitAmount = 39900L; // $399.00 MXN
+        String productName = "Plan Pro Whappify";
+        String productDesc = "Suscripción mensual ilimitada al agente virtual de WhatsApp con menú digital multimedia, Google Calendar y mapas.";
+        plan = "PRO";
 
         // Modo MOCK si no hay llave de Stripe configurada
         if (stripeApiKey == null || stripeApiKey.trim().isEmpty() || "CAMBIAR_POR_LLAVE_REAL".equals(stripeApiKey)) {

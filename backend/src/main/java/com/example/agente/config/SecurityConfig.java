@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/payments/**").permitAll()
                 // Endpoints de Google Calendar públicos para desarrollo y pruebas locales
                 .requestMatchers("/api/v1/google-calendar/**").permitAll()
+                // Recurso estático de imágenes (Menú / Catálogo)
+                .requestMatchers("/uploads/**").permitAll()
                 // Permitir OPTIONS pre-flight requests para CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Todo lo demás (Dashboard) protegido

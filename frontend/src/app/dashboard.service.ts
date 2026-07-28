@@ -79,4 +79,10 @@ export class DashboardService {
   deleteAccount(): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/delete-account`);
   }
+
+  uploadMenuImage(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(`${this.apiUrl}/upload-menu`, formData);
+  }
 }

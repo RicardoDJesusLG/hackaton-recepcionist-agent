@@ -64,6 +64,67 @@ public class WhatsAppService {
         enviarMensajeTextoReal(targetNumber, messageBody, businessPhoneId, tokenToUse, false);
     }
 
+    public void enviarMensajeImagen(String to, String imageUrl, String caption, String businessPhoneId, String customToken) {
+        if (to == null || imageUrl == null || businessPhoneId == null) {
+            System.err.println("[WhatsAppService] Error: Parámetros nulos al enviar imagen.");
+            return;
+        }
+
+        String targetNumber = normalizarNumero(to);
+        String tokenToUse = (customToken != null && !customToken.trim().isEmpty()) ? customToken : this.apiToken;
+
+        if (tokenToUse == null || tokenToUse.trim().isEmpty() || "CAMBIAR_POR_TOKEN_REAL".equals(tokenToUse)) {
+            System.out.println("[WhatsAppService] [MOCK] Omitiendo envío real de imagen WhatsApp.");
+            System.out.println("  Para: " + targetNumber + " | URL Imagen: " + imageUrl);
+            return;
+        }
+
+        enviarMensajeImagenReal(targetNumber, imageUrl, caption, businessPhoneId, tokenToUse, false);
+    }
+
+    private void enviarMensajeImagenReal(String targetNumber, String imageUrl, String caption, String businessPhoneId, String tokenToUse, boolean esReintento) {
+        System.out.println("[WhatsAppService] Enviando imagen real a " + targetNumber + " URL: " + imageUrl);
+
+        try {
+            String url = "https://graph.facebook.com/v20.0/" + businessPhoneId + "/messages";
+            String escapedCaption = caption != null ? caption.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "") : "";
+
+            String jsonPayload = String.format(
+                    "{\"messaging_product\":\"whatsapp\",\"recipient_type\":\"individual\",\"to\":\"%s\",\"type\":\"image\",\"image\":{\"link\":\"%s\",\"caption\":\"%s\"}}",
+                    targetNumber, imageUrl, escapedCaption
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + tokenToUse)
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenAccept(response -> {
+                        if (response.statusCode() == 200 || response.statusCode() == 201) {
+                            System.out.println("[WhatsAppService] Imagen enviada con éxito. Código: " + response.statusCode());
+                        } else {
+                            System.err.println("[WhatsAppService] Error al enviar imagen. Código: " + response.statusCode() + " Body: " + response.body());
+                            if (!esReintento && response.statusCode() == 400 && response.body().contains("131030") && targetNumber.startsWith("52")) {
+                                String alternateNumber = obtenerNumeroAlternoMexico(targetNumber);
+                                if (alternateNumber != null) {
+                                    enviarMensajeImagenReal(alternateNumber, imageUrl, caption, businessPhoneId, tokenToUse, true);
+                                }
+                            }
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        System.err.println("[WhatsAppService] Excepción enviando imagen: " + ex.getMessage());
+                        return null;
+                    });
+
+        } catch (Exception e) {
+            System.err.println("[WhatsAppService] Error al preparar petición imagen WhatsApp: " + e.getMessage());
+        }
+    }
+
     private void enviarMensajeTextoReal(String targetNumber, String messageBody, String businessPhoneId, String tokenToUse, boolean esReintento) {
         System.out.println("[WhatsAppService] Enviando mensaje real a " + targetNumber + " desde " + businessPhoneId + " (esReintento: " + esReintento + ")...");
 

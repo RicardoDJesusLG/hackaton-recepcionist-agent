@@ -51,9 +51,15 @@ export class DashboardComponent implements OnInit {
 
   // Citas y Estadísticas
   citas: any[] = [];
+  citasFiltradas: any[] = [];
   totalCitas = 0;
   citasConfirmadas = 0;
   citasCanceladas = 0;
+
+  // Filtros de Citas
+  filtroEstado: 'TODOS' | 'CONFIRMADA' | 'CANCELADA' = 'TODOS';
+  filtroFechaTipo: 'HOY_Y_MANANA' | 'ESPECIFICO' | 'TODAS' = 'HOY_Y_MANANA';
+  fechaSeleccionada: string = ''; // YYYY-MM-DD
 
   // Datos de la Empresa
   empresa: any = {
@@ -65,8 +71,14 @@ export class DashboardComponent implements OnInit {
     telefonoContacto: '',
     mapsLink: '',
     suscripcionActiva: true,
-    planSuscripcion: 'BASIC'
+    planSuscripcion: 'BASIC',
+    urlMenuImagen: '',
+    activarEnvioMenu: false,
+    envioMenuInmediato: false
   };
+
+  selectedMenuFile: File | null = null;
+  isUploadingMenu = false;
 
   // Estadísticas de Suscripción
   subStats: any = {
@@ -94,7 +106,7 @@ export class DashboardComponent implements OnInit {
     promocionActiva: false
   };
 
-  // Re-autenticación
+  // Re-autenticación y Detección de Cambios
   mostrarModalReauth = false;
   reauthEmail = '';
   reauthPassword = '';
@@ -102,6 +114,38 @@ export class DashboardComponent implements OnInit {
   descripcionNegocioOriginal = '';
   prefijoTelefono = '52';
   telefonoLocal = '';
+  estadoOriginalAgente: string = '';
+
+  actualizarEstadoOriginalAgente(): void {
+    const Snapshot = {
+      descripcionNegocio: (this.empresa.descripcionNegocio || '').trim(),
+      prefijoTelefono: this.prefijoTelefono,
+      telefonoLocal: this.telefonoLocal.trim(),
+      nombre: this.camposRequeridos.nombre,
+      numero: this.camposRequeridos.numero,
+      correo: this.camposRequeridos.correo,
+      activarEnvioMenu: !!this.empresa.activarEnvioMenu,
+      envioMenuInmediato: !!this.empresa.envioMenuInmediato,
+      urlMenuImagen: (this.empresa.urlMenuImagen || '').trim()
+    };
+    this.estadoOriginalAgente = JSON.stringify(Snapshot);
+  }
+
+  hayCambiosEnAgente(): boolean {
+    if (!this.estadoOriginalAgente) return false;
+    const SnapshotActual = {
+      descripcionNegocio: (this.empresa.descripcionNegocio || '').trim(),
+      prefijoTelefono: this.prefijoTelefono,
+      telefonoLocal: this.telefonoLocal.trim(),
+      nombre: this.camposRequeridos.nombre,
+      numero: this.camposRequeridos.numero,
+      correo: this.camposRequeridos.correo,
+      activarEnvioMenu: !!this.empresa.activarEnvioMenu,
+      envioMenuInmediato: !!this.empresa.envioMenuInmediato,
+      urlMenuImagen: (this.empresa.urlMenuImagen || '').trim()
+    };
+    return JSON.stringify(SnapshotActual) !== this.estadoOriginalAgente;
+  }
 
   // Cancelación de cuenta
   mostrarModalDeleteAccount = false;
@@ -228,6 +272,7 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.citas = data;
         this.calcularEstadisticas();
+        this.aplicarFiltrosCitas();
         
         setTimeout(() => {
           this.isLoading = false;
@@ -240,6 +285,35 @@ export class DashboardComponent implements OnInit {
         this.errorMessage = 'No se pudieron cargar las citas. Verifica tu sesión.';
         console.error(err);
       }
+    });
+  }
+
+  aplicarFiltrosCitas(): void {
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0];
+    
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+    const mananaStr = manana.toISOString().split('T')[0];
+
+    this.citasFiltradas = this.citas.filter(cita => {
+      // 1. Filtro de Estado
+      if (this.filtroEstado !== 'TODOS' && cita.estado !== this.filtroEstado) {
+        return false;
+      }
+
+      // Extraer fecha en YYYY-MM-DD
+      const fechaCitaStr = cita.fechaHoraInicio ? cita.fechaHoraInicio.split('T')[0] : '';
+
+      // 2. Filtro de Fecha
+      if (this.filtroFechaTipo === 'HOY_Y_MANANA') {
+        return fechaCitaStr === hoyStr || fechaCitaStr === mananaStr;
+      } else if (this.filtroFechaTipo === 'ESPECIFICO') {
+        if (!this.fechaSeleccionada) return true;
+        return fechaCitaStr === this.fechaSeleccionada;
+      }
+
+      return true; // TODAS
     });
   }
 
@@ -278,6 +352,12 @@ export class DashboardComponent implements OnInit {
         this.camposRequeridos.nombre = data.requiereNombre !== undefined ? data.requiereNombre : true;
         this.camposRequeridos.numero = data.requiereTelefono !== undefined ? data.requiereTelefono : true;
         this.camposRequeridos.correo = data.requiereCorreo !== undefined ? data.requiereCorreo : false;
+        
+        this.empresa.activarEnvioMenu = data.activarEnvioMenu !== undefined ? data.activarEnvioMenu : false;
+        this.empresa.envioMenuInmediato = data.envioMenuInmediato !== undefined ? data.envioMenuInmediato : false;
+        this.empresa.urlMenuImagen = data.urlMenuImagen || '';
+
+        this.actualizarEstadoOriginalAgente();
       },
       error: (err) => {
         console.error('Error al cargar datos de empresa:', err);
@@ -359,6 +439,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  guardarDatosEmpresaDirecto(): void {
+    this.ejecutarGuardarEmpresa();
+  }
+
   guardarDatosEmpresa(): void {
     const nuevaDescripcion = this.empresa.descripcionNegocio || '';
     if (nuevaDescripcion.trim() !== this.descripcionNegocioOriginal.trim()) {
@@ -378,7 +462,7 @@ export class DashboardComponent implements OnInit {
     const numLimpio = this.telefonoLocal.replace(/\D/g, '');
     this.empresa.telefonoContacto = numLimpio ? `+${this.prefijoTelefono}${numLimpio}` : '';
     
-    // Inyectar campos requeridos en el payload enviado al backend
+    // Inyectar campos requeridos y de menú en el payload enviado al backend
     this.empresa.requiereNombre = this.camposRequeridos.nombre;
     this.empresa.requiereTelefono = this.camposRequeridos.numero;
     this.empresa.requiereCorreo = this.camposRequeridos.correo;
@@ -394,16 +478,74 @@ export class DashboardComponent implements OnInit {
         this.camposRequeridos.numero = data.requiereTelefono !== undefined ? data.requiereTelefono : true;
         this.camposRequeridos.correo = data.requiereCorreo !== undefined ? data.requiereCorreo : false;
 
-        this.successMessage = 'Información de la empresa guardada correctamente.';
+        this.empresa.activarEnvioMenu = data.activarEnvioMenu !== undefined ? data.activarEnvioMenu : false;
+        this.empresa.envioMenuInmediato = data.envioMenuInmediato !== undefined ? data.envioMenuInmediato : false;
+        this.empresa.urlMenuImagen = data.urlMenuImagen || '';
+
+        this.actualizarEstadoOriginalAgente();
         this.isLoading = false;
+        this.mostrarAlerta('Configuración Guardada', 'Los cambios en la configuración de tu Agente Virtual se guardaron correctamente.');
         this.cargarEstadisticasSuscripcion();
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = 'Error al guardar la información de la empresa.';
+        this.mostrarAlerta('Error al Guardar', 'Ocurrió un problema al guardar la información de la empresa.', 'error');
         console.error(err);
       }
     });
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        this.errorMessage = 'Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).';
+        return;
+      }
+      this.selectedMenuFile = file;
+      this.subirImagenMenu();
+    }
+  }
+
+  subirImagenMenu(): void {
+    if (!this.selectedMenuFile) return;
+    this.isUploadingMenu = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.dashboardService.uploadMenuImage(this.selectedMenuFile).subscribe({
+      next: (res) => {
+        this.isUploadingMenu = false;
+        this.empresa.urlMenuImagen = res.urlMenuImagen;
+        this.empresa.activarEnvioMenu = true;
+        this.selectedMenuFile = null;
+        this.successMessage = '¡Imagen de menú / catálogo cargada con éxito!';
+      },
+      error: (err) => {
+        this.isUploadingMenu = false;
+        this.errorMessage = err.error?.error || 'Error al subir la imagen del menú. Inténtalo de nuevo.';
+        console.error(err);
+      }
+    });
+  }
+
+  obtenerListaImagenesMenu(): String[] {
+    if (!this.empresa || !this.empresa.urlMenuImagen) return [];
+    return this.empresa.urlMenuImagen.split(',').map((url: string) => url.trim()).filter((url: string) => url.length > 0);
+  }
+
+  eliminarImagenMenuEspecifica(index: number): void {
+    const imagenes = this.obtenerListaImagenesMenu();
+    if (index >= 0 && index < imagenes.length) {
+      imagenes.splice(index, 1);
+      this.empresa.urlMenuImagen = imagenes.join(',');
+      this.guardarDatosEmpresaDirecto();
+    }
+  }
+
+  eliminarImagenMenu(): void {
+    this.empresa.urlMenuImagen = '';
+    this.guardarDatosEmpresaDirecto();
   }
 
   // --- RE-AUTENTICACIÓN TODOS ---

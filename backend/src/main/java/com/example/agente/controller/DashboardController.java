@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -194,6 +195,9 @@ public class DashboardController {
         response.put("requiereNombre", empresa.getRequiereNombre());
         response.put("requiereTelefono", empresa.getRequiereTelefono());
         response.put("requiereCorreo", empresa.getRequiereCorreo());
+        response.put("urlMenuImagen", empresa.getUrlMenuImagen() != null ? empresa.getUrlMenuImagen() : "");
+        response.put("activarEnvioMenu", empresa.getActivarEnvioMenu() != null ? empresa.getActivarEnvioMenu() : false);
+        response.put("envioMenuInmediato", empresa.getEnvioMenuInmediato() != null ? empresa.getEnvioMenuInmediato() : false);
 
         return ResponseEntity.ok(response);
     }
@@ -225,6 +229,9 @@ public class DashboardController {
         Boolean requiereNombre = (Boolean) requestBody.get("requiereNombre");
         Boolean requiereTelefono = (Boolean) requestBody.get("requiereTelefono");
         Boolean requiereCorreo = (Boolean) requestBody.get("requiereCorreo");
+        String urlMenuImagen = (String) requestBody.get("urlMenuImagen");
+        Boolean activarEnvioMenu = (Boolean) requestBody.get("activarEnvioMenu");
+        Boolean envioMenuInmediato = (Boolean) requestBody.get("envioMenuInmediato");
 
 
         if (esPromptSospechoso(descripcionNegocio)) {
@@ -245,6 +252,9 @@ public class DashboardController {
         empresa.setDireccion(direccion);
         empresa.setDescripcionNegocio(descripcionNegocio);
         empresa.setTelefonoContacto(telefonoContacto);
+        if (urlMenuImagen != null) empresa.setUrlMenuImagen(urlMenuImagen);
+        if (activarEnvioMenu != null) empresa.setActivarEnvioMenu(activarEnvioMenu);
+        if (envioMenuInmediato != null) empresa.setEnvioMenuInmediato(envioMenuInmediato);
         if ("BASIC".equalsIgnoreCase(empresa.getPlanSuscripcion())) {
             empresa.setMapsLink(null);
         } else {
@@ -291,6 +301,9 @@ public class DashboardController {
         response.put("requiereNombre", empresa.getRequiereNombre());
         response.put("requiereTelefono", empresa.getRequiereTelefono());
         response.put("requiereCorreo", empresa.getRequiereCorreo());
+        response.put("urlMenuImagen", empresa.getUrlMenuImagen() != null ? empresa.getUrlMenuImagen() : "");
+        response.put("activarEnvioMenu", empresa.getActivarEnvioMenu() != null ? empresa.getActivarEnvioMenu() : false);
+        response.put("envioMenuInmediato", empresa.getEnvioMenuInmediato() != null ? empresa.getEnvioMenuInmediato() : false);
 
 
         return ResponseEntity.ok(response);
@@ -409,11 +422,6 @@ public class DashboardController {
         int limiteServicios = Integer.MAX_VALUE;
         int limiteCitas = Integer.MAX_VALUE;
 
-        if ("BASIC".equalsIgnoreCase(plan)) {
-            limiteServicios = 3;
-            limiteCitas = 60;
-        }
-
         java.util.Map<String, Object> responseData = new java.util.HashMap<>();
         responseData.put("planSuscripcion", plan);
         responseData.put("suscripcionActiva", activa);
@@ -472,5 +480,72 @@ public class DashboardController {
         System.out.println("[DashboardController] Cuenta y datos de empresa eliminados de la BD para: " + empresa.getNombre() + " (" + empresaId + ")");
 
         return ResponseEntity.ok(Map.of("message", "Cuenta eliminada exitosamente."));
+    }
+
+    /**
+     * Sube una imagen para el menú o catálogo de la empresa.
+     */
+    @PostMapping("/upload-menu")
+    public ResponseEntity<?> uploadMenuImage(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        UUID empresaId = (UUID) request.getAttribute("empresaId");
+        if (empresaId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autorizado"));
+        }
+
+        Optional<Empresa> empresaOpt = empresaRepository.findById(empresaId);
+        if (empresaOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Empresa no encontrada"));
+        }
+
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El archivo de imagen está vacío o no se recibió correctamente"));
+        }
+
+        try {
+            String uploadDir = "uploads/";
+            java.io.File dir = new java.io.File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            } else {
+                extension = ".png";
+            }
+
+            String newFilename = "menu_" + empresaId + "_" + System.currentTimeMillis() + extension;
+            java.nio.file.Path filePath = java.nio.file.Paths.get(uploadDir + newFilename);
+            java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            String fileUrl = "http://localhost:8080/uploads/" + newFilename;
+
+            Empresa empresa = empresaOpt.get();
+            String imagenesActuales = empresa.getUrlMenuImagen();
+            List<String> listaUrls = new ArrayList<>();
+            if (imagenesActuales != null && !imagenesActuales.trim().isEmpty()) {
+                for (String u : imagenesActuales.split(",")) {
+                    if (!u.trim().isEmpty()) listaUrls.add(u.trim());
+                }
+            }
+
+            if (listaUrls.size() >= 5) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Has alcanzado el límite máximo de 5 imágenes."));
+            }
+
+            listaUrls.add(fileUrl);
+            String urlConcatenada = String.join(",", listaUrls);
+
+            empresa.setUrlMenuImagen(urlConcatenada);
+            empresa.setActivarEnvioMenu(true);
+            empresaRepository.save(empresa);
+
+            return ResponseEntity.ok(Map.of("urlMenuImagen", urlConcatenada));
+        } catch (Exception e) {
+            System.err.println("[DashboardController] Error al subir imagen de menú: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al procesar la imagen de menú"));
+        }
     }
 }
