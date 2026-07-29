@@ -53,8 +53,8 @@ public class EmailService {
         try {
             CreateEmailResponse data = resend.emails().send(params);
             System.out.println("Correo enviado exitosamente con ID: " + data.getId());
-        } catch (ResendException e) {
-            System.err.println("Error al enviar el correo: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error al enviar el correo vía Resend API: " + e.getMessage());
         }
     }
 }
