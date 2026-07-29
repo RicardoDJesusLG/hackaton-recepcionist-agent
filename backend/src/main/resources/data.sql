@@ -1,50 +1,21 @@
--- Migración automática: Renombrar 'username' a 'email' en tabla owners
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'owners' AND column_name = 'username') THEN
-        ALTER TABLE owners RENAME COLUMN username TO email;
-        ALTER TABLE owners ALTER COLUMN email TYPE varchar(150);
-        RAISE NOTICE '[Migration] Columna username renombrada a email exitosamente.';
-    END IF;
-END
-$$;
+-- ====================================================================
+-- Migración automática compatible con Spring Boot Init y PostgreSQL
+-- Nota: Usamos sentencias SQL estándar en lugar de bloques procedimentales DO $$ 
+-- para evitar errores de parseo por delimitadores de punto y coma (;) en Spring Boot.
+-- ====================================================================
 
--- Migración automática: Agregar columnas de campos obligatorios en tabla empresas
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'requiere_nombre') THEN
-        ALTER TABLE empresas ADD COLUMN requiere_nombre BOOLEAN NOT NULL DEFAULT TRUE;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'requiere_telefono') THEN
-        ALTER TABLE empresas ADD COLUMN requiere_telefono BOOLEAN NOT NULL DEFAULT TRUE;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'requiere_correo') THEN
-        ALTER TABLE empresas ADD COLUMN requiere_correo BOOLEAN NOT NULL DEFAULT FALSE;
-    END IF;
-END
-$$;
+-- 1. Asegurar columna email en tabla owners
+ALTER TABLE owners ADD COLUMN IF NOT EXISTS email VARCHAR(150);
 
--- Migración automática: Agregar columna correo en tabla usuarios
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'usuarios' AND column_name = 'correo') THEN
-        ALTER TABLE usuarios ADD COLUMN correo VARCHAR(150);
-    END IF;
-END
-$$;
+-- 2. Agregar columnas de campos obligatorios en tabla empresas
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS requiere_nombre BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS requiere_telefono BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS requiere_correo BOOLEAN NOT NULL DEFAULT FALSE;
 
--- Migración automática: Agregar columnas de Menú Multimedia en tabla empresas
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'url_menu_imagen') THEN
-        ALTER TABLE empresas ADD COLUMN url_menu_imagen TEXT;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'activar_envio_menu') THEN
-        ALTER TABLE empresas ADD COLUMN activar_envio_menu BOOLEAN NOT NULL DEFAULT FALSE;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'envio_menu_inmediato') THEN
-        ALTER TABLE empresas ADD COLUMN envio_menu_inmediato BOOLEAN NOT NULL DEFAULT FALSE;
-    END IF;
-END
-$$;
+-- 3. Agregar columna correo en tabla usuarios
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS correo VARCHAR(150);
 
+-- 4. Agregar columnas de Menú Multimedia en tabla empresas
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS url_menu_imagen TEXT;
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS activar_envio_menu BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE empresas ADD COLUMN IF NOT EXISTS envio_menu_inmediato BOOLEAN NOT NULL DEFAULT FALSE;
