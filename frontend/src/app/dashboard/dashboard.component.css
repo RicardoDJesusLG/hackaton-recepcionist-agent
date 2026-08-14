@@ -206,7 +206,6 @@ button.badge-toggle:disabled {
 .light-form .form-group { margin-bottom: 20px; }
 .light-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .light-form label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px; }
-/* 🌟 APLICAMOS EL ESTILO BONITO A TODOS LOS INPUTS, SELECTS Y TEXTAREAS */
 .light-form input[type="text"],
 .light-form input[type="number"],
 .light-form input[type="password"],
@@ -898,4 +897,31 @@ button.badge-toggle:disabled {
   padding: 10px 16px;
   font-size: 13px;
   border-radius: 8px;
+}
+
+/* --- FILTROS DE CITAS (Listado) --- */
+.filter-select-custom {
+  height: 42px; /* Alineado perfecto con la altura del botón Refrescar */
+  padding: 0 14px;
+  font-size: 13px;
+  color: #334155;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px; /* Borde redondeado suave como en la imagen */
+  outline: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Efecto al hacer clic en el filtro */
+.filter-select-custom:focus {
+  border-color: var(--color-celeste, #4a5d7f);
+  box-shadow: 0 0 0 3px rgba(74, 93, 127, 0.15);
+}
+
+/* Para inputs de fecha que usan esta misma clase */
+input[type="date"].filter-select-custom {
+  cursor: text;
 }
